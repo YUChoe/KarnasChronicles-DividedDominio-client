@@ -4,6 +4,7 @@ import { logger } from './logger';
 import { ConnectionPool, ClientConnection } from './connection-pool';
 import { TelnetClient } from './telnet-client';
 import { WSMessage } from '../shared/types';
+import { sanitize, containsDangerousPatterns } from './sanitizer';
 
 export class GatewayServer {
   private wss: WebSocketServer | null = null;
@@ -224,15 +225,28 @@ export class GatewayServer {
     }
 
     if (connection.ws.readyState === WebSocket.OPEN) {
+      // 서버 데이터 정제 (XSS 방지)
+      const rawData = data.toString('utf-8');
+      const sanitizedData = sanitize(rawData);
+      
+      // 위험한 패턴이 제거되었는지 로깅
+      if (containsDangerousPatterns(rawData)) {
+        logger.warn('Dangerous patterns detected and removed', { 
+          clientId, 
+          originalLength: rawData.length,
+          sanitizedLength: sanitizedData.length
+        });
+      }
+
       const message: WSMessage = {
         type: 'data',
-        payload: data.toString('utf-8'),
+        payload: sanitizedData,
         timestamp: Date.now()
       };
       connection.ws.send(JSON.stringify(message));
       logger.debug('Data forwarded to WebSocket', { 
         clientId, 
-        length: data.length 
+        length: sanitizedData.length 
       });
     }
   }
