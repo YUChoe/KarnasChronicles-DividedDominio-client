@@ -9,6 +9,7 @@ export class TerminalManager {
   private attachAddon?: AttachAddon;
   private socket?: WebSocket;
   private onDisconnectCallback?: () => void;
+  private onVersionCallback?: (version: string) => void;
 
   constructor(container: HTMLElement) {
     // xterm.js Terminal 인스턴스 초기화
@@ -16,10 +17,12 @@ export class TerminalManager {
       cols: 120,
       rows: 60,
       fontFamily: 'Cascadia Mono, Consolas, Courier New, monospace',
+      fontSize: 14, // 폰트 크기 (기본 15에서 14로 변경)
       fontWeight: 300, // Semi-Light
       lineHeight: 1.15,
       cursorBlink: true,
       scrollback: 0, // 스크롤 비활성화
+      convertEol: true, // \n을 \r\n으로 자동 변환하여 줄바꿈 처리
       theme: {
         background: '#000000',
         foreground: '#ffffff',
@@ -70,23 +73,58 @@ export class TerminalManager {
       this.socket.onopen = () => {
         console.log('[TerminalManager] WebSocket connection established');
         
-        // AttachAddon을 통한 터미널 연결
-        if (this.socket) {
-          this.attachAddon = new AttachAddon(this.socket);
-          this.terminal.loadAddon(this.attachAddon);
+        // 초기 크기 정보 전송
+        const { cols, rows } = this.terminal;
+        this.socket?.send(JSON.stringify({
+          type: 'resize',
+          cols,
+          rows,
+          timestamp: Date.now()
+        }));
 
-          // 초기 크기 정보 전송
-          const { cols, rows } = this.terminal;
-          this.socket.send(JSON.stringify({
-            type: 'resize',
-            cols,
-            rows,
-            timestamp: Date.now()
-          }));
+        resolve();
+      };
 
-          resolve();
+      this.socket.onmessage = (event) => {
+        // JSON 메시지인지 확인
+        if (typeof event.data === 'string') {
+          try {
+            const message = JSON.parse(event.data);
+            
+            // 버전 메시지 처리
+            if (message.type === 'version' && message.payload) {
+              console.log('[TerminalManager] Server version received:', message.payload);
+              if (this.onVersionCallback) {
+                this.onVersionCallback(message.payload);
+              }
+              return;
+            }
+            
+            // 데이터 메시지 처리
+            if (message.type === 'data' && message.payload) {
+              this.terminal.write(message.payload);
+              return;
+            }
+          } catch (error) {
+            // JSON 파싱 실패 - 원시 텍스트로 처리
+            this.terminal.write(event.data);
+          }
+        } else {
+          // 바이너리 데이터
+          this.terminal.write(new Uint8Array(event.data));
         }
       };
+
+      // 터미널 입력을 WebSocket으로 전송
+      this.terminal.onData((data) => {
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+          this.socket.send(JSON.stringify({
+            type: 'data',
+            payload: data,
+            timestamp: Date.now()
+          }));
+        }
+      });
 
       this.socket.onerror = (error) => {
         console.error('[TerminalManager] WebSocket error:', error);
@@ -126,6 +164,10 @@ export class TerminalManager {
 
   setOnDisconnect(callback: () => void): void {
     this.onDisconnectCallback = callback;
+  }
+
+  setOnVersion(callback: (version: string) => void): void {
+    this.onVersionCallback = callback;
   }
 
   private setupKeyHandlers(): void {

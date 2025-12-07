@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev:client": "bash -c './node_modules/.bin/vite'",
-    "dev:server": "bash -c './node_modules/.bin/tsx watch src/server/gateway.ts'",
+    "dev:server": "bash -c './node_modules/.bin/tsx watch src/server/start.ts'",
     "build:client": "bash -c './node_modules/.bin/vite build'",
     "build:server": "node node_modules/typescript/lib/tsc.js -p tsconfig.server.json",
     "build": "npm run build:client && npm run build:server",

@@ -55,6 +55,12 @@ class BrowserClient {
       }
     });
 
+    // 서버 버전 수신 콜백 설정
+    this.terminalManager.setOnVersion((version: string) => {
+      console.log('[BrowserClient] Server version received:', version);
+      this.serverVersionElement.textContent = `Server: v${version}`;
+    });
+
     // WebSocket 연결 시도
     await this.connect();
   }

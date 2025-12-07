@@ -12,6 +12,7 @@ export class GatewayServer {
   private port: number;
   private telnetHost: string;
   private telnetPort: number;
+  private readonly serverVersion: string = '1.0.0';
 
   constructor(
     port: number = 3000,
@@ -165,6 +166,13 @@ export class GatewayServer {
       type: 'connect',
       timestamp: Date.now()
     });
+
+    // 서버 버전 정보 전송
+    this.sendMessage(ws, {
+      type: 'version',
+      payload: this.serverVersion,
+      timestamp: Date.now()
+    });
   }
 
   private async handleMessage(clientId: string, data: Buffer): Promise<void> {
@@ -288,12 +296,12 @@ export class GatewayServer {
   }
 }
 
-// 서버 시작
-if (import.meta.url === `file://${process.argv[1]}`) {
-  const port = process.env.WS_PORT ? parseInt(process.env.WS_PORT) : 3000;
-  const telnetHost = process.env.TELNET_HOST || 'localhost';
-  const telnetPort = process.env.TELNET_PORT ? parseInt(process.env.TELNET_PORT) : 4000;
-
+// 서버 시작 함수 (외부에서 호출 가능)
+export function startServer(
+  port: number = 3000,
+  telnetHost: string = 'localhost',
+  telnetPort: number = 4000
+): GatewayServer {
   const server = new GatewayServer(port, telnetHost, telnetPort);
   
   server.start().catch((error) => {
@@ -313,4 +321,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     await server.stop();
     process.exit(0);
   });
+
+  return server;
 }
