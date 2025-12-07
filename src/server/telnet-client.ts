@@ -8,6 +8,7 @@ export class TelnetClient {
   private onDataCallback?: (data: Buffer) => void;
   private onCloseCallback?: () => void;
   private onErrorCallback?: (error: Error) => void;
+  private isCleanedUp: boolean = false;
 
   constructor(host: string = 'localhost', port: number = 4000) {
     this.host = host;
@@ -70,11 +71,32 @@ export class TelnetClient {
   }
 
   disconnect(): void {
-    if (this.socket) {
-      this.socket.destroy();
-      this.socket = null;
-      logger.debug('Telnet client disconnected');
+    if (this.isCleanedUp) {
+      return;
     }
+
+    this.isCleanedUp = true;
+
+    if (this.socket) {
+      // 모든 이벤트 리스너 제거
+      this.socket.removeAllListeners('data');
+      this.socket.removeAllListeners('close');
+      this.socket.removeAllListeners('error');
+      this.socket.removeAllListeners('connect');
+
+      // 소켓 종료
+      if (!this.socket.destroyed) {
+        this.socket.destroy();
+      }
+      
+      this.socket = null;
+      logger.debug('Telnet client disconnected and cleaned up');
+    }
+
+    // 콜백 참조 제거 (메모리 누수 방지)
+    this.onDataCallback = undefined;
+    this.onCloseCallback = undefined;
+    this.onErrorCallback = undefined;
   }
 
   onData(callback: (data: Buffer) => void): void {

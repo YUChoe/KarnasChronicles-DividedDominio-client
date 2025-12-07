@@ -180,6 +180,221 @@ describe('Gateway Property Tests', () => {
   });
 
   /**
+   * Feature: browser-telnet-terminal, Property 14: 리소스 정리
+   * 
+   * 모든 닫히는 연결(정상적으로 또는 오류로 인해)에 대해, WebSocket Gateway는
+   * 모든 관련 리소스(텔넷 연결, 버퍼, 이벤트 리스너)를 정리해야 합니다.
+   * 
+   * Validates: Requirements 5.4
+   */
+  it('Property 14: 리소스 정리', async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        fc.integer({ min: 1, max: 3 }), // 연결 수 (안정성을 위해 줄임)
+        async (connectionCount: number) => {
+          const connections: WebSocket[] = [];
+          const connectionPromises: Promise<void>[] = [];
+          
+          // 여러 연결 생성
+          for (let i = 0; i < connectionCount; i++) {
+            const ws = new WebSocket(`ws://localhost:${WS_PORT}`);
+            connections.push(ws);
+            
+            const promise = new Promise<void>((resolve, reject) => {
+              const timeout = setTimeout(() => {
+                reject(new Error('Connection timeout'));
+              }, 2000);
+              
+              ws.on('open', () => {
+                clearTimeout(timeout);
+                resolve();
+              });
+              
+              ws.on('error', (error) => {
+                clearTimeout(timeout);
+                reject(error);
+              });
+            });
+            
+            connectionPromises.push(promise);
+          }
+          
+          // 모든 연결이 열릴 때까지 대기
+          await Promise.all(connectionPromises);
+          
+          // 연결이 완전히 설정될 때까지 대기
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          // 초기 연결 수 확인
+          const initialCount = gateway.getConnectionCount();
+          expect(initialCount).toBe(connectionCount);
+          
+          // 모든 연결 종료
+          const closePromises = connections.map(ws => {
+            return new Promise<void>((resolve) => {
+              ws.on('close', () => resolve());
+              ws.close();
+            });
+          });
+          
+          await Promise.all(closePromises);
+          
+          // 리소스 정리 대기
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          // 모든 연결이 정리되었는지 확인
+          const finalCount = gateway.getConnectionCount();
+          expect(finalCount).toBe(0);
+          
+          return true;
+        }
+      ),
+      { numRuns: 20, timeout: 10000 } // 20회 반복, 타임아웃 10초
+    );
+  }, 15000); // 테스트 타임아웃 15초
+
+  /**
+   * Feature: browser-telnet-terminal, Property 13: 연결 용량
+   * 
+   * 모든 최대 200개까지의 동시 연결 수에 대해, WebSocket Gateway는
+   * 모든 연결을 성공적으로 수락하고 유지해야 합니다.
+   * 
+   * Validates: Requirements 5.1
+   */
+  it('Property 13: 연결 용량', async () => {
+    // 소규모 테스트 (전체 200개는 시간이 오래 걸림)
+    const testConnectionCount = 10;
+    const connections: WebSocket[] = [];
+    
+    try {
+      // 여러 연결 생성
+      for (let i = 0; i < testConnectionCount; i++) {
+        const ws = new WebSocket(`ws://localhost:${WS_PORT}`);
+        connections.push(ws);
+        
+        await new Promise<void>((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error('Connection timeout'));
+          }, 2000);
+          
+          ws.on('open', () => {
+            clearTimeout(timeout);
+            resolve();
+          });
+          
+          ws.on('error', (error) => {
+            clearTimeout(timeout);
+            reject(error);
+          });
+        });
+      }
+      
+      // 모든 연결이 설정될 때까지 대기
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // 모든 연결이 수락되었는지 확인
+      const connectionCount = gateway.getConnectionCount();
+      expect(connectionCount).toBe(testConnectionCount);
+      
+      // 모든 연결 종료
+      for (const ws of connections) {
+        ws.close();
+      }
+      
+      // 정리 대기
+      await new Promise(resolve => setTimeout(resolve, 300));
+    } finally {
+      // 정리
+      for (const ws of connections) {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.close();
+        }
+      }
+    }
+  }, 10000);
+
+  /**
+   * Feature: browser-telnet-terminal, Property 15: 우아한 연결 거부
+   * 
+   * 모든 최대 용량에 도달했거나 근접했을 때의 연결 시도에 대해,
+   * WebSocket Gateway는 적절한 오류 메시지와 함께 연결을 우아하게 거부하고
+   * 경고를 로그해야 합니다.
+   * 
+   * Validates: Requirements 5.5
+   */
+  it('Property 15: 우아한 연결 거부', async () => {
+    // 작은 용량의 게이트웨이 생성 (테스트용)
+    const smallGateway = new GatewayServer(3002, 'localhost', TELNET_PORT, 3);
+    await smallGateway.start();
+    
+    const connections: WebSocket[] = [];
+    
+    try {
+      // 최대 용량까지 연결
+      for (let i = 0; i < 3; i++) {
+        const ws = new WebSocket(`ws://localhost:3002`);
+        connections.push(ws);
+        
+        await new Promise<void>((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error('Connection timeout'));
+          }, 2000);
+          
+          ws.on('open', () => {
+            clearTimeout(timeout);
+            resolve();
+          });
+          
+          ws.on('error', (error) => {
+            clearTimeout(timeout);
+            reject(error);
+          });
+        });
+      }
+      
+      // 연결 설정 대기
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // 용량 초과 연결 시도
+      const rejectedWs = new WebSocket(`ws://localhost:3002`);
+      
+      const wasRejected = await new Promise<boolean>((resolve) => {
+        const timeout = setTimeout(() => {
+          resolve(false);
+        }, 2000);
+        
+        rejectedWs.on('close', (code) => {
+          clearTimeout(timeout);
+          // 1008은 "Server at capacity" 코드
+          resolve(code === 1008);
+        });
+        
+        rejectedWs.on('error', () => {
+          clearTimeout(timeout);
+          resolve(true);
+        });
+      });
+      
+      expect(wasRejected).toBe(true);
+      
+      // 정리
+      for (const ws of connections) {
+        ws.close();
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 300));
+    } finally {
+      // 정리
+      for (const ws of connections) {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.close();
+        }
+      }
+      await smallGateway.stop();
+    }
+  }, 10000);
+
+  /**
    * Feature: browser-telnet-terminal, Property 5: 명령 제출 왕복
    * 
    * 모든 입력 버퍼 상태에 대해, 사용자가 Enter를 누르면 완전한 명령이

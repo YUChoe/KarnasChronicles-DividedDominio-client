@@ -53,12 +53,28 @@ export class GatewayServer {
 
     logger.info('New WebSocket connection', { clientId, remoteAddress });
 
-    // 연결 제한 확인
-    if (this.connectionPool.getSize() >= 200) {
-      logger.warn('Connection rejected - capacity reached', { clientId });
+    // 연결 제한 확인 (최대 연결 수)
+    const currentSize = this.connectionPool.getSize();
+    const maxConnections = this.connectionPool.getMaxConnections();
+    
+    if (currentSize >= maxConnections) {
+      logger.warn('Connection rejected - capacity reached', { 
+        clientId, 
+        current: currentSize, 
+        max: maxConnections 
+      });
       this.sendError(ws, 'Server at capacity. Please try again later.');
       ws.close(1008, 'Server at capacity');
       return;
+    }
+
+    // 용량 경고 (90% 이상)
+    if (currentSize >= maxConnections * 0.9) {
+      logger.warn('Connection pool near capacity', { 
+        current: currentSize, 
+        max: maxConnections,
+        percentage: Math.round((currentSize / maxConnections) * 100)
+      });
     }
 
     // Telnet 클라이언트 생성 및 연결
@@ -127,14 +143,20 @@ export class GatewayServer {
     });
 
     // WebSocket 연결 종료 처리
-    ws.on('close', () => {
-      logger.info('WebSocket connection closed', { clientId });
+    ws.on('close', (code, reason) => {
+      logger.info('WebSocket connection closed', { 
+        clientId, 
+        code, 
+        reason: reason.toString() 
+      });
       this.connectionPool.remove(clientId);
     });
 
     // WebSocket 오류 처리
     ws.on('error', (error) => {
       logger.error('WebSocket error', { clientId, error: error.message });
+      // 오류 발생 시에도 연결 정리
+      this.connectionPool.remove(clientId);
     });
 
     // 연결 성공 메시지 전송
