@@ -13,24 +13,32 @@
     "type-check": "node node_modules/typescript/lib/tsc.js --noEmit",
     "test": "bash -c './node_modules/.bin/vitest --run'"
   },
-  "keywords": ["telnet", "terminal", "websocket", "mud"],
+  "keywords": [
+    "telnet",
+    "terminal",
+    "websocket",
+    "mud"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@xterm/xterm": "^5.5.0",
     "@xterm/addon-attach": "^0.11.0",
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/addon-webgl": "^0.18.0",
-    "ws": "^8.18.0",
-    "winston": "^3.14.2"
+    "@xterm/xterm": "^5.5.0",
+    "winston": "^3.14.2",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
+    "@types/jsdom": "^27.0.0",
     "@types/node": "^20.14.0",
     "@types/ws": "^8.5.12",
+    "fast-check": "^3.20.0",
+    "happy-dom": "^20.0.11",
+    "jsdom": "^27.2.0",
+    "tsx": "^4.16.2",
     "typescript": "^5.5.3",
     "vite": "^5.3.3",
-    "vitest": "^2.0.3",
-    "tsx": "^4.16.2",
-    "fast-check": "^3.20.0"
+    "vitest": "^2.0.3"
   }
 }

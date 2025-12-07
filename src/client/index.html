@@ -4,9 +4,117 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Echoes of the Fallen Age</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.css" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Cascadia Mono', 'Consolas', 'Courier New', monospace;
+      background-color: #1a1a1a;
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #ffffff;
+    }
+
+    .version-info {
+      font-size: 0.75rem;
+      color: #888888;
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+    }
+
+    .version-info span {
+      display: inline-block;
+    }
+
+    #terminal-container {
+      width: 100%;
+      max-width: 1200px;
+      background-color: #000000;
+      border: 1px solid #333333;
+      border-radius: 4px;
+      padding: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    }
+
+    #terminal {
+      width: 100%;
+      height: 100%;
+    }
+
+    .error-message {
+      display: none;
+      background-color: #ff4444;
+      color: #ffffff;
+      padding: 12px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+
+    .error-message.visible {
+      display: block;
+    }
+
+    .reconnect-button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      margin-top: 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.9rem;
+    }
+
+    .reconnect-button:hover {
+      background-color: #45a049;
+    }
+
+    .reconnect-button:active {
+      background-color: #3d8b40;
+    }
+  </style>
 </head>
 <body>
-  <div id="app"></div>
+  <div class="header">
+    <h1>Echoes of the Fallen Age</h1>
+    <div class="version-info">
+      <span id="client-version">Client: v1.0.0</span>
+      <span id="server-version">Server: 연결 중...</span>
+    </div>
+  </div>
+
+  <div id="error-container" class="error-message">
+    <div id="error-text"></div>
+    <button id="reconnect-btn" class="reconnect-button">재연결</button>
+  </div>
+
+  <div id="terminal-container">
+    <div id="terminal"></div>
+  </div>
+
   <script type="module" src="/src/client/main.ts"></script>
 </body>
 </html>
