@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  # WebSocket Gateway
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: telnet-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - WS_PORT=3000
+      - TELNET_HOST=host.docker.internal
+      - TELNET_PORT=4000
+      - MAX_CONNECTIONS=200
+      - LOG_LEVEL=info
+    volumes:
+      - ./logs:/app/logs
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+# 참고: 클라이언트 정적 파일은 별도의 웹 서버(nginx, Apache, CDN 등)에서 서빙하세요.
+# 빌드된 클라이언트 파일은 dist/client 디렉토리에 있습니다.
