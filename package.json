@@ -1,0 +1,36 @@
+{
+  "name": "browser-telnet-terminal",
+  "version": "1.0.0",
+  "description": "Browser-based Telnet Terminal Client for MUD servers",
+  "type": "module",
+  "scripts": {
+    "dev:client": "bash -c './node_modules/.bin/vite'",
+    "dev:server": "bash -c './node_modules/.bin/tsx watch src/server/gateway.ts'",
+    "build:client": "bash -c './node_modules/.bin/vite build'",
+    "build:server": "node node_modules/typescript/lib/tsc.js -p tsconfig.server.json",
+    "build": "npm run build:client && npm run build:server",
+    "preview": "bash -c './node_modules/.bin/vite preview'",
+    "type-check": "node node_modules/typescript/lib/tsc.js --noEmit",
+    "test": "bash -c './node_modules/.bin/vitest --run'"
+  },
+  "keywords": ["telnet", "terminal", "websocket", "mud"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@xterm/xterm": "^5.5.0",
+    "@xterm/addon-attach": "^0.11.0",
+    "@xterm/addon-fit": "^0.10.0",
+    "@xterm/addon-webgl": "^0.18.0",
+    "ws": "^8.18.0",
+    "winston": "^3.14.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/ws": "^8.5.12",
+    "typescript": "^5.5.3",
+    "vite": "^5.3.3",
+    "vitest": "^2.0.3",
+    "tsx": "^4.16.2",
+    "fast-check": "^3.20.0"
+  }
+}
