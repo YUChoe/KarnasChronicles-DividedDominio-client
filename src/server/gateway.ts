@@ -1,9 +1,9 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { randomUUID } from 'crypto';
-import { logger } from './logger.js';
-import { ConnectionPool, ClientConnection } from './connection-pool.js';
-import { TelnetClient } from './telnet-client.js';
-import { WSMessage } from '../shared/types.js';
+import { logger } from './logger';
+import { ConnectionPool, ClientConnection } from './connection-pool';
+import { TelnetClient } from './telnet-client';
+import { WSMessage } from '../shared/types';
 
 export class GatewayServer {
   private wss: WebSocketServer | null = null;

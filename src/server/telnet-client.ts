@@ -1,5 +1,5 @@
 import { Socket } from 'net';
-import { logger } from './logger.js';
+import { logger } from './logger';
 
 export class TelnetClient {
   private socket: Socket | null = null;

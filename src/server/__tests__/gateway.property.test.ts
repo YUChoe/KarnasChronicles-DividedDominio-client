@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fc from 'fast-check';
-import { GatewayServer } from '../gateway.js';
+import { GatewayServer } from '../gateway';
 import { WebSocket } from 'ws';
 import { createServer, Server as NetServer } from 'net';
-import { WSMessage } from '../../shared/types.js';
+import { WSMessage } from '../../shared/types';
 
 /**
  * Feature: browser-telnet-terminal, Property 1: WebSocket to Telnet 연결 체인

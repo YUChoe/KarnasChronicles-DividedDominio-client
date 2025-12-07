@@ -1,6 +1,6 @@
 import { WebSocket } from 'ws';
-import { logger } from './logger.js';
-import { TelnetClient } from './telnet-client.js';
+import { logger } from './logger';
+import { TelnetClient } from './telnet-client';
 
 export interface ClientConnection {
   id: string;
