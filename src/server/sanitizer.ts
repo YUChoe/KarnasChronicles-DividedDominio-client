@@ -90,20 +90,16 @@ export function limitDataLength(data: string, maxLength: number = 10 * 1024 * 10
 
 /**
  * 줄바꿈 문자를 정규화합니다.
- * xterm.js는 \r\n을 기대하므로 모든 줄바꿈을 \r\n으로 변환합니다.
+ * 모든 줄바꿈을 LF(\n)로 통일합니다.
  * 
  * @param data - 원본 데이터
  * @returns 정규화된 데이터
  */
 export function normalizeLineEndings(data: string): string {
-  // 먼저 모든 CR+LF를 임시 마커로 변환
-  let normalized = data.replace(/\r\n/g, '\x00');
-  // 단독 LF를 CR+LF로 변환
-  normalized = normalized.replace(/\n/g, '\r\n');
-  // 단독 CR을 CR+LF로 변환
-  normalized = normalized.replace(/\r(?!\n)/g, '\r\n');
-  // 임시 마커를 CR+LF로 복원
-  normalized = normalized.replace(/\x00/g, '\r\n');
+  // CR+LF를 LF로 변환
+  let normalized = data.replace(/\r\n/g, '\n');
+  // 단독 CR을 LF로 변환
+  normalized = normalized.replace(/\r/g, '\n');
   
   return normalized;
 }

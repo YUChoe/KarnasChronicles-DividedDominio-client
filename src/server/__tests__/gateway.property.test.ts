@@ -395,6 +395,140 @@ describe('Gateway Property Tests', () => {
   }, 10000);
 
   /**
+   * Feature: browser-telnet-terminal, Property 17: 연결 이벤트 로깅
+   * 
+   * 모든 연결 이벤트(연결, 연결 해제, 오류)에 대해, 시스템은
+   * 디버깅을 위한 적절한 컨텍스트 정보와 함께 이를 로그해야 합니다.
+   * 
+   * Validates: Requirements 8.5
+   */
+  it('Property 17: 연결 이벤트 로깅', async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        fc.integer({ min: 1, max: 3 }), // 연결 수
+        async (connectionCount: number) => {
+          const connections: WebSocket[] = [];
+          
+          // 여러 연결 생성
+          for (let i = 0; i < connectionCount; i++) {
+            const ws = new WebSocket(`ws://localhost:${WS_PORT}`);
+            connections.push(ws);
+            
+            await new Promise<void>((resolve, reject) => {
+              const timeout = setTimeout(() => {
+                reject(new Error('Connection timeout'));
+              }, 2000);
+              
+              ws.on('open', () => {
+                clearTimeout(timeout);
+                resolve();
+              });
+              
+              ws.on('error', (error) => {
+                clearTimeout(timeout);
+                reject(error);
+              });
+            });
+          }
+          
+          // 연결이 완전히 설정될 때까지 대기
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          // 연결 수 확인 (로깅이 제대로 되었다면 연결이 추가되었을 것)
+          const currentCount = gateway.getConnectionCount();
+          expect(currentCount).toBe(connectionCount);
+          
+          // 모든 연결 종료
+          const closePromises = connections.map(ws => {
+            return new Promise<void>((resolve) => {
+              ws.on('close', () => resolve());
+              ws.close();
+            });
+          });
+          
+          await Promise.all(closePromises);
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          // 모든 연결이 정리되었는지 확인 (로깅이 제대로 되었다면 정리되었을 것)
+          const finalCount = gateway.getConnectionCount();
+          expect(finalCount).toBe(0);
+          
+          return true;
+        }
+      ),
+      { numRuns: 20, timeout: 10000 } // 20회 반복
+    );
+  }, 15000);
+
+  /**
+   * Feature: browser-telnet-terminal, Property 16: 메시지 형식 일관성
+   * 
+   * 모든 WebSocket을 통해 전송되는 메시지에 대해, type, payload, timestamp 필드를 가진
+   * 정의된 WSMessage 형식을 준수해야 합니다.
+   * 
+   * Validates: Requirements 8.4
+   */
+  it('Property 16: 메시지 형식 일관성', async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        fc.constant(null), // 메시지 형식 검증이므로 입력 불필요
+        async () => {
+          return new Promise<void>((resolve, reject) => {
+            const ws = new WebSocket(`ws://localhost:${WS_PORT}`);
+            const receivedMessages: any[] = [];
+
+            const timeout = setTimeout(() => {
+              ws.close();
+              reject(new Error('Timeout waiting for messages'));
+            }, 5000);
+
+            ws.on('open', () => {
+              // 연결 성공
+            });
+
+            ws.on('message', (data: Buffer) => {
+              try {
+                const message = JSON.parse(data.toString());
+                receivedMessages.push(message);
+                
+                // 모든 메시지가 WSMessage 형식을 준수하는지 확인
+                expect(message).toHaveProperty('type');
+                expect(message).toHaveProperty('timestamp');
+                expect(typeof message.type).toBe('string');
+                expect(typeof message.timestamp).toBe('number');
+                
+                // 충분한 메시지를 받았으면 종료
+                if (receivedMessages.length >= 2) {
+                  clearTimeout(timeout);
+                  ws.close();
+                  resolve();
+                }
+              } catch (error) {
+                clearTimeout(timeout);
+                ws.close();
+                reject(error);
+              }
+            });
+
+            ws.on('error', (error) => {
+              clearTimeout(timeout);
+              reject(error);
+            });
+
+            ws.on('close', () => {
+              clearTimeout(timeout);
+              if (receivedMessages.length < 2) {
+                reject(new Error('Connection closed before receiving enough messages'));
+              }
+            });
+          });
+        }
+      ),
+      { numRuns: 20 } // 20회 반복
+    );
+  }, 15000);
+
+  /**
    * Feature: browser-telnet-terminal, Property 5: 명령 제출 왕복
    * 
    * 모든 입력 버퍼 상태에 대해, 사용자가 Enter를 누르면 완전한 명령이

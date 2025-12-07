@@ -11,7 +11,8 @@
     "build": "npm run build:client && npm run build:server",
     "preview": "bash -c './node_modules/.bin/vite preview'",
     "type-check": "node node_modules/typescript/lib/tsc.js --noEmit",
-    "test": "bash -c './node_modules/.bin/vitest --run'"
+    "test": "bash -c './node_modules/.bin/vitest --run'",
+    "test:server": "bash -c './node_modules/.bin/vitest --run --config vitest.config.server.ts'"
   },
   "keywords": [
     "telnet",
