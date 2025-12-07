@@ -8,6 +8,7 @@ export class TerminalManager {
   private fitAddon: FitAddon;
   private attachAddon?: AttachAddon;
   private socket?: WebSocket;
+  private onDisconnectCallback?: () => void;
 
   constructor(container: HTMLElement) {
     // xterm.js Terminal 인스턴스 초기화
@@ -51,6 +52,9 @@ export class TerminalManager {
     window.addEventListener('resize', () => {
       this.fitAddon.fit();
     });
+
+    // 특수 키 처리 설정
+    this.setupKeyHandlers();
   }
 
   getTerminal(): Terminal {
@@ -59,10 +63,12 @@ export class TerminalManager {
 
   connect(wsUrl: string): Promise<void> {
     return new Promise((resolve, reject) => {
+      console.log(`[TerminalManager] Attempting to connect to ${wsUrl}`);
+      
       this.socket = new WebSocket(wsUrl);
 
       this.socket.onopen = () => {
-        console.log('WebSocket connection established');
+        console.log('[TerminalManager] WebSocket connection established');
         
         // AttachAddon을 통한 터미널 연결
         if (this.socket) {
@@ -83,13 +89,18 @@ export class TerminalManager {
       };
 
       this.socket.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        reject(error);
+        console.error('[TerminalManager] WebSocket error:', error);
+        reject(new Error('WebSocket connection failed'));
       };
 
-      this.socket.onclose = () => {
-        console.log('WebSocket connection closed');
+      this.socket.onclose = (event) => {
+        console.log(`[TerminalManager] WebSocket connection closed: code=${event.code}, reason=${event.reason}`);
         this.terminal.writeln('\r\n\x1b[33m연결이 종료되었습니다\x1b[0m');
+        
+        // 비정상 종료인 경우 재연결 콜백 호출
+        if (event.code !== 1000 && this.onDisconnectCallback) {
+          this.onDisconnectCallback();
+        }
       };
     });
   }
@@ -111,5 +122,80 @@ export class TerminalManager {
 
   isConnected(): boolean {
     return this.socket !== undefined && this.socket.readyState === WebSocket.OPEN;
+  }
+
+  setOnDisconnect(callback: () => void): void {
+    this.onDisconnectCallback = callback;
+  }
+
+  private setupKeyHandlers(): void {
+    // 특수 키 처리
+    // AttachAddon이 대부분의 키 입력을 자동으로 처리하지만,
+    // 특수 키에 대한 명시적 처리를 추가합니다.
+    
+    this.terminal.attachCustomKeyEventHandler((event: KeyboardEvent) => {
+      // Ctrl+C: 인터럽트 신호 (요구사항 7.4)
+      if (event.ctrlKey && event.key === 'c') {
+        console.log('[TerminalManager] Ctrl+C detected, sending interrupt signal');
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+          // Ctrl+C는 ASCII 코드 3 (ETX - End of Text)
+          this.socket.send('\x03');
+        }
+        return false; // 기본 동작 방지
+      }
+
+      // Backspace: 입력 버퍼에서 마지막 문자 제거 (요구사항 7.2)
+      // AttachAddon이 자동으로 처리하지만, 로깅을 위해 감지
+      if (event.key === 'Backspace') {
+        console.log('[TerminalManager] Backspace key detected');
+        return true; // AttachAddon이 처리하도록 허용
+      }
+
+      // 화살표 키: 커서 이동 (요구사항 7.3)
+      // AttachAddon이 자동으로 처리하지만, 로깅을 위해 감지
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+        console.log(`[TerminalManager] Arrow key detected: ${event.key}`);
+        return true; // AttachAddon이 처리하도록 허용
+      }
+
+      // 브라우저 기본 동작 방지 (요구사항 7.5)
+      // F5: 새로고침
+      if (event.key === 'F5') {
+        event.preventDefault();
+        console.log('[TerminalManager] F5 key blocked');
+        return false;
+      }
+
+      // Ctrl+W: 탭 닫기
+      if (event.ctrlKey && event.key === 'w') {
+        event.preventDefault();
+        console.log('[TerminalManager] Ctrl+W key blocked');
+        return false;
+      }
+
+      // Ctrl+R: 새로고침
+      if (event.ctrlKey && event.key === 'r') {
+        event.preventDefault();
+        console.log('[TerminalManager] Ctrl+R key blocked');
+        return false;
+      }
+
+      // Ctrl+T: 새 탭
+      if (event.ctrlKey && event.key === 't') {
+        event.preventDefault();
+        console.log('[TerminalManager] Ctrl+T key blocked');
+        return false;
+      }
+
+      // Ctrl+N: 새 창
+      if (event.ctrlKey && event.key === 'n') {
+        event.preventDefault();
+        console.log('[TerminalManager] Ctrl+N key blocked');
+        return false;
+      }
+
+      // 기타 모든 키는 AttachAddon이 처리하도록 허용
+      return true;
+    });
   }
 }
