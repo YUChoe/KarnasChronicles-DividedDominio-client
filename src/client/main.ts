@@ -4,8 +4,14 @@ import '@xterm/xterm/css/xterm.css';
 // 클라이언트 버전
 const CLIENT_VERSION = '1.0.0';
 
-// WebSocket URL (개발 환경)
-const WS_URL = 'ws://localhost:3000';
+// WebSocket URL - 현재 호스트의 /ws 경로 사용 (프록시 통과)
+const getWebSocketUrl = (): string => {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const host = window.location.host;
+  return `${protocol}//${host}/ws`;
+};
+
+const WS_URL = getWebSocketUrl();
 
 class BrowserClient {
   private terminalManager?: TerminalManager;
@@ -72,11 +78,12 @@ class BrowserClient {
     }
 
     try {
-      console.log(`[BrowserClient] Connecting to ${WS_URL} (attempt ${this.reconnectAttempts + 1})`);
+      const wsUrl = getWebSocketUrl();
+      console.log(`[BrowserClient] Connecting to ${wsUrl} (attempt ${this.reconnectAttempts + 1})`);
       this.serverVersionElement.textContent = 'Server: 연결 중...';
       
       // WebSocket 연결
-      await this.terminalManager.connect(WS_URL);
+      await this.terminalManager.connect(wsUrl);
       
       console.log('[BrowserClient] Successfully connected to WebSocket Gateway');
       this.serverVersionElement.textContent = 'Server: 연결됨';
