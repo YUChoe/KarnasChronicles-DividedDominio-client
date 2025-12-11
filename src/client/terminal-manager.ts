@@ -10,6 +10,7 @@ export class TerminalManager {
   private socket?: WebSocket;
   private onDisconnectCallback?: () => void;
   private onVersionCallback?: (version: string) => void;
+  private echoEnabled: boolean = true; // 에코 상태 관리
 
   constructor(container: HTMLElement) {
     // xterm.js Terminal 인스턴스 초기화
@@ -109,6 +110,8 @@ export class TerminalManager {
             
             // 데이터 메시지 처리
             if (message.type === 'data' && message.payload) {
+              // 패스워드 프롬프트 감지하여 에코 모드 전환
+              this.detectPasswordPrompt(message.payload);
               this.terminal.write(message.payload);
               return;
             }
@@ -130,17 +133,28 @@ export class TerminalManager {
           }
           
           // 로컬 에코 (서버가 에코하지 않는 경우를 위해)
-          if (data === '\r') {
-            // Enter: 줄바꿈
-            this.terminal.write('\r\n');
-          } else if (data === '\x7F' || data === '\b') {
-            // Backspace (DEL 또는 BS): 커서를 뒤로 이동하고 문자 삭제
-            this.terminal.write('\b \b');
-          } else if (data.charCodeAt(0) < 32 && data !== '\n' && data !== '\t') {
-            // 제어 문자는 에코하지 않음 (Ctrl+C 등)
+          if (this.echoEnabled) {
+            if (data === '\r') {
+              // Enter: 줄바꿈
+              this.terminal.write('\r\n');
+            } else if (data === '\x7F' || data === '\b') {
+              // Backspace (DEL 또는 BS): 커서를 뒤로 이동하고 문자 삭제
+              this.terminal.write('\b \b');
+            } else if (data.charCodeAt(0) < 32 && data !== '\n' && data !== '\t') {
+              // 제어 문자는 에코하지 않음 (Ctrl+C 등)
+            } else {
+              // 일반 문자: 그대로 에코
+              this.terminal.write(data);
+            }
           } else {
-            // 일반 문자: 그대로 에코
-            this.terminal.write(data);
+            // 패스워드 모드: Enter만 줄바꿈 처리하고 에코 재활성화
+            if (data === '\r') {
+              this.terminal.write('\r\n');
+              // 패스워드 입력 완료 - 에코 재활성화
+              this.echoEnabled = true;
+              console.log('[TerminalManager] Password input completed - echo re-enabled');
+            }
+            // 다른 문자는 에코하지 않음 (패스워드 숨김)
           }
           
           // JSON 형식으로 전송
@@ -265,5 +279,43 @@ export class TerminalManager {
       // 기타 모든 키는 AttachAddon이 처리하도록 허용
       return true;
     });
+  }
+
+  private detectPasswordPrompt(data: string): void {
+    // 패스워드 프롬프트 패턴 감지
+    const passwordPatterns = [
+      /비밀번호[:\s]*$/i,
+      /password[:\s]*$/i,
+      /암호[:\s]*$/i,
+      /패스워드[:\s]*$/i
+    ];
+
+    // 일반 프롬프트 패턴 (에코 재활성화)
+    const normalPatterns = [
+      /사용자명[:\s]*$/i,
+      /username[:\s]*$/i,
+      /선택[>\s]*$/i,
+      /choice[>\s]*$/i,
+      /명령[>\s]*$/i,
+      /command[>\s]*$/i
+    ];
+
+    // 패스워드 프롬프트 감지
+    for (const pattern of passwordPatterns) {
+      if (pattern.test(data)) {
+        this.echoEnabled = false;
+        console.log('[TerminalManager] Password mode enabled - echo disabled');
+        return;
+      }
+    }
+
+    // 일반 프롬프트 감지 (에코 재활성화)
+    for (const pattern of normalPatterns) {
+      if (pattern.test(data)) {
+        this.echoEnabled = true;
+        console.log('[TerminalManager] Normal mode enabled - echo enabled');
+        return;
+      }
+    }
   }
 }
