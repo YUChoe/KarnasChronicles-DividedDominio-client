@@ -132,9 +132,10 @@ export class GatewayServer {
     });
 
     // WebSocket 메시지 처리
-    ws.on('message', async (data: Buffer) => {
+    ws.on('message', async (data: Buffer | string) => {
       try {
-        await this.handleMessage(clientId, data);
+        const buffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
+        await this.handleMessage(clientId, buffer);
       } catch (error) {
         logger.error('Message handling error', { 
           clientId, 
@@ -182,9 +183,10 @@ export class GatewayServer {
       return;
     }
 
+    // JSON 메시지 파싱
     let message: WSMessage;
     try {
-      message = JSON.parse(data.toString()) as WSMessage;
+      message = JSON.parse(data.toString('utf-8')) as WSMessage;
     } catch (error) {
       logger.error('Invalid message format', { clientId, error });
       this.sendError(connection.ws, 'Invalid message format');
@@ -233,30 +235,80 @@ export class GatewayServer {
     }
 
     if (connection.ws.readyState === WebSocket.OPEN) {
-      // 서버 데이터 정제 (XSS 방지)
-      const rawData = data.toString('utf-8');
-      const sanitizedData = sanitize(rawData);
+      // Telnet IAC (0xFF) 시퀀스 필터링
+      const filtered = this.filterTelnetCommands(data);
       
-      // 위험한 패턴이 제거되었는지 로깅
-      if (containsDangerousPatterns(rawData)) {
-        logger.warn('Dangerous patterns detected and removed', { 
-          clientId, 
-          originalLength: rawData.length,
-          sanitizedLength: sanitizedData.length
-        });
-      }
-
+      // Buffer를 UTF-8 문자열로 변환하여 JSON으로 전송
+      const text = filtered.toString('utf-8');
+      
       const message: WSMessage = {
         type: 'data',
-        payload: sanitizedData,
+        payload: text,
         timestamp: Date.now()
       };
       connection.ws.send(JSON.stringify(message));
       logger.debug('Data forwarded to WebSocket', { 
         clientId, 
-        length: sanitizedData.length 
+        length: text.length 
       });
     }
+  }
+
+  private filterTelnetCommands(data: Buffer): Buffer {
+    const result: number[] = [];
+    let i = 0;
+
+    while (i < data.length) {
+      const byte = data[i];
+
+      // IAC (0xFF) 시퀀스 처리
+      if (byte === 0xFF && i + 1 < data.length) {
+        const command = data[i + 1];
+
+        // IAC IAC (0xFF 0xFF) = 리터럴 0xFF
+        if (command === 0xFF) {
+          result.push(0xFF);
+          i += 2;
+          continue;
+        }
+
+        // IAC WILL/WONT/DO/DONT (3바이트 시퀀스)
+        if (command >= 0xFB && command <= 0xFE && i + 2 < data.length) {
+          logger.debug('Telnet negotiation filtered', {
+            command: command.toString(16),
+            option: data[i + 2].toString(16)
+          });
+          i += 3;
+          continue;
+        }
+
+        // IAC SB ... IAC SE (서브협상)
+        if (command === 0xFA) {
+          let j = i + 2;
+          while (j < data.length - 1) {
+            if (data[j] === 0xFF && data[j + 1] === 0xF0) {
+              i = j + 2;
+              break;
+            }
+            j++;
+          }
+          if (j >= data.length - 1) {
+            i = data.length;
+          }
+          continue;
+        }
+
+        // 기타 2바이트 IAC 명령
+        i += 2;
+        continue;
+      }
+
+      // 일반 데이터
+      result.push(byte);
+      i++;
+    }
+
+    return Buffer.from(result);
   }
 
   private sendMessage(ws: WebSocket, message: WSMessage): void {

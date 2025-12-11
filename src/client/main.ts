@@ -4,8 +4,14 @@ import '@xterm/xterm/css/xterm.css';
 // 클라이언트 버전
 const CLIENT_VERSION = '1.0.0';
 
-// WebSocket URL - 현재 호스트의 /ws 경로 사용 (프록시 통과)
+// WebSocket URL - 환경에 따라 다른 URL 사용
 const getWebSocketUrl = (): string => {
+  // 개발 환경: Vite dev server (5173) -> Gateway (3000)
+  if (window.location.port === '5173') {
+    return 'ws://localhost:3000';
+  }
+  
+  // 프로덕션 환경: 현재 호스트의 /ws 경로 사용 (프록시 통과)
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   const host = window.location.host;
   return `${protocol}//${host}/ws`;

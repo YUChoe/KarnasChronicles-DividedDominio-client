@@ -17,12 +17,12 @@ export class TerminalManager {
       cols: 120,
       rows: 60,
       fontFamily: 'Cascadia Mono, Consolas, Courier New, monospace',
-      fontSize: 14, // 폰트 크기 (기본 15에서 14로 변경)
-      fontWeight: 300, // Semi-Light
+      fontSize: 14,
+      fontWeight: 300,
       lineHeight: 1.15,
       cursorBlink: true,
-      scrollback: 0, // 스크롤 비활성화
-      convertEol: true, // \n을 \r\n으로 자동 변환하여 줄바꿈 처리
+      scrollback: 1000,
+      convertEol: true, // \r을 \r\n으로 변환하여 줄바꿈 처리
       theme: {
         background: '#000000',
         foreground: '#ffffff',
@@ -69,6 +69,7 @@ export class TerminalManager {
       console.log(`[TerminalManager] Attempting to connect to ${wsUrl}`);
       
       this.socket = new WebSocket(wsUrl);
+      this.socket.binaryType = 'arraybuffer'; // 바이너리 데이터를 ArrayBuffer로 받기
 
       this.socket.onopen = () => {
         console.log('[TerminalManager] WebSocket connection established');
@@ -86,7 +87,7 @@ export class TerminalManager {
       };
 
       this.socket.onmessage = (event) => {
-        // JSON 메시지인지 확인
+        // 문자열 메시지 처리
         if (typeof event.data === 'string') {
           try {
             const message = JSON.parse(event.data);
@@ -100,6 +101,12 @@ export class TerminalManager {
               return;
             }
             
+            // 연결 메시지 처리
+            if (message.type === 'connect') {
+              console.log('[TerminalManager] Connection confirmed');
+              return;
+            }
+            
             // 데이터 메시지 처리
             if (message.type === 'data' && message.payload) {
               this.terminal.write(message.payload);
@@ -107,17 +114,36 @@ export class TerminalManager {
             }
           } catch (error) {
             // JSON 파싱 실패 - 원시 텍스트로 처리
+            console.warn('[TerminalManager] Non-JSON string message received');
             this.terminal.write(event.data);
           }
-        } else {
-          // 바이너리 데이터
-          this.terminal.write(new Uint8Array(event.data));
         }
       };
 
       // 터미널 입력을 WebSocket으로 전송
       this.terminal.onData((data) => {
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+          // 방향키 필터링 (ANSI escape sequences)
+          if (data === '\x1b[A' || data === '\x1b[B' || data === '\x1b[C' || data === '\x1b[D') {
+            // 방향키는 무시
+            return;
+          }
+          
+          // 로컬 에코 (서버가 에코하지 않는 경우를 위해)
+          if (data === '\r') {
+            // Enter: 줄바꿈
+            this.terminal.write('\r\n');
+          } else if (data === '\x7F' || data === '\b') {
+            // Backspace (DEL 또는 BS): 커서를 뒤로 이동하고 문자 삭제
+            this.terminal.write('\b \b');
+          } else if (data.charCodeAt(0) < 32 && data !== '\n' && data !== '\t') {
+            // 제어 문자는 에코하지 않음 (Ctrl+C 등)
+          } else {
+            // 일반 문자: 그대로 에코
+            this.terminal.write(data);
+          }
+          
+          // JSON 형식으로 전송
           this.socket.send(JSON.stringify({
             type: 'data',
             payload: data,
