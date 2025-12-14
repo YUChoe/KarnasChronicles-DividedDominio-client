@@ -112,6 +112,61 @@
     .reconnect-button:active {
       background-color: #3d8b40;
     }
+
+    #input-container {
+      width: 100%;
+      max-width: 1200px;
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      padding: 0 10px;
+    }
+
+    #command-input {
+      flex: 1;
+      padding: 8px 12px;
+      background-color: #2a2a2a;
+      border: 1px solid #444444;
+      border-radius: 4px;
+      color: #ffffff;
+      font-family: 'Cascadia Mono', 'Consolas', 'Courier New', monospace;
+      font-size: 14px;
+      outline: none;
+    }
+
+    #command-input:focus {
+      border-color: #666666;
+      background-color: #333333;
+    }
+
+    #command-input::placeholder {
+      color: #888888;
+    }
+
+    #send-button {
+      padding: 8px 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    #send-button:hover {
+      background-color: #45a049;
+    }
+
+    #send-button:active {
+      background-color: #3d8b40;
+    }
+
+    #send-button:disabled {
+      background-color: #666666;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
@@ -125,11 +180,16 @@
 
   <div id="error-container" class="error-message">
     <div id="error-text"></div>
-    <button id="reconnect-btn" class="reconnect-button">재연결</button>
+    <button id="reconnect-btn" class="reconnect-button">Reconnect</button>
   </div>
 
   <div id="terminal-container">
     <div id="terminal"></div>
+  </div>
+
+  <div id="input-container">
+    <input type="text" id="command-input" placeholder="Enter command..." autocomplete="off" spellcheck="false">
+    <button id="send-button">Send</button>
   </div>
 
   <script type="module" src="/main.ts"></script>
