@@ -173,7 +173,7 @@ export class TerminalManager {
 
       this.socket.onclose = (event) => {
         console.log(`[TerminalManager] WebSocket connection closed: code=${event.code}, reason=${event.reason}`);
-        this.terminal.writeln('\r\n\x1b[33m연결이 종료되었습니다\x1b[0m');
+        this.terminal.writeln('\r\n\x1b[33m연결이 종료되었습니다 / Connection closed\x1b[0m');
         
         // 비정상 종료인 경우 재연결 콜백 호출
         if (event.code !== 1000 && this.onDisconnectCallback) {
