@@ -99,6 +99,9 @@ class BrowserClient {
       this.isReconnecting = false;
       this.hideError();
       
+      // 헤더 축소
+      this.compactHeader();
+      
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류';
       console.error('[BrowserClient] Connection failed:', errorMessage, error);
@@ -112,6 +115,7 @@ class BrowserClient {
         // 최대 재연결 시도 횟수 초과
         this.showError(`서버에 연결할 수 없습니다: ${errorMessage}. 최대 재연결 시도 횟수를 초과했습니다.`);
         this.isReconnecting = false;
+        this.expandHeader();
       }
     }
   }
@@ -131,6 +135,7 @@ class BrowserClient {
     console.log(`[BrowserClient] Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
     
     this.showError(`연결이 끊어졌습니다. ${delay / 1000}초 후 재연결 시도 중... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+    this.expandHeader();
 
     this.reconnectTimeout = window.setTimeout(() => {
       this.connect();
@@ -158,6 +163,20 @@ class BrowserClient {
     this.cancelReconnect();
     if (this.terminalManager) {
       this.terminalManager.dispose();
+    }
+  }
+
+  private compactHeader(): void {
+    const header = document.querySelector('.header');
+    if (header) {
+      header.classList.add('compact');
+    }
+  }
+
+  private expandHeader(): void {
+    const header = document.querySelector('.header');
+    if (header) {
+      header.classList.remove('compact');
     }
   }
 }

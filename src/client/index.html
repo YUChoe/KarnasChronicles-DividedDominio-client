@@ -26,6 +26,11 @@
     .header {
       text-align: center;
       margin-bottom: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .header.compact {
+      margin-bottom: 8px;
     }
 
     .header h1 {
@@ -33,6 +38,12 @@
       font-weight: 600;
       margin-bottom: 8px;
       color: #ffffff;
+      transition: all 0.3s ease;
+    }
+
+    .header.compact h1 {
+      font-size: 1rem;
+      margin-bottom: 4px;
     }
 
     .version-info {
@@ -41,6 +52,12 @@
       display: flex;
       gap: 16px;
       justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .header.compact .version-info {
+      font-size: 0.6rem;
+      gap: 8px;
     }
 
     .version-info span {

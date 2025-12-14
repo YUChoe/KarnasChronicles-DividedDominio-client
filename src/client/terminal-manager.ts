@@ -13,10 +13,13 @@ export class TerminalManager {
   private echoEnabled: boolean = true; // 에코 상태 관리
 
   constructor(container: HTMLElement) {
+    // 윈도우 크기에 따른 터미널 크기 계산
+    const { cols, rows } = this.calculateTerminalSize();
+    
     // xterm.js Terminal 인스턴스 초기화
     this.terminal = new Terminal({
-      cols: 120,
-      rows: 60,
+      cols,
+      rows,
       fontFamily: 'Cascadia Mono, Consolas, Courier New, monospace',
       fontSize: 14,
       fontWeight: 300,
@@ -54,7 +57,7 @@ export class TerminalManager {
 
     // 윈도우 리사이즈 이벤트 처리
     window.addEventListener('resize', () => {
-      this.fitAddon.fit();
+      this.handleResize();
     });
 
     // 특수 키 처리 설정
@@ -316,6 +319,60 @@ export class TerminalManager {
         console.log('[TerminalManager] Normal mode enabled - echo enabled');
         return;
       }
+    }
+  }
+
+  private calculateTerminalSize(): { cols: number; rows: number } {
+    // 기본값
+    const defaultCols = 120;
+    const defaultRows = 30;
+    
+    // 폰트 크기와 라인 높이
+    const fontSize = 14;
+    const lineHeight = 1.15;
+    const charWidth = fontSize * 0.6; // 대략적인 문자 너비
+    const charHeight = fontSize * lineHeight;
+    
+    // 윈도우 크기
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    
+    // 여백 계산 (헤더, 패딩 등)
+    const headerHeight = 120; // 헤더 영역 높이
+    const padding = 60; // 전체 패딩
+    
+    // 사용 가능한 영역
+    const availableWidth = Math.max(windowWidth - padding, 800);
+    const availableHeight = Math.max(windowHeight - headerHeight - padding, 400);
+    
+    // 터미널 크기 계산
+    const cols = Math.min(Math.floor(availableWidth / charWidth), defaultCols);
+    const rows = Math.floor(availableHeight / charHeight);
+    
+    return {
+      cols: Math.max(cols, 80), // 최소 80 컬럼
+      rows: Math.max(rows, 20)  // 최소 20 행
+    };
+  }
+
+  private handleResize(): void {
+    // 새로운 크기 계산
+    const { cols, rows } = this.calculateTerminalSize();
+    
+    // 터미널 크기 변경
+    this.terminal.resize(cols, rows);
+    
+    // FitAddon 적용
+    this.fitAddon.fit();
+    
+    // 서버에 크기 변경 알림
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+      this.socket.send(JSON.stringify({
+        type: 'resize',
+        cols,
+        rows,
+        timestamp: Date.now()
+      }));
     }
   }
 }
