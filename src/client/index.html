@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -64,6 +64,55 @@
       display: inline-block;
     }
 
+    .connection-controls {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+      align-items: center;
+    }
+
+    .connect-button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .connect-button:hover {
+      background-color: #45a049;
+    }
+
+    .connect-button:active {
+      background-color: #3d8b40;
+    }
+
+    .connect-button:disabled {
+      background-color: #666666;
+      cursor: not-allowed;
+    }
+
+    .connection-status {
+      font-size: 0.85rem;
+      color: #888888;
+    }
+
+    .connection-status.connected {
+      color: #4CAF50;
+    }
+
+    .connection-status.connecting {
+      color: #FFA500;
+    }
+
+    .connection-status.error {
+      color: #ff4444;
+    }
+
     #terminal-container {
       width: 100%;
       max-width: 1200px;
@@ -72,6 +121,8 @@
       border-radius: 4px;
       padding: 10px;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+      height: 400px;
+      overflow: hidden;
     }
 
     #terminal {
@@ -171,11 +222,16 @@
 </head>
 <body>
   <div class="header">
-    <h1>Karnas Chronicles: Divided Dominion</h1>
+    <h1 id="game-title">Karnas Chronicles: Divided Dominion</h1>
     <div class="version-info">
       <span id="client-version">Client: v1.0.0</span>
-      <span id="server-version">Server: 연결 중...</span>
+      <span id="server-version">Server: Not connected</span>
     </div>
+  </div>
+
+  <div class="connection-controls">
+    <button id="connect-btn" class="connect-button">Connect</button>
+    <span id="connection-status" class="connection-status">Ready to connect</span>
   </div>
 
   <div id="error-container" class="error-message">
