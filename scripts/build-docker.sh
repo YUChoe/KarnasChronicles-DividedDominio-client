@@ -6,7 +6,7 @@
 set -e
 
 VERSION=${1:-latest}
-IMAGE_NAME="browser-telnet-terminal"
+IMAGE_NAME="karnas-chronicles-terminal"
 
 echo "=========================================="
 echo "Docker 이미지 빌드 시작"

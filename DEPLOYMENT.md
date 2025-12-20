@@ -75,10 +75,10 @@ chmod +x scripts/build-docker.sh
 
 ```bash
 # 기본 빌드
-docker build -t browser-telnet-terminal:latest .
+docker build -t karnas-chronicles-terminal:latest .
 
 # 특정 버전으로 빌드
-docker build -t browser-telnet-terminal:v1.0.0 .
+docker build -t karnas-chronicles-terminal:v1.0.0 .
 
 # 빌드 캐시 없이 빌드
 docker build --no-cache -t browser-telnet-terminal:latest .

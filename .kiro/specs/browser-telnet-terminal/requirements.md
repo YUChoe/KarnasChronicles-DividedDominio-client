@@ -56,7 +56,7 @@
 
 #### 수락 기준
 
-1. THE Terminal Client는 화면 상단에 "Echoes of the Fallen Age"를 제목으로 표시해야 합니다
+1. THE Terminal Client는 화면 상단에 "Karnas Chronicles: Divided Dominion"을 제목으로 표시해야 합니다
 2. WHEN WebSocket Gateway가 서버 버전 정보를 수신하면 THEN Terminal Client는 이를 작은 텍스트로 표시해야 합니다
 3. THE Terminal Client는 클라이언트 버전 번호를 작은 텍스트로 표시해야 합니다
 4. THE Terminal Client는 터미널을 가리지 않도록 제목 근처에 버전 정보를 배치해야 합니다

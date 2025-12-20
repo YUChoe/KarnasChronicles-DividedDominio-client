@@ -6,7 +6,7 @@
 set -e
 
 ENVIRONMENT=${1:-production}
-IMAGE_NAME="browser-telnet-terminal"
+IMAGE_NAME="karnas-chronicles-terminal"
 CONTAINER_NAME="telnet-gateway"
 
 echo "=========================================="
@@ -33,16 +33,16 @@ fi
 # docker-compose 사용
 if [ -f "docker-compose.yml" ]; then
     echo "docker-compose로 배포 중..."
-    
+
     # 환경별 docker-compose 파일 확인
     COMPOSE_FILE="docker-compose.yml"
     if [ -f "docker-compose.${ENVIRONMENT}.yml" ]; then
         COMPOSE_FILE="docker-compose.${ENVIRONMENT}.yml"
     fi
-    
+
     docker-compose -f ${COMPOSE_FILE} down
     docker-compose -f ${COMPOSE_FILE} up -d
-    
+
     echo ""
     echo "컨테이너 상태:"
     docker-compose -f ${COMPOSE_FILE} ps
@@ -56,7 +56,7 @@ else
         -v $(pwd)/logs:/app/logs \
         --restart unless-stopped \
         ${IMAGE_NAME}:latest
-    
+
     echo ""
     echo "컨테이너 상태:"
     docker ps -f name=${CONTAINER_NAME}

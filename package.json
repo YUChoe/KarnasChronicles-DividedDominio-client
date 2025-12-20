@@ -1,7 +1,7 @@
 {
-  "name": "browser-telnet-terminal",
+  "name": "karnas-chronicles-terminal",
   "version": "1.0.0",
-  "description": "Browser-based Telnet Terminal Client for MUD servers",
+  "description": "Browser-based Telnet Terminal Client for Karnas Chronicles: Divided Dominion",
   "type": "module",
   "scripts": {
     "dev:client": "bash -c './node_modules/.bin/vite'",
