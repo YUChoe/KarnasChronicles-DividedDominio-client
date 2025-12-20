@@ -52,8 +52,12 @@ export class TerminalManager {
     // 터미널을 컨테이너에 마운트
     this.terminal.open(container);
 
-    // 터미널 크기 조정
-    this.fitAddon.fit();
+    // DOM이 완전히 렌더링된 후 크기 조정
+    setTimeout(() => {
+      this.fitAddon.fit();
+      const { cols, rows } = this.calculateTerminalSize();
+      this.terminal.resize(cols, rows);
+    }, 100);
 
     // 윈도우 리사이즈 이벤트 처리
     window.addEventListener('resize', () => {
@@ -335,10 +339,6 @@ export class TerminalManager {
   }
 
   private calculateTerminalSize(): { cols: number; rows: number } {
-    // 기본값 - 높이를 줄임
-    const defaultCols = 120;
-    const defaultRows = 25; // 30에서 25로 줄임
-
     // 폰트 크기와 라인 높이
     const fontSize = 14;
     const lineHeight = 1.15;
@@ -349,21 +349,32 @@ export class TerminalManager {
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
 
-    // 여백 계산 (헤더, 패딩 등) - 더 많은 여백 고려
-    const headerHeight = 160; // 헤더 + 연결 컨트롤 영역 높이
-    const padding = 80; // 전체 패딩
+    // 터미널 컨테이너의 실제 크기 계산
+    const terminalContainer = document.getElementById('terminal-container');
+    let availableWidth = windowWidth;
+    let availableHeight = windowHeight;
 
-    // 사용 가능한 영역
-    const availableWidth = Math.max(windowWidth - padding, 800);
-    const availableHeight = Math.max(windowHeight - headerHeight - padding, 350); // 최소 높이 줄임
+    if (terminalContainer) {
+      const containerRect = terminalContainer.getBoundingClientRect();
+      availableWidth = containerRect.width - 20; // 패딩 고려
+      availableHeight = containerRect.height - 20; // 패딩 고려
+    } else {
+      // 컨테이너가 없는 경우 추정값 사용
+      const headerHeight = 120; // 헤더 영역 높이
+      const inputHeight = 60;   // 입력 폼 높이
+      const padding = 40;       // 전체 패딩
+
+      availableHeight = windowHeight - headerHeight - inputHeight - padding;
+      availableWidth = windowWidth - padding;
+    }
 
     // 터미널 크기 계산
-    const cols = Math.min(Math.floor(availableWidth / charWidth), defaultCols);
-    const rows = Math.min(Math.floor(availableHeight / charHeight), defaultRows); // 최대 행 수 제한
+    const cols = Math.floor(availableWidth / charWidth);
+    const rows = Math.floor(availableHeight / charHeight);
 
     return {
-      cols: Math.max(cols, 80), // 최소 80 컬럼
-      rows: Math.max(rows, 15)  // 최소 15 행 (20에서 15로 줄임)
+      cols: Math.max(cols, 80),  // 최소 80 컬럼
+      rows: Math.max(rows, 10)   // 최소 10 행
     };
   }
 

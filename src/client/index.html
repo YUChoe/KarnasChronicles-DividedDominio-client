@@ -16,38 +16,40 @@
       font-family: 'Cascadia Mono', 'Consolas', 'Courier New', monospace;
       background-color: #1a1a1a;
       color: #ffffff;
+      height: 100vh;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-      padding: 20px;
     }
 
     .header {
       text-align: center;
-      margin-bottom: 20px;
+      padding: 15px 20px;
+      background-color: #1a1a1a;
+      border-bottom: 1px solid #333333;
+      flex-shrink: 0;
       transition: all 0.3s ease;
     }
 
     .header.compact {
-      margin-bottom: 8px;
+      padding: 8px 20px;
     }
 
     .header h1 {
-      font-size: 2rem;
+      font-size: 1.8rem;
       font-weight: 600;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       color: #ffffff;
       transition: all 0.3s ease;
     }
 
     .header.compact h1 {
-      font-size: 1rem;
+      font-size: 1.2rem;
       margin-bottom: 4px;
     }
 
     .version-info {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       color: #888888;
       display: flex;
       gap: 16px;
@@ -57,7 +59,7 @@
 
     .header.compact .version-info {
       font-size: 0.6rem;
-      gap: 8px;
+      gap: 12px;
     }
 
     .version-info span {
@@ -67,19 +69,20 @@
     .connection-controls {
       display: flex;
       gap: 12px;
-      margin-bottom: 16px;
+      margin-top: 8px;
       align-items: center;
+      justify-content: center;
     }
 
     .connect-button {
       background-color: #4CAF50;
       color: white;
       border: none;
-      padding: 10px 20px;
+      padding: 8px 16px;
       border-radius: 4px;
       cursor: pointer;
       font-family: inherit;
-      font-size: 0.9rem;
+      font-size: 0.8rem;
       font-weight: 500;
     }
 
@@ -97,7 +100,7 @@
     }
 
     .connection-status {
-      font-size: 0.85rem;
+      font-size: 0.75rem;
       color: #888888;
     }
 
@@ -113,31 +116,13 @@
       color: #ff4444;
     }
 
-    #terminal-container {
-      width: 100%;
-      max-width: 1200px;
-      background-color: #000000;
-      border: 1px solid #333333;
-      border-radius: 4px;
-      padding: 10px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-      height: 400px;
-      overflow: hidden;
-    }
-
-    #terminal {
-      width: 100%;
-      height: 100%;
-    }
-
     .error-message {
       display: none;
       background-color: #ff4444;
       color: #ffffff;
-      padding: 12px;
-      border-radius: 4px;
-      margin-bottom: 16px;
+      padding: 10px 20px;
       text-align: center;
+      flex-shrink: 0;
     }
 
     .error-message.visible {
@@ -148,12 +133,12 @@
       background-color: #4CAF50;
       color: white;
       border: none;
-      padding: 8px 16px;
-      margin-top: 8px;
+      padding: 6px 12px;
+      margin-top: 6px;
       border-radius: 4px;
       cursor: pointer;
       font-family: inherit;
-      font-size: 0.9rem;
+      font-size: 0.8rem;
     }
 
     .reconnect-button:hover {
@@ -164,20 +149,34 @@
       background-color: #3d8b40;
     }
 
-    #input-container {
+    #terminal-container {
+      flex: 1;
+      background-color: #000000;
+      border-top: 1px solid #333333;
+      overflow: hidden;
+      position: relative;
+    }
+
+    #terminal {
       width: 100%;
-      max-width: 1200px;
+      height: 100%;
+      padding: 10px;
+    }
+
+    #input-container {
+      background-color: #2a2a2a;
+      border-top: 1px solid #444444;
+      padding: 12px 20px;
       display: flex;
-      gap: 8px;
-      margin-top: 10px;
-      padding: 0 10px;
+      gap: 10px;
+      flex-shrink: 0;
     }
 
     #command-input {
       flex: 1;
-      padding: 8px 12px;
-      background-color: #2a2a2a;
-      border: 1px solid #444444;
+      padding: 10px 12px;
+      background-color: #333333;
+      border: 1px solid #555555;
       border-radius: 4px;
       color: #ffffff;
       font-family: 'Cascadia Mono', 'Consolas', 'Courier New', monospace;
@@ -186,8 +185,8 @@
     }
 
     #command-input:focus {
-      border-color: #666666;
-      background-color: #333333;
+      border-color: #777777;
+      background-color: #3a3a3a;
     }
 
     #command-input::placeholder {
@@ -195,7 +194,7 @@
     }
 
     #send-button {
-      padding: 8px 16px;
+      padding: 10px 20px;
       background-color: #4CAF50;
       color: white;
       border: none;
@@ -203,6 +202,7 @@
       cursor: pointer;
       font-family: inherit;
       font-size: 14px;
+      font-weight: 500;
       white-space: nowrap;
     }
 
@@ -218,6 +218,36 @@
       background-color: #666666;
       cursor: not-allowed;
     }
+
+    /* 반응형 디자인 */
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 1.4rem;
+      }
+
+      .header.compact h1 {
+        font-size: 1rem;
+      }
+
+      .version-info {
+        font-size: 0.6rem;
+        gap: 8px;
+      }
+
+      .connection-controls {
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      #input-container {
+        padding: 10px 15px;
+        gap: 8px;
+      }
+
+      #command-input {
+        font-size: 16px; /* iOS에서 줌 방지 */
+      }
+    }
   </style>
 </head>
 <body>
@@ -227,11 +257,10 @@
       <span id="client-version">Client: v1.0.0</span>
       <span id="server-version">Server: Not connected</span>
     </div>
-  </div>
-
-  <div class="connection-controls">
-    <button id="connect-btn" class="connect-button">Connect</button>
-    <span id="connection-status" class="connection-status">Ready to connect</span>
+    <div class="connection-controls">
+      <button id="connect-btn" class="connect-button">Connect</button>
+      <span id="connection-status" class="connection-status">Ready to connect</span>
+    </div>
   </div>
 
   <div id="error-container" class="error-message">
