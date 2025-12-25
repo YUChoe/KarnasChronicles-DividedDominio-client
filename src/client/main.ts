@@ -32,10 +32,6 @@ class BrowserClient {
   private serverVersionElement: HTMLElement;
   private commandInput: HTMLInputElement;
   private sendButton: HTMLButtonElement;
-  private reconnectAttempts: number = 0;
-  private maxReconnectAttempts: number = 5;
-  private reconnectTimeout?: number;
-  private isReconnecting: boolean = false;
   private isConnected: boolean = false;
 
   constructor() {
@@ -73,15 +69,13 @@ class BrowserClient {
     // TerminalManager 초기화
     this.terminalManager = new TerminalManager(terminalContainer);
 
-    // 연결 끊김 콜백 설정
+    // 연결 끊김 콜백 설정 - 자동 재연결 제거
     this.terminalManager.setOnDisconnect(() => {
-      console.log('[BrowserClient] Connection lost, attempting reconnect');
+      console.log('[BrowserClient] Connection lost');
       this.isConnected = false;
+      this.updateConnectionStatus('error', messages.connectionLost);
+      this.expandHeader();
       this.updateConnectionUI();
-
-      if (this.reconnectAttempts < this.maxReconnectAttempts) {
-        this.attemptReconnect();
-      }
     });
 
     // 서버 버전 수신 콜백 설정
@@ -100,7 +94,6 @@ class BrowserClient {
         this.disconnect();
       } else {
         this.hideError();
-        this.reconnectAttempts = 0;
         this.connect();
       }
     });
@@ -108,7 +101,6 @@ class BrowserClient {
     // 재연결 버튼 클릭
     this.reconnectBtn.addEventListener('click', () => {
       this.hideError();
-      this.reconnectAttempts = 0;
       this.connect();
     });
   }
@@ -121,7 +113,7 @@ class BrowserClient {
 
     try {
       const wsUrl = getWebSocketUrl();
-      console.log(`[BrowserClient] Connecting to ${wsUrl} (attempt ${this.reconnectAttempts + 1})`);
+      console.log(`[BrowserClient] Connecting to ${wsUrl}`);
 
       // UI 상태 업데이트
       this.updateConnectionStatus('connecting', messages.connecting);
@@ -132,8 +124,6 @@ class BrowserClient {
 
       console.log('[BrowserClient] Successfully connected to WebSocket Gateway');
       this.isConnected = true;
-      this.reconnectAttempts = 0;
-      this.isReconnecting = false;
 
       // UI 상태 업데이트
       this.updateConnectionStatus('connected', messages.connected);
@@ -147,17 +137,9 @@ class BrowserClient {
 
       this.isConnected = false;
       this.updateConnectionStatus('error', messages.connectionFailed);
-
-      // 자동 재연결 시도
-      if (this.reconnectAttempts < this.maxReconnectAttempts) {
-        this.attemptReconnect();
-      } else {
-        // 최대 재연결 시도 횟수 초과
-        this.showError(`${messages.cannotConnect}: ${errorMessage}. ${messages.maxRetriesExceeded}`);
-        this.isReconnecting = false;
-        this.expandHeader();
-        this.updateConnectionUI();
-      }
+      this.showError(`${messages.cannotConnect}: ${errorMessage}`);
+      this.expandHeader();
+      this.updateConnectionUI();
     }
   }
 
@@ -167,43 +149,12 @@ class BrowserClient {
     }
 
     this.isConnected = false;
-    this.cancelReconnect();
     this.updateConnectionStatus('', messages.readyToConnect);
     this.serverVersionElement.textContent = `Server: ${messages.serverNotConnected}`;
     this.expandHeader();
     this.updateConnectionUI();
 
     console.log('[BrowserClient] Disconnected');
-  }
-
-  private attemptReconnect(): void {
-    if (this.isReconnecting) {
-      return; // 이미 재연결 중이면 중복 시도 방지
-    }
-
-    this.isReconnecting = true;
-    this.reconnectAttempts++;
-
-    // 지수 백오프 계산 (1s, 2s, 4s, 8s, 최대 30s)
-    const baseDelay = 1000;
-    const delay = Math.min(baseDelay * Math.pow(2, this.reconnectAttempts - 1), 30000);
-
-    console.log(`[BrowserClient] Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
-
-    this.showError(`${messages.connectionLost}. ${messages.reconnecting} ${delay / 1000}s (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
-    this.expandHeader();
-
-    this.reconnectTimeout = window.setTimeout(() => {
-      this.connect();
-    }, delay);
-  }
-
-  private cancelReconnect(): void {
-    if (this.reconnectTimeout) {
-      clearTimeout(this.reconnectTimeout);
-      this.reconnectTimeout = undefined;
-    }
-    this.isReconnecting = false;
   }
 
   private updateConnectionStatus(type: string, message: string): void {
@@ -213,7 +164,7 @@ class BrowserClient {
 
   private updateConnectionUI(): void {
     // 연결 버튼 상태 업데이트
-    this.connectBtn.disabled = this.isReconnecting;
+    this.connectBtn.disabled = false;
     this.connectBtn.textContent = this.isConnected ? messages.disconnectButton : messages.connectButton;
 
     // 입력 폼 상태 업데이트
@@ -230,7 +181,6 @@ class BrowserClient {
   }
 
   dispose(): void {
-    this.cancelReconnect();
     if (this.terminalManager) {
       this.terminalManager.dispose();
     }
