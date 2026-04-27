@@ -110,6 +110,10 @@ const modal = (() => {
     document.getElementById('modal-overlay').hidden = true;
     document.getElementById('modal-body').innerHTML = '';
     document.getElementById('modal-footer').innerHTML = '';
+    // 대시보드에서 모달을 닫으면 자동 새로고침 타이머 재시작
+    if (getCurrentSection() === 'dashboard' && !_dashboardRefreshInterval) {
+      startDashboardTimer();
+    }
   }
 
   return { open, close };
@@ -121,9 +125,13 @@ const modal = (() => {
 const confirm = (() => {
   let _onConfirm = null;
 
-  function open(message, onConfirm) {
+  function open(message, onConfirm, options) {
     _onConfirm = onConfirm;
+    var opts = options || {};
+    document.getElementById('confirm-title').textContent = opts.title || 'Confirm Deletion';
     document.getElementById('confirm-message').textContent = message;
+    document.getElementById('confirm-ok').textContent = opts.okText || 'Delete';
+    document.getElementById('confirm-ok').className = opts.okClass || 'btn btn-danger';
     document.getElementById('confirm-overlay').hidden = false;
   }
 
@@ -378,7 +386,7 @@ function buildMapGrid(rooms) {
         html += '<div class="map-tooltip"></div>';
         html += '</td>';
       } else {
-        html += '<td class="empty"></td>';
+        html += '<td class="empty" data-x="' + x + '" data-y="' + y + '"></td>';
       }
     }
     html += '</tr>';
@@ -411,13 +419,9 @@ function buildIndicators(room) {
   return '<div class="map-indicators">' + indicators.join('') + '</div>';
 }
 
-/** 방 상세 패널 HTML (빈 상태) */
+/** 방 상세 패널 HTML (빈 상태) — 모달로 대체되어 더 이상 사용하지 않음 */
 function buildRoomDetailsPanel() {
-  return '<div id="room-details-panel" class="room-details-panel">'
-    + '<button class="close-btn" id="room-details-close">&times;</button>'
-    + '<h3 id="room-details-title"></h3>'
-    + '<div id="room-details-body"></div>'
-    + '</div>';
+  return '';
 }
 
 /** 출구 방향 계산 */
@@ -462,13 +466,10 @@ function buildTooltipText(room, roomMap) {
   return text;
 }
 
-/** 방 상세 패널 내용 렌더링 */
+/** 방 상세 정보를 모달로 표시 */
 function showRoomDetail(room) {
-  const panel = document.getElementById('room-details-panel');
-  const title = document.getElementById('room-details-title');
-  const body = document.getElementById('room-details-body');
-
-  title.textContent = 'Room (' + room.x + ', ' + room.y + ')';
+  // 모달이 열려있는 동안 자동 새로고침 일시 정지
+  clearDashboardTimer();
 
   let html = '';
 
@@ -522,8 +523,27 @@ function showRoomDetail(room) {
     html += '</div></div>';
   }
 
-  body.innerHTML = html;
-  panel.style.display = 'block';
+  var footerHtml = '<button class="btn btn-primary" id="map-edit-room-btn" data-id="' + escapeHtml(room.id) + '">Edit Room</button>'
+    + ' <button class="btn btn-secondary" id="map-room-close-btn">Close</button>';
+
+  modal.open('Room (' + room.x + ', ' + room.y + ')', html, footerHtml);
+
+  document.getElementById('map-room-close-btn').addEventListener('click', function () {
+    modal.close();
+    // 모달 닫힌 후 자동 새로고침 재시작
+    startDashboardTimer();
+  });
+
+  document.getElementById('map-edit-room-btn').addEventListener('click', function () {
+    var roomId = this.getAttribute('data-id');
+    modal.close();
+    // Rooms 섹션으로 이동 후 해당 룸 수정 모달 표시
+    window.location.hash = '#rooms';
+    // 약간의 딜레이 후 수정 모달 표시 (섹션 렌더링 완료 대기)
+    setTimeout(function () {
+      showEditRoomModal(roomId);
+    }, 300);
+  });
 }
 
 /** 맵 이벤트 바인딩 (툴팁, 클릭, 상세 패널 닫기) */
@@ -565,13 +585,29 @@ function bindMapEvents(rooms) {
     });
   });
 
-  // 상세 패널 닫기 버튼
-  const closeBtn = document.getElementById('room-details-close');
-  if (closeBtn) {
-    closeBtn.addEventListener('click', function () {
-      document.getElementById('room-details-panel').style.display = 'none';
+  // 빈 셀 클릭 → 방 생성 확인
+  document.querySelectorAll('.map-container td.empty').forEach(function (td) {
+    const x = parseInt(td.getAttribute('data-x'), 10);
+    const y = parseInt(td.getAttribute('data-y'), 10);
+    if (isNaN(x) || isNaN(y)) return;
+
+    td.addEventListener('click', function () {
+      clearDashboardTimer();
+      confirm.open('Create a new room at (' + x + ', ' + y + ')?', function () {
+        // Rooms 섹션으로 이동 후 생성 모달 표시 (좌표 자동 채움)
+        window.location.hash = '#rooms';
+        setTimeout(function () {
+          showCreateRoomModalWithCoords(x, y);
+        }, 300);
+      }, { title: 'Create Room', okText: 'Create', okClass: 'btn btn-primary' });
+      // confirm 닫힐 때 타이머 재시작을 위해 cancel 이벤트 오버라이드
+      var origCancel = document.getElementById('confirm-cancel');
+      var origClose = document.getElementById('confirm-close');
+      var restartTimer = function () { startDashboardTimer(); };
+      origCancel.addEventListener('click', restartTimer, { once: true });
+      origClose.addEventListener('click', restartTimer, { once: true });
     });
-  }
+  });
 }
 
 /** 60초 자동 새로고침 타이머 시작 */
@@ -587,6 +623,16 @@ function startDashboardTimer() {
 
     if (_dashboardCountdown <= 0) {
       clearDashboardTimer();
+      // 모달이 열려있으면 새로고침 건너뛰고 타이머만 리셋
+      var modalOpen = !document.getElementById('modal-overlay').hidden;
+      var confirmOpen = !document.getElementById('confirm-overlay').hidden;
+      if (modalOpen || confirmOpen) {
+        _dashboardCountdown = 60;
+        var el2 = document.getElementById('dashboard-countdown');
+        if (el2) el2.textContent = _dashboardCountdown;
+        startDashboardTimer();
+        return;
+      }
       // 현재 섹션이 대시보드인 경우에만 새로고침
       if (getCurrentSection() === 'dashboard') {
         renderDashboard();
@@ -1047,6 +1093,16 @@ function bindRoomsEvents() {
       renderRooms();
     });
   }
+}
+
+/** 좌표가 미리 채워진 방 생성 모달 표시 (대시보드 맵에서 빈 셀 클릭 시) */
+function showCreateRoomModalWithCoords(x, y) {
+  showCreateRoomModal();
+  // 모달이 열린 후 좌표 자동 채움
+  var xInput = document.getElementById('rf-x');
+  var yInput = document.getElementById('rf-y');
+  if (xInput) xInput.value = x;
+  if (yInput) yInput.value = y;
 }
 
 /** 방 생성 모달 표시 */
