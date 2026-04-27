@@ -99,8 +99,13 @@ function escapeHtml(str) {
  * 모달 시스템
  * ================================================================ */
 const modal = (() => {
-  function open(title, bodyHtml, footerHtml) {
-    document.getElementById('modal-title').textContent = title;
+  function open(title, bodyHtml, footerHtml, options) {
+    var opts = options || {};
+    if (opts.titleHtml) {
+      document.getElementById('modal-title').innerHTML = title;
+    } else {
+      document.getElementById('modal-title').textContent = title;
+    }
     document.getElementById('modal-body').innerHTML = bodyHtml;
     document.getElementById('modal-footer').innerHTML = footerHtml || '';
     document.getElementById('modal-overlay').hidden = false;
@@ -282,7 +287,7 @@ let _dashboardCountdown = 60;
 const FACTION_COLOURS = {
   ash_knights: '#4a9eff',
   goblins: '#ff4444',
-  animals: '#ff9800',
+  animals: '#ff4444',
   townspeople: '#9c27b0',
   undead: '#607d8b',
 };
@@ -388,7 +393,7 @@ function buildMapGrid(rooms) {
         html += '<div class="map-tooltip"></div>';
         html += '</td>';
       } else {
-        html += '<td class="empty" data-x="' + x + '" data-y="' + y + '"></td>';
+        html += '<td class="empty" data-x="' + x + '" data-y="' + y + '"><div class="map-tooltip"></div></td>';
       }
     }
     html += '</tr>';
@@ -402,19 +407,26 @@ function buildMapGrid(rooms) {
 function buildIndicators(room) {
   const indicators = [];
 
-  // 플레이어 인디케이터 (초록색)
+  // 플레이어 인디케이터 (초록색) — 1개만
   if (room.players && room.players.length > 0) {
-    for (let i = 0; i < room.players.length; i++) {
-      indicators.push('<div class="map-indicator map-indicator-player"></div>');
+    indicators.push('<div class="map-indicator map-indicator-player"></div>');
+  }
+
+  // 몬스터 인디케이터 (팩션별 색상) — 팩션당 1개만
+  if (room.creatures && room.creatures.length > 0) {
+    const seenFactions = new Set();
+    for (const c of room.creatures) {
+      const fid = c.faction_id || c.faction || '_default';
+      if (seenFactions.has(fid)) continue;
+      seenFactions.add(fid);
+      const colour = getFactionColour(fid);
+      indicators.push('<div class="map-indicator" style="background-color:' + colour + ';"></div>');
     }
   }
 
-  // 몬스터 인디케이터 (팩션별 색상)
-  if (room.creatures && room.creatures.length > 0) {
-    for (const c of room.creatures) {
-      const colour = getFactionColour(c.faction_id || c.faction);
-      indicators.push('<div class="map-indicator" style="background-color:' + colour + ';"></div>');
-    }
+  // 아이템 인디케이터 (노란색) — 1개만
+  if (room.items && room.items.length > 0) {
+    indicators.push('<div class="map-indicator" style="background-color:#ffeb3b;"></div>');
   }
 
   if (!indicators.length) return '';
@@ -446,14 +458,29 @@ function computeExits(room, roomMap) {
 }
 
 /** 출구 방향별 테두리 색상 계산 (출구: 밝은색, 벽/blocked: 어두운색) */
-function computeExitBorders(room, roomMap) {
+/** 반대 방향 매핑 */
+var OPPOSITE_DIR = { north: 'south', south: 'north', east: 'west', west: 'east' };
+
+/** 특정 방향이 blocked인지 확인 (자기 방 + 인접 방의 반대 방향 모두 확인) */
+function isExitBlocked(room, dir, roomMap) {
   var blocked = Array.isArray(room.blocked_exits) ? room.blocked_exits : [];
+  if (blocked.includes(dir)) return true;
+  // 인접 방의 반대 방향 blocked_exits도 확인
+  var dirMap = { north: {dx:0,dy:1}, south: {dx:0,dy:-1}, east: {dx:1,dy:0}, west: {dx:-1,dy:0} };
+  var d = dirMap[dir];
+  if (!d) return false;
+  var nKey = (room.x + d.dx) + ',' + (room.y + d.dy);
+  var neighbour = roomMap[nKey];
+  if (!neighbour) return false;
+  var nBlocked = Array.isArray(neighbour.blocked_exits) ? neighbour.blocked_exits : [];
+  return nBlocked.includes(OPPOSITE_DIR[dir]);
+}
+
+function computeExitBorders(room, roomMap) {
   var openColour = '#4a9eff';
   var wallColour = '#555';
   var blockedColour = '#e53935';
 
-  // 각 방향: 인접 방 존재 + blocked 아님 → 출구(파란), blocked → 빨간, 그 외 → 벽(어두운)
-  // CSS border 순서: top(north) right(east) bottom(south) left(west)
   var dirs = [
     { dir: 'north', dx: 0, dy: 1 },
     { dir: 'east', dx: 1, dy: 0 },
@@ -464,9 +491,9 @@ function computeExitBorders(room, roomMap) {
   var colours = dirs.map(function (d) {
     var key = (room.x + d.dx) + ',' + (room.y + d.dy);
     var hasNeighbour = !!roomMap[key];
-    var isBlocked = blocked.includes(d.dir);
-    if (hasNeighbour && !isBlocked) return openColour;
-    if (hasNeighbour && isBlocked) return blockedColour;
+    var blocked = isExitBlocked(room, d.dir, roomMap);
+    if (hasNeighbour && !blocked) return openColour;
+    if (hasNeighbour && blocked) return blockedColour;
     return wallColour;
   });
 
@@ -478,25 +505,7 @@ function computeExitBorders(room, roomMap) {
 
 /** 툴팁 텍스트 생성 */
 function buildTooltipText(room, roomMap) {
-  const exits = computeExits(room, roomMap);
-  let text = exits + '(' + room.x + ',' + room.y + ')';
-
-  // 몬스터/플레이어 요약
-  if (room.players && room.players.length > 0) {
-    text += ' 🟢Players:' + room.players.length;
-  }
-  if (room.creatures && room.creatures.length > 0) {
-    // 팩션별 그룹핑
-    const factions = {};
-    for (const c of room.creatures) {
-      const fid = c.faction_id || c.faction || 'unknown';
-      factions[fid] = (factions[fid] || 0) + 1;
-    }
-    for (const [fid, count] of Object.entries(factions)) {
-      text += ' 🔴' + fid + ':' + count;
-    }
-  }
-  return text;
+  return '(' + room.x + ',' + room.y + ')';
 }
 
 /** 방 상세 정보를 모달로 표시 */
@@ -506,6 +515,26 @@ function showRoomDetail(room) {
 
   let html = '';
 
+  // 타이틀용 네비게이션 버튼 생성 (출구: 회색 버튼, blocked: 빨간 버튼)
+  var blocked = Array.isArray(room.blocked_exits) ? room.blocked_exits : [];
+  var exitNavChecks = [
+    { key: 'north', dx: 0, dy: 1, symbol: '↑' },
+    { key: 'south', dx: 0, dy: -1, symbol: '↓' },
+    { key: 'east', dx: 1, dy: 0, symbol: '→' },
+    { key: 'west', dx: -1, dy: 0, symbol: '←' },
+  ];
+  var titleNavHtml = '';
+  for (var ec of exitNavChecks) {
+    var nKey = (room.x + ec.dx) + ',' + (room.y + ec.dy);
+    var hasNeighbour = !!_dashboardRoomMap[nKey];
+    var exitBlocked = isExitBlocked(room, ec.key, _dashboardRoomMap);
+    if (hasNeighbour && !exitBlocked) {
+      titleNavHtml += ' <button class="btn btn-sm btn-secondary room-nav-btn" data-nx="' + (room.x + ec.dx) + '" data-ny="' + (room.y + ec.dy) + '" style="font-size:14px;padding:1px 6px;cursor:pointer;min-width:24px;">' + ec.symbol + '</button>';
+    } else if (hasNeighbour && exitBlocked) {
+      titleNavHtml += ' <button class="btn btn-sm btn-danger room-nav-btn" data-nx="' + (room.x + ec.dx) + '" data-ny="' + (room.y + ec.dy) + '" style="font-size:14px;padding:1px 6px;cursor:pointer;min-width:24px;" title="blocked">' + ec.symbol + '</button>';
+    }
+  }
+  var titleHtml = escapeHtml('Room (' + room.x + ', ' + room.y + ')') + titleNavHtml;
   // 한국어/영어 설명
   html += '<div class="description">';
   html += '<div>한국어: ' + escapeHtml(room.description_ko || '설명 없음') + '</div>';
@@ -559,7 +588,19 @@ function showRoomDetail(room) {
   var footerHtml = '<button class="btn btn-primary" id="map-edit-room-btn" data-id="' + escapeHtml(room.id) + '">Edit Room</button>'
     + ' <button class="btn btn-secondary" id="map-room-close-btn">Close</button>';
 
-  modal.open('Room (' + room.x + ', ' + room.y + ')', html, footerHtml);
+  modal.open(titleHtml, html, footerHtml, { titleHtml: true });
+
+  // 네비게이션 화살표 클릭 이벤트
+  document.querySelectorAll('.room-nav-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var nx = parseInt(btn.getAttribute('data-nx'), 10);
+      var ny = parseInt(btn.getAttribute('data-ny'), 10);
+      var targetRoom = _dashboardRoomMap[nx + ',' + ny];
+      if (targetRoom) {
+        showRoomDetail(targetRoom);
+      }
+    });
+  });
 
   document.getElementById('map-room-close-btn').addEventListener('click', function () {
     modal.close();
@@ -579,6 +620,9 @@ function showRoomDetail(room) {
   });
 }
 
+// 대시보드 맵 전체 방 좌표 맵 (출구 계산용)
+let _dashboardRoomMap = {};
+
 /** 맵 이벤트 바인딩 (툴팁, 클릭, 상세 패널 닫기) */
 function bindMapEvents(rooms) {
   // roomMap 구축
@@ -586,6 +630,7 @@ function bindMapEvents(rooms) {
   for (const room of rooms) {
     roomMap[room.x + ',' + room.y] = room;
   }
+  _dashboardRoomMap = roomMap;
 
   // 방 셀 이벤트
   document.querySelectorAll('.map-container td.room').forEach(function (td) {
@@ -618,11 +663,29 @@ function bindMapEvents(rooms) {
     });
   });
 
-  // 빈 셀 클릭 → 방 생성 확인
+  // 빈 셀 클릭 → 방 생성 확인 + 툴팁
   document.querySelectorAll('.map-container td.empty').forEach(function (td) {
     const x = parseInt(td.getAttribute('data-x'), 10);
     const y = parseInt(td.getAttribute('data-y'), 10);
     if (isNaN(x) || isNaN(y)) return;
+
+    // 빈 셀 툴팁
+    var tooltip = td.querySelector('.map-tooltip');
+    if (tooltip) {
+      tooltip.textContent = '(' + x + ',' + y + ')';
+      td.addEventListener('mouseenter', function (e) {
+        tooltip.style.display = 'block';
+        tooltip.style.left = (e.clientX + 15) + 'px';
+        tooltip.style.top = (e.clientY - 10) + 'px';
+      });
+      td.addEventListener('mousemove', function (e) {
+        tooltip.style.left = (e.clientX + 15) + 'px';
+        tooltip.style.top = (e.clientY - 10) + 'px';
+      });
+      td.addEventListener('mouseleave', function () {
+        tooltip.style.display = 'none';
+      });
+    }
 
     td.addEventListener('click', function () {
       clearDashboardTimer();
@@ -990,8 +1053,10 @@ const _roomsLimit = 20;
 
 // 전체 방 좌표 Set (출구 화살표 계산용)
 let _roomsCoordsSet = new Set();
+// 전체 방 맵 데이터 (양방향 blocked exit 계산용)
+let _roomsFullMap = {};
 
-/** 방의 출구 화살표 계산 (인접 방이 존재하고 blocked_exits에 없는 방향) */
+/** 방의 출구 화살표 계산 (양방향 blocked_exits 확인) */
 function computeRoomExits(x, y, blockedExits) {
   const dirs = [];
   const checks = [
@@ -1002,9 +1067,16 @@ function computeRoomExits(x, y, blockedExits) {
   ];
   for (const c of checks) {
     const key = (x + c.dx) + ',' + (y + c.dy);
-    if (_roomsCoordsSet.has(key) && !blockedExits.includes(c.dir)) {
-      dirs.push(c.symbol);
+    if (!_roomsCoordsSet.has(key)) continue;
+    // 자기 방의 blocked
+    if (blockedExits.includes(c.dir)) continue;
+    // 인접 방의 반대 방향 blocked
+    var neighbour = _roomsFullMap[key];
+    if (neighbour) {
+      var nBlocked = Array.isArray(neighbour.blocked_exits) ? neighbour.blocked_exits : [];
+      if (nBlocked.includes(OPPOSITE_DIR[c.dir])) continue;
     }
+    dirs.push(c.symbol);
   }
   return dirs.join('') || '-';
 }
@@ -1025,9 +1097,11 @@ async function renderRooms() {
 
     // 전체 방 좌표 Set 구축 (출구 화살표 계산용)
     _roomsCoordsSet = new Set();
+    _roomsFullMap = {};
     if (mapData.rooms) {
       for (const mr of mapData.rooms) {
         _roomsCoordsSet.add(mr.x + ',' + mr.y);
+        _roomsFullMap[mr.x + ',' + mr.y] = mr;
       }
     }
 
