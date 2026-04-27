@@ -826,7 +826,8 @@ async function renderPlayers() {
           + '<td class="actions-cell">'
           + '<button class="btn btn-sm btn-secondary btn-edit-player" data-id="' + escapeHtml(p.id) + '">Edit</button> '
           + '<button class="btn btn-sm btn-danger btn-delete-player" data-id="' + escapeHtml(p.id) + '" data-name="' + escapeHtml(p.username) + '">Delete</button> '
-          + '<button class="btn btn-sm btn-secondary btn-inventory-player" data-id="' + escapeHtml(p.id) + '" data-name="' + escapeHtml(p.username) + '">Inventory</button>'
+          + '<button class="btn btn-sm btn-secondary btn-inventory-player" data-id="' + escapeHtml(p.id) + '" data-name="' + escapeHtml(p.username) + '">Inventory</button> '
+          + '<button class="btn btn-sm btn-secondary btn-stats-player" data-id="' + escapeHtml(p.id) + '" data-name="' + escapeHtml(p.username) + '">Stats</button>'
           + '</td>'
           + '</tr>';
       }
@@ -895,6 +896,13 @@ function bindPlayersEvents() {
   document.querySelectorAll('.btn-inventory-player').forEach(function (btn) {
     btn.addEventListener('click', function () {
       showPlayerInventoryModal(btn.getAttribute('data-id'), btn.getAttribute('data-name'));
+    });
+  });
+
+  // Stats 버튼들
+  document.querySelectorAll('.btn-stats-player').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      showPlayerStatsModal(btn.getAttribute('data-id'), btn.getAttribute('data-name'));
     });
   });
 
@@ -1047,38 +1055,136 @@ async function showPlayerInventoryModal(playerId, playerName) {
   try {
     const result = await api.get('/players/' + playerId + '/inventory');
     const items = result.data || result || [];
+    const allItems = Array.isArray(items) ? items : [];
 
-    let bodyHtml = '';
-    if (!Array.isArray(items) || items.length === 0) {
-      bodyHtml = '<p class="text-muted">No items in inventory.</p>';
-    } else {
-      bodyHtml = '<table class="data-table">';
-      bodyHtml += '<thead><tr>'
-        + '<th>Name (EN)</th>'
-        + '<th>Name (KO)</th>'
-        + '<th>Category</th>'
-        + '<th>Location</th>'
-        + '<th>Equipped</th>'
-        + '</tr></thead>';
-      bodyHtml += '<tbody>';
-      for (const item of items) {
-        bodyHtml += '<tr>'
-          + '<td>' + escapeHtml(item.name_en || '') + '</td>'
-          + '<td>' + escapeHtml(item.name_ko || '') + '</td>'
-          + '<td>' + escapeHtml(item.category || '') + '</td>'
-          + '<td>' + escapeHtml(item.location_type || '') + '</td>'
-          + '<td>' + (item.is_equipped ? 'Yes' : 'No') + '</td>'
-          + '</tr>';
+    // 장착 아이템과 인벤토리 아이템 분리
+    const equipped = {};
+    const bagItems = [];
+    for (const item of allItems) {
+      if (item.is_equipped && item.equipment_slot) {
+        var slot = item.equipment_slot.toLowerCase();
+        equipped[slot] = item;
+      } else {
+        bagItems.push(item);
       }
-      bodyHtml += '</tbody></table>';
     }
+
+    // 장비 슬롯 정의 (디아블로 스타일 배치)
+    var slots = [
+      { key: 'head', label: 'Head', row: 1, col: 2 },
+      { key: 'right_hand', label: 'Weapon', row: 2, col: 1 },
+      { key: 'chest', label: 'Body', row: 2, col: 2 },
+      { key: 'left_hand', label: 'Shield', row: 2, col: 3 },
+      { key: 'accessory', label: 'Accessory', row: 3, col: 1 },
+      { key: 'legs', label: 'Legs', row: 3, col: 2 },
+      { key: 'ring', label: 'Ring', row: 3, col: 3 },
+      { key: 'feet', label: 'Feet', row: 4, col: 2 },
+    ];
+
+    let bodyHtml = '<div class="inventory-layout">';
+
+    // 좌측: 인벤토리 목록
+    bodyHtml += '<div class="inventory-bag">';
+    bodyHtml += '<div style="font-size:13px;color:var(--text-muted);margin-bottom:6px;">Bag (' + bagItems.length + ')</div>';
+    if (bagItems.length === 0) {
+      bodyHtml += '<p class="text-muted" style="font-size:13px;">Empty</p>';
+    } else {
+      bodyHtml += '<div style="display:flex;gap:4px;flex-wrap:wrap;">';
+      for (const item of bagItems) {
+        bodyHtml += '<button class="btn btn-sm btn-secondary inv-item-btn" data-id="' + escapeHtml(item.id || '') + '" style="font-size:13px;padding:2px 8px;">'
+          + escapeHtml(item.name_ko || item.name_en || '?')
+          + '</button>';
+      }
+      bodyHtml += '</div>';
+    }
+    bodyHtml += '</div>';
+
+    // 우측: 장비 슬롯 (디아블로 스타일 그리드)
+    bodyHtml += '<div class="inventory-equip">';
+    bodyHtml += '<div class="equip-grid">';
+    for (var s of slots) {
+      var eq = equipped[s.key];
+      var cellClass = eq ? 'equip-slot equip-filled' : 'equip-slot equip-empty';
+      var cellContent = eq
+        ? '<button class="inv-equip-btn" data-id="' + escapeHtml(eq.id || '') + '" style="background:none;border:none;color:inherit;cursor:pointer;font-size:11px;padding:0;word-break:break-word;">' + escapeHtml(eq.name_ko || eq.name_en || '?') + '</button>'
+        : '<span class="equip-label">' + escapeHtml(s.label) + '</span>';
+      bodyHtml += '<div class="' + cellClass + '" style="grid-row:' + s.row + ';grid-column:' + s.col + ';">'
+        + cellContent + '</div>';
+    }
+    bodyHtml += '</div>';
+    bodyHtml += '</div>';
+
+    bodyHtml += '</div>';
 
     const footerHtml = '<button class="btn btn-secondary" id="inventory-close">Close</button>';
     modal.open('Inventory: ' + (playerName || playerId), bodyHtml, footerHtml);
 
     document.getElementById('inventory-close').addEventListener('click', modal.close);
+
+    // 인벤토리/장착 아이템 클릭 → Objects 수정으로 이동
+    document.querySelectorAll('.inv-item-btn, .inv-equip-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var itemId = btn.getAttribute('data-id');
+        if (!itemId) return;
+        modal.close();
+        window.location.hash = '#objects';
+        setTimeout(function () {
+          showEditObjectModal(itemId);
+        }, 300);
+      });
+    });
   } catch (err) {
     notify.error('Failed to load inventory: ' + err.message);
+  }
+}
+
+/** 플레이어 스탯 수정 모달 표시 */
+async function showPlayerStatsModal(playerId, playerName) {
+  try {
+    var player = await api.get('/players/' + playerId);
+    var p = player.data || player;
+
+    var stats = [
+      { key: 'stat_strength', label: 'Strength' },
+      { key: 'stat_dexterity', label: 'Dexterity' },
+      { key: 'stat_intelligence', label: 'Intelligence' },
+      { key: 'stat_wisdom', label: 'Wisdom' },
+      { key: 'stat_constitution', label: 'Constitution' },
+      { key: 'stat_charisma', label: 'Charisma' },
+    ];
+
+    var bodyHtml = '<form id="player-stats-form">';
+    for (var s of stats) {
+      bodyHtml += '<div class="form-group">'
+        + '<label for="ps-' + s.key + '">' + s.label + '</label>'
+        + '<input type="number" id="ps-' + s.key + '" value="' + escapeHtml(p[s.key] != null ? p[s.key] : 1) + '" min="1">'
+        + '</div>';
+    }
+    bodyHtml += '</form>';
+
+    var footerHtml = '<button class="btn btn-secondary" id="stats-cancel">Cancel</button>'
+      + ' <button class="btn btn-primary" id="stats-save">Save</button>';
+
+    modal.open('Stats: ' + (playerName || playerId), bodyHtml, footerHtml);
+
+    document.getElementById('stats-cancel').addEventListener('click', modal.close);
+    document.getElementById('stats-save').addEventListener('click', async function () {
+      var body = {};
+      for (var s of stats) {
+        var val = document.getElementById('ps-' + s.key).value.trim();
+        if (val !== '') body[s.key] = parseInt(val, 10);
+      }
+      try {
+        await api.put('/players/' + playerId, body);
+        modal.close();
+        notify.success('Stats updated successfully.');
+        renderPlayers();
+      } catch (err) {
+        notify.error('Failed to update stats: ' + err.message);
+      }
+    });
+  } catch (err) {
+    notify.error('Failed to load player stats: ' + err.message);
   }
 }
 

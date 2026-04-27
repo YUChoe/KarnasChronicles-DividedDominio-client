@@ -752,7 +752,7 @@ export class DBClient {
         this.db.prepare(`
           DELETE FROM game_objects
           WHERE location_id = @id
-            AND location_type IN ('INVENTORY', 'EQUIPPED')
+            AND UPPER(location_type) IN ('INVENTORY', 'EQUIPPED')
         `).run({ id });
 
         // 플레이어 레코드 삭제
@@ -783,7 +783,7 @@ export class DBClient {
                is_equipped, created_at
         FROM game_objects
         WHERE location_id = @playerId
-          AND location_type IN ('INVENTORY', 'EQUIPPED')
+          AND UPPER(location_type) IN ('INVENTORY', 'EQUIPPED')
         ORDER BY created_at DESC
       `).all({ playerId }) as any[];
 

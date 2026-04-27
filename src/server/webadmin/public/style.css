@@ -761,3 +761,68 @@ tbody tr:hover {
   color: var(--text-muted);
   font-size: 13px;
 }
+
+/* === Inventory Modal (Diablo-style) === */
+.inventory-layout {
+  display: flex;
+  gap: 16px;
+  min-height: 280px;
+}
+
+.inventory-bag {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 350px;
+}
+
+.inventory-item {
+  padding: 6px 10px;
+  margin-bottom: 4px;
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-colour);
+  border-radius: 4px;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.inventory-equip {
+  width: 200px;
+  min-width: 200px;
+}
+
+.equip-grid {
+  display: grid;
+  grid-template-columns: 60px 60px 60px;
+  grid-template-rows: repeat(4, 60px);
+  gap: 4px;
+  justify-content: center;
+}
+
+.equip-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  font-size: 11px;
+  text-align: center;
+  padding: 4px;
+  word-break: break-word;
+  line-height: 1.2;
+}
+
+.equip-empty {
+  background-color: var(--bg-tertiary);
+  border: 1px dashed var(--border-colour);
+  color: var(--text-muted);
+}
+
+.equip-filled {
+  background-color: rgba(76, 175, 80, 0.15);
+  border: 1px solid var(--accent);
+  color: var(--text-primary);
+}
+
+.equip-label {
+  font-size: 10px;
+  color: var(--text-muted);
+}
