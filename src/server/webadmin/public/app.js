@@ -955,15 +955,48 @@ async function showPlayerInventoryModal(playerId, playerName) {
 let _roomsPage = 1;
 const _roomsLimit = 20;
 
+// 전체 방 좌표 Set (출구 화살표 계산용)
+let _roomsCoordsSet = new Set();
+
+/** 방의 출구 화살표 계산 (인접 방이 존재하고 blocked_exits에 없는 방향) */
+function computeRoomExits(x, y, blockedExits) {
+  const dirs = [];
+  const checks = [
+    { dir: 'north', dx: 0, dy: 1, symbol: '↑' },
+    { dir: 'south', dx: 0, dy: -1, symbol: '↓' },
+    { dir: 'east', dx: 1, dy: 0, symbol: '→' },
+    { dir: 'west', dx: -1, dy: 0, symbol: '←' },
+  ];
+  for (const c of checks) {
+    const key = (x + c.dx) + ',' + (y + c.dy);
+    if (_roomsCoordsSet.has(key) && !blockedExits.includes(c.dir)) {
+      dirs.push(c.symbol);
+    }
+  }
+  return dirs.join('') || '-';
+}
+
 /** 방 섹션 렌더링 */
 async function renderRooms() {
   const container = document.getElementById('section-rooms');
   container.innerHTML = '<p class="text-muted">Loading rooms...</p>';
 
   try {
-    const result = await api.get('/rooms?page=' + _roomsPage + '&limit=' + _roomsLimit);
+    // 페이지네이션된 방 목록 + 출구 계산용 전체 방 좌표 맵 로드
+    const [result, mapData] = await Promise.all([
+      api.get('/rooms?page=' + _roomsPage + '&limit=' + _roomsLimit),
+      api.get('/map'),
+    ]);
     const rooms = result.data || [];
     const pagination = result.pagination || {};
+
+    // 전체 방 좌표 Set 구축 (출구 화살표 계산용)
+    _roomsCoordsSet = new Set();
+    if (mapData.rooms) {
+      for (const mr of mapData.rooms) {
+        _roomsCoordsSet.add(mr.x + ',' + mr.y);
+      }
+    }
 
     let html = '<div class="section-header">'
       + '<h2>Rooms</h2>'
@@ -973,29 +1006,27 @@ async function renderRooms() {
     // 방 목록 테이블
     html += '<div class="table-container"><table class="data-table">';
     html += '<thead><tr>'
-      + '<th>ID</th>'
-      + '<th>X</th>'
-      + '<th>Y</th>'
+      + '<th>Coords</th>'
+      + '<th>Exits</th>'
       + '<th>Description (EN)</th>'
       + '<th>Description (KO)</th>'
-      + '<th>Blocked Exits</th>'
       + '<th>Actions</th>'
       + '</tr></thead>';
     html += '<tbody>';
 
     if (rooms.length === 0) {
-      html += '<tr><td colspan="7" class="text-muted text-center">No rooms found.</td></tr>';
+      html += '<tr><td colspan="5" class="text-muted text-center">No rooms found.</td></tr>';
     } else {
+      // 출구 화살표 계산을 위해 전체 방 좌표 맵 구축
+      // _roomsCoordsMap은 renderRooms 시작 시 맵 API에서 로드
       for (const r of rooms) {
-        const shortId = r.id ? r.id.substring(0, 8) : '-';
-        const blockedExits = Array.isArray(r.blocked_exits) ? r.blocked_exits.join(', ') : '';
+        const blocked = Array.isArray(r.blocked_exits) ? r.blocked_exits : [];
+        const exits = computeRoomExits(r.x, r.y, blocked);
         html += '<tr>'
-          + '<td title="' + escapeHtml(r.id) + '">' + escapeHtml(shortId) + '</td>'
-          + '<td>' + escapeHtml(r.x) + '</td>'
-          + '<td>' + escapeHtml(r.y) + '</td>'
+          + '<td>' + escapeHtml(r.x) + ', ' + escapeHtml(r.y) + '</td>'
+          + '<td>' + escapeHtml(exits) + '</td>'
           + '<td>' + escapeHtml(r.description_en || '-') + '</td>'
           + '<td>' + escapeHtml(r.description_ko || '-') + '</td>'
-          + '<td>' + escapeHtml(blockedExits || '-') + '</td>'
           + '<td class="actions-cell">'
           + '<button class="btn btn-sm btn-secondary btn-edit-room" data-id="' + escapeHtml(r.id) + '">Edit</button> '
           + '<button class="btn btn-sm btn-danger btn-delete-room" data-id="' + escapeHtml(r.id) + '" data-coords="(' + escapeHtml(r.x) + ',' + escapeHtml(r.y) + ')">Delete</button> '
