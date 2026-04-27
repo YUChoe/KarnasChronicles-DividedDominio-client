@@ -381,7 +381,9 @@ function buildMapGrid(rooms) {
     for (let x = minX; x <= maxX; x++) {
       const room = roomMap[x + ',' + y];
       if (room) {
-        html += '<td class="room" data-x="' + x + '" data-y="' + y + '">';
+        // 출구 방향별 테두리 색상 계산
+        var borderStyle = computeExitBorders(room, roomMap);
+        html += '<td class="room" data-x="' + x + '" data-y="' + y + '" style="' + borderStyle + '">';
         html += buildIndicators(room);
         html += '<div class="map-tooltip"></div>';
         html += '</td>';
@@ -441,6 +443,37 @@ function computeExits(room, roomMap) {
     }
   }
   return dirs.join('');
+}
+
+/** 출구 방향별 테두리 색상 계산 (출구: 밝은색, 벽/blocked: 어두운색) */
+function computeExitBorders(room, roomMap) {
+  var blocked = Array.isArray(room.blocked_exits) ? room.blocked_exits : [];
+  var openColour = '#4a9eff';
+  var wallColour = '#555';
+  var blockedColour = '#e53935';
+
+  // 각 방향: 인접 방 존재 + blocked 아님 → 출구(파란), blocked → 빨간, 그 외 → 벽(어두운)
+  // CSS border 순서: top(north) right(east) bottom(south) left(west)
+  var dirs = [
+    { dir: 'north', dx: 0, dy: 1 },
+    { dir: 'east', dx: 1, dy: 0 },
+    { dir: 'south', dx: 0, dy: -1 },
+    { dir: 'west', dx: -1, dy: 0 },
+  ];
+
+  var colours = dirs.map(function (d) {
+    var key = (room.x + d.dx) + ',' + (room.y + d.dy);
+    var hasNeighbour = !!roomMap[key];
+    var isBlocked = blocked.includes(d.dir);
+    if (hasNeighbour && !isBlocked) return openColour;
+    if (hasNeighbour && isBlocked) return blockedColour;
+    return wallColour;
+  });
+
+  return 'border-top:2px solid ' + colours[0]
+    + ';border-right:2px solid ' + colours[1]
+    + ';border-bottom:2px solid ' + colours[2]
+    + ';border-left:2px solid ' + colours[3] + ';';
 }
 
 /** 툴팁 텍스트 생성 */
