@@ -29,6 +29,7 @@ export interface MapRoom {
 }
 
 export interface MapCreature {
+  id: string;
   name_en: string;
   name_ko: string;
   hp: number;
@@ -37,11 +38,13 @@ export interface MapCreature {
 }
 
 export interface MapPlayer {
+  id: string;
   username: string;
   is_admin: boolean;
 }
 
 export interface MapItem {
+  id: string;
   name_en: string;
   name_ko: string;
   category: string;
@@ -388,12 +391,13 @@ export class DBClient {
 
       // 2) 전체 몬스터 + faction 이름 조회 (LEFT JOIN factions)
       const monsters = this.db.prepare(`
-        SELECT m.x, m.y, m.name_en, m.name_ko, m.stats, m.faction_id,
+        SELECT m.id, m.x, m.y, m.name_en, m.name_ko, m.stats, m.faction_id,
                COALESCE(f.name_en, '') AS faction_name
         FROM monsters m
         LEFT JOIN factions f ON m.faction_id = f.id
         WHERE m.x IS NOT NULL AND m.y IS NOT NULL
       `).all() as Array<{
+        id: string;
         x: number;
         y: number;
         name_en: string;
@@ -405,8 +409,9 @@ export class DBClient {
 
       // 3) 전체 플레이어 조회
       const players = this.db.prepare(
-        'SELECT username, is_admin, last_room_x, last_room_y FROM players',
+        'SELECT id, username, is_admin, last_room_x, last_room_y FROM players',
       ).all() as Array<{
+        id: string;
         username: string;
         is_admin: number;
         last_room_x: number;
@@ -415,10 +420,11 @@ export class DBClient {
 
       // 4) 방에 위치한 게임 오브젝트 조회
       const objects = this.db.prepare(`
-        SELECT go.name_en, go.name_ko, go.category, go.location_id
+        SELECT go.id, go.name_en, go.name_ko, go.category, go.location_id
         FROM game_objects go
         WHERE go.location_type = 'ROOM'
       `).all() as Array<{
+        id: string;
         name_en: string;
         name_ko: string;
         category: string;
@@ -449,6 +455,7 @@ export class DBClient {
           } catch { /* JSON 파싱 실패 시 hp=0 */ }
         }
         const creature: MapCreature = {
+          id: m.id,
           name_en: m.name_en,
           name_ko: m.name_ko,
           hp,
@@ -465,6 +472,7 @@ export class DBClient {
       for (const p of players) {
         const key = `${p.last_room_x},${p.last_room_y}`;
         const player: MapPlayer = {
+          id: p.id,
           username: p.username,
           is_admin: Boolean(p.is_admin),
         };
@@ -478,6 +486,7 @@ export class DBClient {
       for (const o of objects) {
         if (!o.location_id) continue;
         const item: MapItem = {
+          id: o.id,
           name_en: o.name_en,
           name_ko: o.name_ko,
           category: o.category,

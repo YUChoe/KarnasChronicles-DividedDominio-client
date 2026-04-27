@@ -240,6 +240,10 @@ function getCurrentSection() {
 function navigate() {
   const section = getCurrentSection();
 
+  // 섹션 전환 시 열려있는 모달/확인 대화상자 닫기
+  modal.close();
+  confirm.close();
+
   // 대시보드가 아닌 섹션으로 이동 시 타이머 정리
   if (section !== 'dashboard') {
     clearDashboardTimer();
@@ -535,52 +539,51 @@ function showRoomDetail(room) {
     }
   }
   var titleHtml = escapeHtml('Room (' + room.x + ', ' + room.y + ')') + titleNavHtml;
-  // 한국어/영어 설명
+  // 한국어/영어 설명 (라벨 없이)
   html += '<div class="description">';
-  html += '<div>한국어: ' + escapeHtml(room.description_ko || '설명 없음') + '</div>';
-  html += '<div style="margin-top:8px;">English: ' + escapeHtml(room.description_en || 'No description') + '</div>';
+  html += '<div>' + escapeHtml(room.description_ko || '설명 없음') + '</div>';
+  html += '<div style="margin-top:6px;color:var(--text-muted);">' + escapeHtml(room.description_en || 'No description') + '</div>';
   html += '</div>';
 
-  // 생명체 목록
+  // 생명체 목록 (클릭 시 몬스터 수정으로 이동)
   if (room.creatures && room.creatures.length > 0) {
-    html += '<div class="detail-section">';
-    html += '<div class="detail-section-title">Creatures (' + room.creatures.length + ')</div>';
-    html += '<div class="detail-item-list">';
+    html += '<div class="detail-section" style="margin-top:10px;">';
+    html += '<div style="display:flex;gap:4px;flex-wrap:wrap;">';
     for (const c of room.creatures) {
-      html += '• ' + escapeHtml(c.name_ko || '') + ' (' + escapeHtml(c.name_en || '') + ') HP:' + escapeHtml(c.hp) + ' [' + escapeHtml(c.faction_id || c.faction || '') + ']<br>';
+      var cLabel = escapeHtml(c.name_ko || c.name_en || '?');
+      html += '<button class="btn btn-sm btn-secondary room-modal-creature-btn" data-id="' + escapeHtml(c.id || '') + '" style="font-size:13px;padding:2px 8px;">' + cLabel + '</button>';
     }
     html += '</div></div>';
   }
 
-  // 플레이어 목록
+  // 플레이어 목록 (클릭 시 플레이어 수정으로 이동)
   if (room.players && room.players.length > 0) {
-    html += '<div class="detail-section">';
-    html += '<div class="detail-section-title">Players (' + room.players.length + ')</div>';
-    html += '<div class="detail-item-list">';
+    html += '<div class="detail-section" style="margin-top:8px;">';
+    html += '<div style="display:flex;gap:4px;flex-wrap:wrap;">';
     for (const p of room.players) {
-      html += '• ' + escapeHtml(p.username) + (p.is_admin ? ' (admin)' : '') + '<br>';
+      var pLabel = escapeHtml(p.username || '?');
+      html += '<button class="btn btn-sm btn-secondary room-modal-player-btn" data-id="' + escapeHtml(p.id || '') + '" style="font-size:13px;padding:2px 8px;">👤 ' + pLabel + '</button>';
     }
     html += '</div></div>';
   }
 
   // 아이템 목록
   if (room.items && room.items.length > 0) {
-    html += '<div class="detail-section">';
-    html += '<div class="detail-section-title">Items (' + room.items.length + ')</div>';
-    html += '<div class="detail-item-list">';
+    html += '<div class="detail-section" style="margin-top:8px;">';
+    html += '<div style="display:flex;gap:4px;flex-wrap:wrap;">';
     for (const i of room.items) {
-      html += '• ' + escapeHtml(i.name_ko || '') + ' (' + escapeHtml(i.name_en || '') + ') [' + escapeHtml(i.category || '') + ']<br>';
+      var iLabel = escapeHtml(i.name_ko || i.name_en || '?');
+      html += '<button class="btn btn-sm btn-secondary room-modal-item-btn" data-id="' + escapeHtml(i.id || '') + '" style="font-size:13px;padding:2px 8px;">' + iLabel + '</button>';
     }
     html += '</div></div>';
   }
 
   // Enter 연결 정보
   if (room.enter_connections && room.enter_connections.length > 0) {
-    html += '<div class="detail-section">';
-    html += '<div class="detail-section-title">Enter Connections</div>';
-    html += '<div class="detail-item-list">';
+    html += '<div class="detail-section" style="margin-top:8px;">';
+    html += '<div style="display:flex;gap:4px;flex-wrap:wrap;">';
     for (const c of room.enter_connections) {
-      html += '• → (' + c.to_x + ', ' + c.to_y + ')<br>';
+      html += '<span class="btn btn-sm btn-secondary" style="font-size:13px;padding:2px 8px;cursor:default;">Enter → (' + c.to_x + ', ' + c.to_y + ')</span>';
     }
     html += '</div></div>';
   }
@@ -599,6 +602,42 @@ function showRoomDetail(room) {
       if (targetRoom) {
         showRoomDetail(targetRoom);
       }
+    });
+  });
+
+  // Creature 버튼 클릭 → 몬스터 수정 (id 기반)
+  document.querySelectorAll('.room-modal-creature-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var id = btn.getAttribute('data-id');
+      modal.close();
+      window.location.hash = '#monsters';
+      setTimeout(function () {
+        showEditMonsterModal(id);
+      }, 300);
+    });
+  });
+
+  // Player 버튼 클릭 → 플레이어 수정 (id 기반)
+  document.querySelectorAll('.room-modal-player-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var id = btn.getAttribute('data-id');
+      modal.close();
+      window.location.hash = '#players';
+      setTimeout(function () {
+        showEditPlayerModal(id);
+      }, 300);
+    });
+  });
+
+  // Item 버튼 클릭 → 오브젝트 수정 (id 기반)
+  document.querySelectorAll('.room-modal-item-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var id = btn.getAttribute('data-id');
+      modal.close();
+      window.location.hash = '#objects';
+      setTimeout(function () {
+        showEditObjectModal(id);
+      }, 300);
     });
   });
 
