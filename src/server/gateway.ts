@@ -1,3 +1,4 @@
+import http from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import { randomUUID } from 'crypto';
 import { logger } from './logger';
@@ -5,38 +6,53 @@ import { ConnectionPool, ClientConnection } from './connection-pool';
 import { TelnetClient } from './telnet-client';
 import { WSMessage } from '../shared/types';
 import { sanitize, containsDangerousPatterns } from './sanitizer';
+import { AdminRouter } from './webadmin/admin-router';
 
 export class GatewayServer {
   private wss: WebSocketServer | null = null;
+  private httpServer: http.Server | null = null;
   private connectionPool: ConnectionPool;
   private port: number;
   private telnetHost: string;
   private telnetPort: number;
   private readonly serverVersion: string = '1.0.0';
+  private adminRouter?: AdminRouter;
 
   constructor(
     port: number = 3000,
     telnetHost: string = 'localhost',
     telnetPort: number = 4000,
-    maxConnections: number = 200
+    maxConnections: number = 200,
+    adminRouter?: AdminRouter
   ) {
     this.port = port;
     this.telnetHost = telnetHost;
     this.telnetPort = telnetPort;
     this.connectionPool = new ConnectionPool(maxConnections);
+    this.adminRouter = adminRouter;
   }
 
   async start(): Promise<void> {
     return new Promise((resolve) => {
-      this.wss = new WebSocketServer({ port: this.port });
+      // HTTP 서버 생성 - HTTP 요청은 AdminRouter로 위임
+      this.httpServer = http.createServer((req, res) => {
+        if (this.adminRouter) {
+          this.adminRouter.handleRequest(req, res);
+        } else {
+          // AdminRouter가 없는 경우 기본 404 응답
+          res.writeHead(404, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: 'Not found' }));
+        }
+      });
 
-      this.wss.on('listening', () => {
-        logger.info('WebSocket Gateway started', { 
-          port: this.port,
-          telnetHost: this.telnetHost,
-          telnetPort: this.telnetPort
+      // WebSocket 서버를 noServer 모드로 생성
+      this.wss = new WebSocketServer({ noServer: true });
+
+      // HTTP upgrade 이벤트에서 WebSocket 핸들링
+      this.httpServer.on('upgrade', (req, socket, head) => {
+        this.wss!.handleUpgrade(req, socket, head, (ws) => {
+          this.wss!.emit('connection', ws, req);
         });
-        resolve();
       });
 
       this.wss.on('connection', (ws: WebSocket, req) => {
@@ -45,6 +61,19 @@ export class GatewayServer {
 
       this.wss.on('error', (error) => {
         logger.error('WebSocket server error', { error: error.message });
+      });
+
+      this.httpServer.on('error', (error) => {
+        logger.error('HTTP server error', { error: error.message });
+      });
+
+      this.httpServer.listen(this.port, () => {
+        logger.info('Gateway server started', {
+          port: this.port,
+          telnetHost: this.telnetHost,
+          telnetPort: this.telnetPort
+        });
+        resolve();
       });
     });
   }
@@ -58,12 +87,12 @@ export class GatewayServer {
     // 연결 제한 확인 (최대 연결 수)
     const currentSize = this.connectionPool.getSize();
     const maxConnections = this.connectionPool.getMaxConnections();
-    
+
     if (currentSize >= maxConnections) {
-      logger.warn('Connection rejected - capacity reached', { 
-        clientId, 
-        current: currentSize, 
-        max: maxConnections 
+      logger.warn('Connection rejected - capacity reached', {
+        clientId,
+        current: currentSize,
+        max: maxConnections
       });
       this.sendError(ws, 'Server at capacity. Please try again later.');
       ws.close(1008, 'Server at capacity');
@@ -72,8 +101,8 @@ export class GatewayServer {
 
     // 용량 경고 (90% 이상)
     if (currentSize >= maxConnections * 0.9) {
-      logger.warn('Connection pool near capacity', { 
-        current: currentSize, 
+      logger.warn('Connection pool near capacity', {
+        current: currentSize,
         max: maxConnections,
         percentage: Math.round((currentSize / maxConnections) * 100)
       });
@@ -81,12 +110,12 @@ export class GatewayServer {
 
     // Telnet 클라이언트 생성 및 연결
     const telnetClient = new TelnetClient(this.telnetHost, this.telnetPort);
-    
+
     try {
       await telnetClient.connect();
     } catch (error) {
-      logger.error('Failed to connect to telnet server', { 
-        clientId, 
+      logger.error('Failed to connect to telnet server', {
+        clientId,
         error: error instanceof Error ? error.message : String(error)
       });
       this.sendError(ws, 'Failed to connect to game server');
@@ -137,8 +166,8 @@ export class GatewayServer {
         const buffer = Buffer.isBuffer(data) ? data : Buffer.from(data);
         await this.handleMessage(clientId, buffer);
       } catch (error) {
-        logger.error('Message handling error', { 
-          clientId, 
+        logger.error('Message handling error', {
+          clientId,
           error: error instanceof Error ? error.message : String(error)
         });
         this.sendError(ws, 'Failed to process message');
@@ -147,10 +176,10 @@ export class GatewayServer {
 
     // WebSocket 연결 종료 처리
     ws.on('close', (code, reason) => {
-      logger.info('WebSocket connection closed', { 
-        clientId, 
-        code, 
-        reason: reason.toString() 
+      logger.info('WebSocket connection closed', {
+        clientId,
+        code,
+        reason: reason.toString()
       });
       this.connectionPool.remove(clientId);
     });
@@ -204,10 +233,10 @@ export class GatewayServer {
         break;
       case 'resize':
         if (message.cols !== undefined && message.rows !== undefined) {
-          logger.debug('Terminal resize', { 
-            clientId, 
-            cols: message.cols, 
-            rows: message.rows 
+          logger.debug('Terminal resize', {
+            clientId,
+            cols: message.cols,
+            rows: message.rows
           });
         }
         break;
@@ -237,19 +266,19 @@ export class GatewayServer {
     if (connection.ws.readyState === WebSocket.OPEN) {
       // Telnet IAC (0xFF) 시퀀스 필터링
       const filtered = this.filterTelnetCommands(data);
-      
+
       // Buffer를 UTF-8 문자열로 변환하여 JSON으로 전송
       const text = filtered.toString('utf-8');
-      
+
       const message: WSMessage = {
         type: 'data',
         payload: text,
         timestamp: Date.now()
       };
       connection.ws.send(JSON.stringify(message));
-      logger.debug('Data forwarded to WebSocket', { 
-        clientId, 
-        length: text.length 
+      logger.debug('Data forwarded to WebSocket', {
+        clientId,
+        length: text.length
       });
     }
   }
@@ -328,13 +357,19 @@ export class GatewayServer {
 
   async stop(): Promise<void> {
     return new Promise((resolve) => {
-      logger.info('Stopping WebSocket Gateway');
-      
+      logger.info('Stopping Gateway server');
+
       this.connectionPool.cleanup();
-      
+
+      // WebSocket 서버 종료
       if (this.wss) {
-        this.wss.close(() => {
-          logger.info('WebSocket Gateway stopped');
+        this.wss.close();
+      }
+
+      // HTTP 서버 종료
+      if (this.httpServer) {
+        this.httpServer.close(() => {
+          logger.info('Gateway server stopped');
           resolve();
         });
       } else {
@@ -352,10 +387,11 @@ export class GatewayServer {
 export function startServer(
   port: number = 3000,
   telnetHost: string = 'localhost',
-  telnetPort: number = 4000
+  telnetPort: number = 4000,
+  adminRouter?: AdminRouter
 ): GatewayServer {
-  const server = new GatewayServer(port, telnetHost, telnetPort);
-  
+  const server = new GatewayServer(port, telnetHost, telnetPort, 200, adminRouter);
+
   server.start().catch((error) => {
     logger.error('Failed to start server', { error: error.message });
     process.exit(1);

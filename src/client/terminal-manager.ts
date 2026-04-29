@@ -11,11 +11,12 @@ export class TerminalManager {
   private onDisconnectCallback?: () => void;
   private onVersionCallback?: (version: string) => void;
   private echoEnabled: boolean = true; // 에코 상태 관리
+  private dataHandler?: (data: string) => void; // 데이터 핸들러 참조 저장
 
   constructor(container: HTMLElement) {
     // 윈도우 크기에 따른 터미널 크기 계산
     const { cols, rows } = this.calculateTerminalSize();
-    
+
     // xterm.js Terminal 인스턴스 초기화
     this.terminal = new Terminal({
       cols,
@@ -51,9 +52,13 @@ export class TerminalManager {
 
     // 터미널을 컨테이너에 마운트
     this.terminal.open(container);
-    
-    // 터미널 크기 조정
-    this.fitAddon.fit();
+
+    // DOM이 완전히 렌더링된 후 크기 조정
+    setTimeout(() => {
+      this.fitAddon.fit();
+      const { cols, rows } = this.calculateTerminalSize();
+      this.terminal.resize(cols, rows);
+    }, 100);
 
     // 윈도우 리사이즈 이벤트 처리
     window.addEventListener('resize', () => {
@@ -62,6 +67,9 @@ export class TerminalManager {
 
     // 특수 키 처리 설정
     this.setupKeyHandlers();
+
+    // 터미널 데이터 핸들러 설정 (한 번만 등록)
+    this.setupDataHandler();
   }
 
   getTerminal(): Terminal {
@@ -71,13 +79,13 @@ export class TerminalManager {
   connect(wsUrl: string): Promise<void> {
     return new Promise((resolve, reject) => {
       console.log(`[TerminalManager] Attempting to connect to ${wsUrl}`);
-      
+
       this.socket = new WebSocket(wsUrl);
       this.socket.binaryType = 'arraybuffer'; // 바이너리 데이터를 ArrayBuffer로 받기
 
       this.socket.onopen = () => {
         console.log('[TerminalManager] WebSocket connection established');
-        
+
         // 초기 크기 정보 전송
         const { cols, rows } = this.terminal;
         this.socket?.send(JSON.stringify({
@@ -95,7 +103,7 @@ export class TerminalManager {
         if (typeof event.data === 'string') {
           try {
             const message = JSON.parse(event.data);
-            
+
             // 버전 메시지 처리
             if (message.type === 'version' && message.payload) {
               console.log('[TerminalManager] Server version received:', message.payload);
@@ -104,13 +112,13 @@ export class TerminalManager {
               }
               return;
             }
-            
+
             // 연결 메시지 처리
             if (message.type === 'connect') {
               console.log('[TerminalManager] Connection confirmed');
               return;
             }
-            
+
             // 데이터 메시지 처리
             if (message.type === 'data' && message.payload) {
               // 패스워드 프롬프트 감지하여 에코 모드 전환
@@ -126,49 +134,6 @@ export class TerminalManager {
         }
       };
 
-      // 터미널 입력을 WebSocket으로 전송
-      this.terminal.onData((data) => {
-        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-          // 방향키 필터링 (ANSI escape sequences)
-          if (data === '\x1b[A' || data === '\x1b[B' || data === '\x1b[C' || data === '\x1b[D') {
-            // 방향키는 무시
-            return;
-          }
-          
-          // 로컬 에코 (서버가 에코하지 않는 경우를 위해)
-          if (this.echoEnabled) {
-            if (data === '\r') {
-              // Enter: 줄바꿈
-              this.terminal.write('\r\n');
-            } else if (data === '\x7F' || data === '\b') {
-              // Backspace (DEL 또는 BS): 커서를 뒤로 이동하고 문자 삭제
-              this.terminal.write('\b \b');
-            } else if (data.charCodeAt(0) < 32 && data !== '\n' && data !== '\t') {
-              // 제어 문자는 에코하지 않음 (Ctrl+C 등)
-            } else {
-              // 일반 문자: 그대로 에코
-              this.terminal.write(data);
-            }
-          } else {
-            // 패스워드 모드: Enter만 줄바꿈 처리하고 에코 재활성화
-            if (data === '\r') {
-              this.terminal.write('\r\n');
-              // 패스워드 입력 완료 - 에코 재활성화
-              this.echoEnabled = true;
-              console.log('[TerminalManager] Password input completed - echo re-enabled');
-            }
-            // 다른 문자는 에코하지 않음 (패스워드 숨김)
-          }
-          
-          // JSON 형식으로 전송
-          this.socket.send(JSON.stringify({
-            type: 'data',
-            payload: data,
-            timestamp: Date.now()
-          }));
-        }
-      });
-
       this.socket.onerror = (error) => {
         console.error('[TerminalManager] WebSocket error:', error);
         reject(new Error('WebSocket connection failed'));
@@ -179,7 +144,7 @@ export class TerminalManager {
         const isKorean = navigator.language.startsWith('ko');
         const message = isKorean ? '연결이 종료되었습니다 / Connection closed' : 'Connection closed';
         this.terminal.writeln(`\r\n\x1b[33m${message}\x1b[0m`);
-        
+
         // 비정상 종료인 경우 재연결 콜백 호출
         if (event.code !== 1000 && this.onDisconnectCallback) {
           this.onDisconnectCallback();
@@ -225,11 +190,59 @@ export class TerminalManager {
     this.onVersionCallback = callback;
   }
 
+  private setupDataHandler(): void {
+    // 터미널 데이터 핸들러를 한 번만 등록
+    this.dataHandler = (data: string) => {
+      if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+        // 방향키 필터링 (ANSI escape sequences)
+        if (data === '\x1b[A' || data === '\x1b[B' || data === '\x1b[C' || data === '\x1b[D') {
+          // 방향키는 무시
+          return;
+        }
+
+        // 로컬 에코 (서버가 에코하지 않는 경우를 위해)
+        if (this.echoEnabled) {
+          if (data === '\r') {
+            // Enter: 줄바꿈
+            this.terminal.write('\r\n');
+          } else if (data === '\x7F' || data === '\b') {
+            // Backspace (DEL 또는 BS): 커서를 뒤로 이동하고 문자 삭제
+            this.terminal.write('\b \b');
+          } else if (data.charCodeAt(0) < 32 && data !== '\n' && data !== '\t') {
+            // 제어 문자는 에코하지 않음 (Ctrl+C 등)
+          } else {
+            // 일반 문자: 그대로 에코
+            this.terminal.write(data);
+          }
+        } else {
+          // 패스워드 모드: Enter만 줄바꿈 처리하고 에코 재활성화
+          if (data === '\r') {
+            this.terminal.write('\r\n');
+            // 패스워드 입력 완료 - 에코 재활성화
+            this.echoEnabled = true;
+            console.log('[TerminalManager] Password input completed - echo re-enabled');
+          }
+          // 다른 문자는 에코하지 않음 (패스워드 숨김)
+        }
+
+        // JSON 형식으로 전송
+        this.socket.send(JSON.stringify({
+          type: 'data',
+          payload: data,
+          timestamp: Date.now()
+        }));
+      }
+    };
+
+    // 터미널에 데이터 핸들러 등록
+    this.terminal.onData(this.dataHandler);
+  }
+
   private setupKeyHandlers(): void {
     // 특수 키 처리
     // AttachAddon이 대부분의 키 입력을 자동으로 처리하지만,
     // 특수 키에 대한 명시적 처리를 추가합니다.
-    
+
     this.terminal.attachCustomKeyEventHandler((event: KeyboardEvent) => {
       // Ctrl+C: 인터럽트 신호 (요구사항 7.4)
       if (event.ctrlKey && event.key === 'c') {
@@ -335,48 +348,55 @@ export class TerminalManager {
   }
 
   private calculateTerminalSize(): { cols: number; rows: number } {
-    // 기본값
-    const defaultCols = 120;
-    const defaultRows = 30;
-    
     // 폰트 크기와 라인 높이
     const fontSize = 14;
     const lineHeight = 1.15;
     const charWidth = fontSize * 0.6; // 대략적인 문자 너비
     const charHeight = fontSize * lineHeight;
-    
+
     // 윈도우 크기
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
-    
-    // 여백 계산 (헤더, 패딩 등)
-    const headerHeight = 120; // 헤더 영역 높이
-    const padding = 60; // 전체 패딩
-    
-    // 사용 가능한 영역
-    const availableWidth = Math.max(windowWidth - padding, 800);
-    const availableHeight = Math.max(windowHeight - headerHeight - padding, 400);
-    
+
+    // 터미널 컨테이너의 실제 크기 계산
+    const terminalContainer = document.getElementById('terminal-container');
+    let availableWidth = windowWidth;
+    let availableHeight = windowHeight;
+
+    if (terminalContainer) {
+      const containerRect = terminalContainer.getBoundingClientRect();
+      availableWidth = containerRect.width - 20; // 패딩 고려
+      availableHeight = containerRect.height - 20; // 패딩 고려
+    } else {
+      // 컨테이너가 없는 경우 추정값 사용
+      const headerHeight = 120; // 헤더 영역 높이
+      const inputHeight = 60;   // 입력 폼 높이
+      const padding = 40;       // 전체 패딩
+
+      availableHeight = windowHeight - headerHeight - inputHeight - padding;
+      availableWidth = windowWidth - padding;
+    }
+
     // 터미널 크기 계산
-    const cols = Math.min(Math.floor(availableWidth / charWidth), defaultCols);
+    const cols = Math.floor(availableWidth / charWidth);
     const rows = Math.floor(availableHeight / charHeight);
-    
+
     return {
-      cols: Math.max(cols, 80), // 최소 80 컬럼
-      rows: Math.max(rows, 20)  // 최소 20 행
+      cols: Math.max(cols, 80),  // 최소 80 컬럼
+      rows: Math.max(rows - 3, 10)   // 최소 10 행
     };
   }
 
   private handleResize(): void {
     // 새로운 크기 계산
     const { cols, rows } = this.calculateTerminalSize();
-    
+
     // 터미널 크기 변경
     this.terminal.resize(cols, rows);
-    
+
     // FitAddon 적용
     this.fitAddon.fit();
-    
+
     // 서버에 크기 변경 알림
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.send(JSON.stringify({

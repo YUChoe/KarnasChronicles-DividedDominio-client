@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Echoes of the Fallen Age</title>
+  <title>Karnas Chronicles: Divided Dominion</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xterm/xterm@5.5.0/css/xterm.css" />
   <style>
     * {
@@ -16,47 +16,56 @@
       font-family: 'Cascadia Mono', 'Consolas', 'Courier New', monospace;
       background-color: #1a1a1a;
       color: #ffffff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-      padding: 20px;
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .main-container {
+      display: grid;
+      grid-template-rows: auto 1fr auto; /* 헤더, 터미널, 입력영역 */
+      height: 100vh;
+      overflow: hidden;
     }
 
     .header {
       text-align: center;
-      margin-bottom: 20px;
+      padding: 10px 20px; /* 패딩 줄임 */
+      background-color: #1a1a1a;
+      border-bottom: 1px solid #333333;
+      flex-shrink: 0;
       transition: all 0.3s ease;
     }
 
     .header.compact {
-      margin-bottom: 8px;
+      padding: 6px 20px; /* 패딩 줄임 */
     }
 
     .header h1 {
-      font-size: 2rem;
+      font-size: 1.6rem; /* 폰트 크기 줄임 */
       font-weight: 600;
-      margin-bottom: 8px;
+      margin-bottom: 4px; /* 마진 줄임 */
       color: #ffffff;
       transition: all 0.3s ease;
     }
 
     .header.compact h1 {
       font-size: 1rem;
-      margin-bottom: 4px;
+      margin-bottom: 2px;
     }
 
     .version-info {
-      font-size: 0.75rem;
+      font-size: 0.65rem; /* 폰트 크기 줄임 */
       color: #888888;
       display: flex;
-      gap: 16px;
+      gap: 12px; /* 간격 줄임 */
       justify-content: center;
       transition: all 0.3s ease;
     }
 
     .header.compact .version-info {
-      font-size: 0.6rem;
+      font-size: 0.55rem;
       gap: 8px;
     }
 
@@ -64,29 +73,63 @@
       display: inline-block;
     }
 
-    #terminal-container {
-      width: 100%;
-      max-width: 1200px;
-      background-color: #000000;
-      border: 1px solid #333333;
-      border-radius: 4px;
-      padding: 10px;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    .connection-controls {
+      display: flex;
+      gap: 10px; /* 간격 줄임 */
+      margin-top: 6px; /* 마진 줄임 */
+      align-items: center;
+      justify-content: center;
     }
 
-    #terminal {
-      width: 100%;
-      height: 100%;
+    .connect-button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .connect-button:hover {
+      background-color: #45a049;
+    }
+
+    .connect-button:active {
+      background-color: #3d8b40;
+    }
+
+    .connect-button:disabled {
+      background-color: #666666;
+      cursor: not-allowed;
+    }
+
+    .connection-status {
+      font-size: 0.75rem;
+      color: #888888;
+    }
+
+    .connection-status.connected {
+      color: #4CAF50;
+    }
+
+    .connection-status.connecting {
+      color: #FFA500;
+    }
+
+    .connection-status.error {
+      color: #ff4444;
     }
 
     .error-message {
       display: none;
       background-color: #ff4444;
       color: #ffffff;
-      padding: 12px;
-      border-radius: 4px;
-      margin-bottom: 16px;
+      padding: 10px 20px;
       text-align: center;
+      flex-shrink: 0;
     }
 
     .error-message.visible {
@@ -97,12 +140,12 @@
       background-color: #4CAF50;
       color: white;
       border: none;
-      padding: 8px 16px;
-      margin-top: 8px;
+      padding: 6px 12px;
+      margin-top: 6px;
       border-radius: 4px;
       cursor: pointer;
       font-family: inherit;
-      font-size: 0.9rem;
+      font-size: 0.8rem;
     }
 
     .reconnect-button:hover {
@@ -113,20 +156,67 @@
       background-color: #3d8b40;
     }
 
-    #input-container {
+    #terminal-container {
+      background-color: #000000;
+      border-top: 1px solid #333333;
+      /* overflow: hidden; */
+       /* 다시 hidden으로 변경 - xterm.js만 스크롤 관리 */
+      position: relative;
+      /* grid에서 자동으로 남은 공간 차지 */
+    }
+
+    #terminal {
       width: 100%;
-      max-width: 1200px;
+      height: 100%;
+      padding: 0;
+    }
+
+    #input-container {
+      background-color: #2a2a2a;
+      border-top: 1px solid #444444;
+      padding: 8px 15px;
+      display: block;
+      position: relative;
+      z-index: 100;
+      max-height: 200px;
+      overflow-y: auto; /* 다시 추가 - 버튼이 많을 때 스크롤 필요 */
+      box-sizing: border-box;
+    }
+
+    /* 입력 필드와 버튼들을 위한 래퍼 */
+    .input-row {
       display: flex;
       gap: 8px;
-      margin-top: 10px;
-      padding: 0 10px;
+      margin-bottom: 8px;
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+      gap: 5px;
+    }
+
+    .test-btn {
+      background-color: #555555;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .test-btn:hover {
+      background-color: #666666;
     }
 
     #command-input {
       flex: 1;
-      padding: 8px 12px;
-      background-color: #2a2a2a;
-      border: 1px solid #444444;
+      padding: 10px 12px;
+      background-color: #333333;
+      border: 1px solid #555555;
       border-radius: 4px;
       color: #ffffff;
       font-family: 'Cascadia Mono', 'Consolas', 'Courier New', monospace;
@@ -135,8 +225,8 @@
     }
 
     #command-input:focus {
-      border-color: #666666;
-      background-color: #333333;
+      border-color: #777777;
+      background-color: #3a3a3a;
     }
 
     #command-input::placeholder {
@@ -144,7 +234,7 @@
     }
 
     #send-button {
-      padding: 8px 16px;
+      padding: 10px 20px;
       background-color: #4CAF50;
       color: white;
       border: none;
@@ -152,6 +242,7 @@
       cursor: pointer;
       font-family: inherit;
       font-size: 14px;
+      font-weight: 500;
       white-space: nowrap;
     }
 
@@ -167,29 +258,101 @@
       background-color: #666666;
       cursor: not-allowed;
     }
+
+    /* 반응형 디자인 */
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 1.4rem;
+      }
+
+      .header.compact h1 {
+        font-size: 1rem;
+      }
+
+      .version-info {
+        font-size: 0.6rem;
+        gap: 8px;
+      }
+
+      .connection-controls {
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      #input-container {
+        padding: 10px 15px;
+        gap: 8px;
+      }
+
+      #command-input {
+        font-size: 16px; /* iOS에서 줌 방지 */
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="header">
-    <h1>Echoes of the Fallen Age</h1>
-    <div class="version-info">
-      <span id="client-version">Client: v1.0.0</span>
-      <span id="server-version">Server: 연결 중...</span>
+  <div class="main-container">
+    <div class="header">
+      <h1 id="game-title">Karnas Chronicles: Divided Dominion</h1>
+      <div class="version-info">
+        <span id="client-version">Client: v1.0.0</span>
+        <span id="server-version">Server: Not connected</span>
+      </div>
+      <div class="connection-controls">
+        <button id="connect-btn" class="connect-button">Connect</button>
+        <span id="connection-status" class="connection-status">Ready to connect</span>
+      </div>
     </div>
-  </div>
 
-  <div id="error-container" class="error-message">
-    <div id="error-text"></div>
-    <button id="reconnect-btn" class="reconnect-button">Reconnect</button>
-  </div>
+    <div id="error-container" class="error-message">
+      <div id="error-text"></div>
+      <button id="reconnect-btn" class="reconnect-button">Reconnect</button>
+    </div>
 
-  <div id="terminal-container">
-    <div id="terminal"></div>
-  </div>
+    <div id="terminal-container">
+      <div id="terminal"></div>
+    </div>
 
-  <div id="input-container">
-    <input type="text" id="command-input" placeholder="Enter command..." autocomplete="off" spellcheck="false">
-    <button id="send-button">Send</button>
+    <div id="input-container">
+      <div class="input-row">
+        <input type="text" id="command-input" placeholder="Enter command..." autocomplete="off" spellcheck="false">
+        <button id="send-button">Send</button>
+      </div>
+
+      <!-- 테스트용 버튼들을 그리드로 배치 -->
+      <div class="button-grid">
+        <button class="test-btn">Test1</button>
+        <button class="test-btn">Test2</button>
+        <button class="test-btn">Test3</button>
+        <button class="test-btn">Test4</button>
+        <button class="test-btn">Test5</button>
+        <button class="test-btn">Test6</button>
+        <button class="test-btn">Test7</button>
+        <button class="test-btn">Test8</button>
+        <button class="test-btn">Test9</button>
+        <button class="test-btn">Test10</button>
+        <button class="test-btn">Test11</button>
+        <button class="test-btn">Test12</button>
+        <button class="test-btn">Test13</button>
+        <button class="test-btn">Test14</button>
+        <button class="test-btn">Test15</button>
+        <button class="test-btn">Test16</button>
+        <button class="test-btn">Test17</button>
+        <button class="test-btn">Test18</button>
+        <button class="test-btn">Test19</button>
+        <button class="test-btn">Test20</button>
+        <button class="test-btn">Test21</button>
+        <button class="test-btn">Test22</button>
+        <button class="test-btn">Test23</button>
+        <button class="test-btn">Test24</button>
+        <button class="test-btn">Test25</button>
+        <button class="test-btn">Test26</button>
+        <button class="test-btn">Test27</button>
+        <button class="test-btn">Test28</button>
+        <button class="test-btn">Test29</button>
+        <button class="test-btn">Test30</button>
+      </div>
+    </div>
   </div>
 
   <script type="module" src="/main.ts"></script>

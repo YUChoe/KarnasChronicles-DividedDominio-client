@@ -1,8 +1,8 @@
-# Browser Telnet Terminal
+# Karnas Chronicles: Divided Dominion - Browser Telnet Terminal
 
 브라우저 기반 텔넷 터미널 클라이언트 - MUD 서버 연결용
 
-웹 브라우저를 통해 텔넷 기반 MUD(Multi-User Dungeon) 게임 서버에 접속할 수 있는 현대적인 터미널 클라이언트입니다. 별도의 텔넷 클라이언트 설치 없이 브라우저만으로 게임을 즐길 수 있습니다.
+웹 브라우저를 통해 텔넷 기반 MUD(Multi-User Dungeon) 게임 서버에 접속할 수 있는 현대적인 터미널 클라이언트입니다. 별도의 텔넷 클라이언트 설치 없이 브라우저만으로 Karnas Chronicles: Divided Dominion 게임을 즐길 수 있습니다.
 
 ## 주요 기능
 
@@ -25,7 +25,7 @@
 ```bash
 # 저장소 클론
 git clone <repository-url>
-cd browser-telnet-terminal
+cd karnas-chronicles-terminal
 
 # 의존성 설치
 npm install
@@ -82,7 +82,7 @@ docker run -d \
   -p 3000:3000 \
   -v $(pwd)/logs:/app/logs \
   --env-file .env \
-  browser-telnet-terminal:latest
+  karnas-chronicles-terminal:latest
 
 # 또는 docker-compose 사용
 docker-compose up -d
@@ -131,7 +131,7 @@ const config = {
 ## 프로젝트 구조
 
 ```
-browser-telnet-terminal/
+karnas-chronicles-terminal/
 ├── src/
 │   ├── client/                    # 브라우저 클라이언트
 │   │   ├── index.html            # HTML 엔트리 포인트
