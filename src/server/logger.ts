@@ -5,7 +5,7 @@ import path from 'path';
 function getCallerInfo(): string {
   const stack = new Error().stack;
   if (!stack) return '';
-  
+
   const lines = stack.split('\n');
   // 3번째 라인이 실제 호출자 (0: Error, 1: getCallerInfo, 2: format, 3: 실제 호출자)
   for (let i = 3; i < lines.length; i++) {
@@ -57,6 +57,21 @@ export const logger = winston.createLogger({
     })
   ]
 });
+
+// 프로덕션 환경에서 파일 로그 추가
+if (process.env.NODE_ENV === 'production') {
+  logger.add(new winston.transports.File({
+    filename: 'logs/error.log',
+    level: 'error',
+    maxsize: 200 * 1024 * 1024,
+    maxFiles: 30,
+  }));
+  logger.add(new winston.transports.File({
+    filename: 'logs/combined.log',
+    maxsize: 200 * 1024 * 1024,
+    maxFiles: 30,
+  }));
+}
 
 // 개발 환경에서는 더 상세한 로그
 if (process.env.NODE_ENV !== 'production') {

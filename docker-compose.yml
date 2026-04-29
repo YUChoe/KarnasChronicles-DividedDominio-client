@@ -18,6 +18,7 @@ services:
       - LOG_LEVEL=info
     volumes:
       - ./logs:/app/logs
+      - ./data:/app/data
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped

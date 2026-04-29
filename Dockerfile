@@ -36,8 +36,8 @@ RUN npm ci --only=production && npm cache clean --force
 # Copy built server
 COPY --from=builder /app/dist/server ./dist/server
 
-# Create logs directory
-RUN mkdir -p logs
+# Create logs and data directories
+RUN mkdir -p logs data
 
 # Expose WebSocket port
 EXPOSE 3000
