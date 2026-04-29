@@ -11,6 +11,7 @@
     "build": "npm run build:client && npm run build:server",
     "preview": "bash -c './node_modules/.bin/vite preview'",
     "type-check": "node node_modules/typescript/lib/tsc.js --noEmit",
+    "type-check:server": "node node_modules/typescript/lib/tsc.js -p tsconfig.server.json --noEmit",
     "test": "bash -c './node_modules/.bin/vitest --run'",
     "test:server": "bash -c './node_modules/.bin/vitest --run --config vitest.config.server.ts'",
     "test:e2e": "bash -c './node_modules/.bin/vitest --run --config vitest.config.e2e.ts'",

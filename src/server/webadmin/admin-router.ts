@@ -1,13 +1,9 @@
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { AuthModule } from './auth.js';
 import { DBClient } from './db-client.js';
 import { logger } from '../logger.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 /** Content-Type 매핑 */
 const MIME_TYPES: Record<string, string> = {
