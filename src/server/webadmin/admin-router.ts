@@ -236,6 +236,12 @@ export class AdminRouter {
         case 'item-prices':
           this.handleItemPricesApi(req, res, method, params);
           break;
+        case 'factions':
+          this.handleFactionsApi(req, res, method, params);
+          break;
+        case 'faction-relations':
+          this.handleFactionRelationsApi(req, res, method, params, segments);
+          break;
         default:
           this.sendError(res, 404, 'API endpoint not found');
       }
@@ -791,6 +797,165 @@ export class AdminRouter {
       }
     } catch (error) {
       logger.error('Item prices API handler error', {
+        method,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      this.sendError(res, 500, 'Internal server error');
+    }
+  }
+
+  /** /webadmin/api/factions/* */
+  private async handleFactionsApi(
+    req: http.IncomingMessage,
+    res: http.ServerResponse,
+    method: string,
+    params: RouteParams,
+  ): Promise<void> {
+    try {
+      // /webadmin/api/factions/:id (단일 리소스)
+      if (params.id) {
+        switch (method) {
+          case 'GET': {
+            const faction = this.db.getFactionById(params.id);
+            if (!faction) {
+              this.sendError(res, 404, 'Faction not found');
+              return;
+            }
+            this.sendJson(res, 200, faction);
+            return;
+          }
+          case 'PUT': {
+            const body = await this.parseBody(req);
+            const updated = this.db.updateFaction(params.id, body);
+            if (!updated) {
+              this.sendError(res, 404, 'Faction not found');
+              return;
+            }
+            this.sendJson(res, 200, updated);
+            return;
+          }
+          case 'DELETE': {
+            try {
+              const deleted = this.db.deleteFaction(params.id);
+              if (!deleted) {
+                this.sendError(res, 404, 'Faction not found');
+                return;
+              }
+              this.sendJson(res, 200, { success: true });
+            } catch (error) {
+              if (error instanceof Error && error.name === 'FactionInUseError') {
+                this.sendError(res, 409, error.message);
+                return;
+              }
+              throw error;
+            }
+            return;
+          }
+          default:
+            this.sendError(res, 405, 'Method not allowed');
+            return;
+        }
+      }
+
+      // /webadmin/api/factions (컬렉션)
+      switch (method) {
+        case 'GET': {
+          this.sendJson(res, 200, this.db.getFactions());
+          return;
+        }
+        case 'POST': {
+          const body = await this.parseBody(req);
+          // 필수 필드 검증: id, name_en, name_ko
+          if (!body.id || typeof body.id !== 'string') {
+            this.sendError(res, 400, 'id is required', 'id');
+            return;
+          }
+          if (!body.name_en || typeof body.name_en !== 'string') {
+            this.sendError(res, 400, 'name_en is required', 'name_en');
+            return;
+          }
+          if (!body.name_ko || typeof body.name_ko !== 'string') {
+            this.sendError(res, 400, 'name_ko is required', 'name_ko');
+            return;
+          }
+          try {
+            const created = this.db.createFaction(body as import('./db-client.js').CreateFactionInput);
+            this.sendJson(res, 201, created);
+          } catch (error) {
+            if (error instanceof Error && error.name === 'UniqueConstraintError') {
+              this.sendError(res, 409, error.message);
+              return;
+            }
+            throw error;
+          }
+          return;
+        }
+        default:
+          this.sendError(res, 405, 'Method not allowed');
+          return;
+      }
+    } catch (error) {
+      logger.error('Factions API handler error', {
+        method,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      this.sendError(res, 500, 'Internal server error');
+    }
+  }
+
+  /** /webadmin/api/faction-relations/* */
+  private async handleFactionRelationsApi(
+    req: http.IncomingMessage,
+    res: http.ServerResponse,
+    method: string,
+    _params: RouteParams,
+    segments: string[],
+  ): Promise<void> {
+    try {
+      // DELETE /webadmin/api/faction-relations/:a/:b (복합 PK)
+      if (segments.length === 3) {
+        if (method === 'DELETE') {
+          const deleted = this.db.deleteFactionRelation(segments[1], segments[2]);
+          if (!deleted) {
+            this.sendError(res, 404, 'Faction relation not found');
+            return;
+          }
+          this.sendJson(res, 200, { success: true });
+          return;
+        }
+        this.sendError(res, 405, 'Method not allowed');
+        return;
+      }
+
+      // /webadmin/api/faction-relations (컬렉션)
+      switch (method) {
+        case 'GET': {
+          this.sendJson(res, 200, this.db.getFactionRelations());
+          return;
+        }
+        case 'POST': {
+          const body = await this.parseBody(req);
+          // 필수 필드 검증: faction_a_id, faction_b_id
+          if (!body.faction_a_id || typeof body.faction_a_id !== 'string') {
+            this.sendError(res, 400, 'faction_a_id is required', 'faction_a_id');
+            return;
+          }
+          if (!body.faction_b_id || typeof body.faction_b_id !== 'string') {
+            this.sendError(res, 400, 'faction_b_id is required', 'faction_b_id');
+            return;
+          }
+          const result = this.db.upsertFactionRelation(
+            body as import('./db-client.js').UpsertFactionRelationInput,
+          );
+          this.sendJson(res, 200, result);
+          return;
+        }
+        default:
+          this.sendError(res, 405, 'Method not allowed');
+          return;
+      }
+    } catch (error) {
+      logger.error('Faction relations API handler error', {
         method,
         error: error instanceof Error ? error.message : String(error),
       });

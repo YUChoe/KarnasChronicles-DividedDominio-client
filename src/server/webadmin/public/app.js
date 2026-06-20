@@ -228,7 +228,7 @@ async function checkSession() {
 /* ================================================================
  * 해시 기반 라우팅
  * ================================================================ */
-const SECTIONS = ['dashboard', 'players', 'rooms', 'monsters', 'objects', 'item-prices'];
+const SECTIONS = ['dashboard', 'players', 'rooms', 'monsters', 'objects', 'item-prices', 'factions', 'faction-relations'];
 
 /** 현재 해시에서 섹션 이름 추출 */
 function getCurrentSection() {
@@ -273,6 +273,8 @@ function navigate() {
     monsters:  renderMonsters,
     objects:   renderObjects,
     'item-prices': renderItemPrices,
+    factions:  renderFactions,
+    'faction-relations': renderFactionRelations,
   };
 
   if (renderers[section]) {
@@ -2523,5 +2525,395 @@ async function handleEditItemPrice(templateId) {
     renderItemPrices();
   } catch (err) {
     notify.error('Failed to update item price: ' + err.message);
+  }
+}
+
+/* ================================================================
+ * 종족 (factions) 섹션
+ * ================================================================ */
+
+const STANCE_OPTIONS = ['FRIENDLY', 'NEUTRAL', 'HOSTILE'];
+const RELATION_STATUS_OPTIONS = ['ALLIED', 'FRIENDLY', 'NEUTRAL', 'UNFRIENDLY', 'HOSTILE'];
+
+function buildSelectOptions(values, selected) {
+  return values.map(function (v) {
+    return '<option value="' + v + '"' + (v === selected ? ' selected' : '') + '>' + v + '</option>';
+  }).join('');
+}
+
+/** 종족 섹션 렌더링 */
+async function renderFactions() {
+  const container = document.getElementById('section-factions');
+  container.innerHTML = '<p class="text-muted">Loading factions...</p>';
+
+  try {
+    const result = await api.get('/factions');
+    const factions = Array.isArray(result) ? result : (result.data || []);
+
+    let html = '<div class="section-header">'
+      + '<h2>Factions</h2>'
+      + '<button class="btn btn-primary" id="btn-create-faction">Create Faction</button>'
+      + '</div>';
+
+    html += '<div class="table-container"><table class="data-table">';
+    html += '<thead><tr>'
+      + '<th>ID</th>'
+      + '<th>Name (EN)</th>'
+      + '<th>Name (KO)</th>'
+      + '<th>Default Stance</th>'
+      + '<th>Actions</th>'
+      + '</tr></thead><tbody>';
+
+    if (factions.length === 0) {
+      html += '<tr><td colspan="5" class="text-muted text-center">No factions found.</td></tr>';
+    } else {
+      for (const f of factions) {
+        html += '<tr>'
+          + '<td>' + escapeHtml(f.id) + '</td>'
+          + '<td>' + escapeHtml(f.name_en || '') + '</td>'
+          + '<td>' + escapeHtml(f.name_ko || '') + '</td>'
+          + '<td>' + escapeHtml(f.default_stance || '-') + '</td>'
+          + '<td class="actions-cell">'
+          + '<button class="btn btn-sm btn-secondary btn-edit-faction" data-id="' + escapeHtml(f.id) + '">Edit</button> '
+          + '<button class="btn btn-sm btn-danger btn-delete-faction" data-id="' + escapeHtml(f.id) + '">Delete</button>'
+          + '</td>'
+          + '</tr>';
+      }
+    }
+
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+    bindFactionsEvents();
+  } catch (err) {
+    container.innerHTML = '<p class="text-danger">Failed to load factions: ' + escapeHtml(err.message) + '</p>';
+  }
+}
+
+/** 종족 섹션 이벤트 바인딩 */
+function bindFactionsEvents() {
+  const createBtn = document.getElementById('btn-create-faction');
+  if (createBtn) {
+    createBtn.addEventListener('click', showCreateFactionModal);
+  }
+
+  document.querySelectorAll('.btn-edit-faction').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      showEditFactionModal(btn.getAttribute('data-id'));
+    });
+  });
+
+  document.querySelectorAll('.btn-delete-faction').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const id = btn.getAttribute('data-id');
+      confirm.open('Are you sure you want to delete faction \'' + id + '\'?', async function () {
+        try {
+          await api.del('/factions/' + encodeURIComponent(id));
+          notify.success('Faction deleted successfully.');
+          renderFactions();
+        } catch (err) {
+          notify.error('Failed to delete faction: ' + err.message);
+        }
+      });
+    });
+  });
+}
+
+/** 종족 폼 본문 HTML (생성/수정 공용) */
+function buildFactionFormHtml(f, isEdit) {
+  const propsStr = f.properties ? JSON.stringify(f.properties, null, 2) : '{}';
+  return '<form id="faction-form">'
+    + '<div class="form-group"><label for="ff-id">ID *</label>'
+    + '<input type="text" id="ff-id" value="' + escapeHtml(f.id || '') + '"' + (isEdit ? ' disabled' : ' placeholder="e.g. goblins"') + '></div>'
+    + '<div class="form-group"><label for="ff-name-en">Name (EN) *</label>'
+    + '<input type="text" id="ff-name-en" value="' + escapeHtml(f.name_en || '') + '"></div>'
+    + '<div class="form-group"><label for="ff-name-ko">Name (KO) *</label>'
+    + '<input type="text" id="ff-name-ko" value="' + escapeHtml(f.name_ko || '') + '"></div>'
+    + '<div class="form-group"><label for="ff-desc-en">Description (EN)</label>'
+    + '<textarea id="ff-desc-en" rows="2">' + escapeHtml(f.description_en || '') + '</textarea></div>'
+    + '<div class="form-group"><label for="ff-desc-ko">Description (KO)</label>'
+    + '<textarea id="ff-desc-ko" rows="2">' + escapeHtml(f.description_ko || '') + '</textarea></div>'
+    + '<div class="form-group"><label for="ff-stance">Default Stance</label>'
+    + '<select id="ff-stance">' + buildSelectOptions(STANCE_OPTIONS, f.default_stance || 'NEUTRAL') + '</select></div>'
+    + '<div class="form-group"><label for="ff-properties">Properties (JSON)</label>'
+    + '<textarea id="ff-properties" rows="3">' + escapeHtml(propsStr) + '</textarea></div>'
+    + '</form>';
+}
+
+/** 종족 폼에서 입력값 수집 (JSON 파싱 포함). 오류 시 null 반환하고 notify */
+function collectFactionForm(includeId) {
+  const nameEn = document.getElementById('ff-name-en').value.trim();
+  const nameKo = document.getElementById('ff-name-ko').value.trim();
+  if (nameEn === '' || nameKo === '') {
+    notify.error('Name (EN) and Name (KO) are required.');
+    return null;
+  }
+
+  let properties;
+  const propsRaw = document.getElementById('ff-properties').value.trim();
+  try {
+    properties = propsRaw === '' ? {} : JSON.parse(propsRaw);
+  } catch (e) {
+    notify.error('Properties must be valid JSON.');
+    return null;
+  }
+
+  const body = {
+    name_en: nameEn,
+    name_ko: nameKo,
+    description_en: document.getElementById('ff-desc-en').value.trim() || null,
+    description_ko: document.getElementById('ff-desc-ko').value.trim() || null,
+    default_stance: document.getElementById('ff-stance').value,
+    properties: properties,
+  };
+
+  if (includeId) {
+    const id = document.getElementById('ff-id').value.trim();
+    if (id === '') {
+      notify.error('ID is required.');
+      return null;
+    }
+    body.id = id;
+  }
+
+  return body;
+}
+
+/** 종족 생성 모달 표시 */
+function showCreateFactionModal() {
+  const footerHtml = '<button class="btn btn-secondary" id="faction-create-cancel">Cancel</button>'
+    + ' <button class="btn btn-primary" id="faction-create-submit">Create</button>';
+
+  modal.open('Create Faction', buildFactionFormHtml({}, false), footerHtml);
+
+  document.getElementById('faction-create-cancel').addEventListener('click', modal.close);
+  document.getElementById('faction-create-submit').addEventListener('click', handleCreateFaction);
+}
+
+/** 종족 생성 처리 */
+async function handleCreateFaction() {
+  const body = collectFactionForm(true);
+  if (!body) return;
+
+  try {
+    await api.post('/factions', body);
+    modal.close();
+    notify.success('Faction created successfully.');
+    renderFactions();
+  } catch (err) {
+    notify.error('Failed to create faction: ' + err.message);
+  }
+}
+
+/** 종족 수정 모달 표시 */
+async function showEditFactionModal(factionId) {
+  try {
+    const result = await api.get('/factions/' + encodeURIComponent(factionId));
+    const f = result.data || result;
+
+    const footerHtml = '<button class="btn btn-secondary" id="faction-edit-cancel">Cancel</button>'
+      + ' <button class="btn btn-primary" id="faction-edit-submit">Save</button>';
+
+    modal.open('Edit Faction: ' + f.id, buildFactionFormHtml(f, true), footerHtml);
+
+    document.getElementById('faction-edit-cancel').addEventListener('click', modal.close);
+    document.getElementById('faction-edit-submit').addEventListener('click', function () {
+      handleEditFaction(factionId);
+    });
+  } catch (err) {
+    notify.error('Failed to load faction: ' + err.message);
+  }
+}
+
+/** 종족 수정 처리 */
+async function handleEditFaction(factionId) {
+  const body = collectFactionForm(false);
+  if (!body) return;
+
+  try {
+    await api.put('/factions/' + encodeURIComponent(factionId), body);
+    modal.close();
+    notify.success('Faction updated successfully.');
+    renderFactions();
+  } catch (err) {
+    notify.error('Failed to update faction: ' + err.message);
+  }
+}
+
+/* ================================================================
+ * 종족 관계 (faction_relations) 섹션
+ * ================================================================ */
+
+/** 종족 관계 섹션 렌더링 */
+async function renderFactionRelations() {
+  const container = document.getElementById('section-faction-relations');
+  container.innerHTML = '<p class="text-muted">Loading faction relations...</p>';
+
+  try {
+    const result = await api.get('/faction-relations');
+    const relations = Array.isArray(result) ? result : (result.data || []);
+
+    let html = '<div class="section-header">'
+      + '<h2>Faction Relations</h2>'
+      + '<button class="btn btn-primary" id="btn-create-relation">Create Relation</button>'
+      + '</div>';
+
+    html += '<div class="table-container"><table class="data-table">';
+    html += '<thead><tr>'
+      + '<th>Faction A</th>'
+      + '<th>Faction B</th>'
+      + '<th>Value</th>'
+      + '<th>Status</th>'
+      + '<th>Actions</th>'
+      + '</tr></thead><tbody>';
+
+    if (relations.length === 0) {
+      html += '<tr><td colspan="5" class="text-muted text-center">No faction relations found.</td></tr>';
+    } else {
+      for (const r of relations) {
+        html += '<tr>'
+          + '<td>' + escapeHtml(r.faction_a_id) + '</td>'
+          + '<td>' + escapeHtml(r.faction_b_id) + '</td>'
+          + '<td>' + escapeHtml(r.relation_value) + '</td>'
+          + '<td>' + escapeHtml(r.relation_status || '-') + '</td>'
+          + '<td class="actions-cell">'
+          + '<button class="btn btn-sm btn-secondary btn-edit-relation" data-a="' + escapeHtml(r.faction_a_id) + '" data-b="' + escapeHtml(r.faction_b_id) + '" data-value="' + escapeHtml(r.relation_value) + '" data-status="' + escapeHtml(r.relation_status || 'NEUTRAL') + '">Edit</button> '
+          + '<button class="btn btn-sm btn-danger btn-delete-relation" data-a="' + escapeHtml(r.faction_a_id) + '" data-b="' + escapeHtml(r.faction_b_id) + '">Delete</button>'
+          + '</td>'
+          + '</tr>';
+      }
+    }
+
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+    bindFactionRelationsEvents();
+  } catch (err) {
+    container.innerHTML = '<p class="text-danger">Failed to load faction relations: ' + escapeHtml(err.message) + '</p>';
+  }
+}
+
+/** 종족 관계 섹션 이벤트 바인딩 */
+function bindFactionRelationsEvents() {
+  const createBtn = document.getElementById('btn-create-relation');
+  if (createBtn) {
+    createBtn.addEventListener('click', showCreateFactionRelationModal);
+  }
+
+  document.querySelectorAll('.btn-edit-relation').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      showEditFactionRelationModal(
+        btn.getAttribute('data-a'),
+        btn.getAttribute('data-b'),
+        btn.getAttribute('data-value'),
+        btn.getAttribute('data-status')
+      );
+    });
+  });
+
+  document.querySelectorAll('.btn-delete-relation').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const a = btn.getAttribute('data-a');
+      const b = btn.getAttribute('data-b');
+      confirm.open('Delete relation \'' + a + '\' → \'' + b + '\'?', async function () {
+        try {
+          await api.del('/faction-relations/' + encodeURIComponent(a) + '/' + encodeURIComponent(b));
+          notify.success('Faction relation deleted successfully.');
+          renderFactionRelations();
+        } catch (err) {
+          notify.error('Failed to delete faction relation: ' + err.message);
+        }
+      });
+    });
+  });
+}
+
+/** 종족 목록 조회 (관계 폼 드롭다운용) */
+async function fetchFactionList() {
+  const result = await api.get('/factions');
+  return Array.isArray(result) ? result : (result.data || []);
+}
+
+/** 종족 관계 생성 모달 표시 */
+async function showCreateFactionRelationModal() {
+  try {
+    const factions = await fetchFactionList();
+    if (factions.length === 0) {
+      notify.error('No factions available. Create factions first.');
+      return;
+    }
+    const factionOpts = factions.map(function (f) {
+      return '<option value="' + escapeHtml(f.id) + '">' + escapeHtml(f.id) + '</option>';
+    }).join('');
+
+    const bodyHtml = '<form id="relation-form">'
+      + '<div class="form-group"><label for="rl-a">Faction A *</label>'
+      + '<select id="rl-a">' + factionOpts + '</select></div>'
+      + '<div class="form-group"><label for="rl-b">Faction B *</label>'
+      + '<select id="rl-b">' + factionOpts + '</select></div>'
+      + '<div class="form-group"><label for="rl-value">Relation Value (-100 ~ 100)</label>'
+      + '<input type="number" id="rl-value" value="0" min="-100" max="100"></div>'
+      + '<div class="form-group"><label for="rl-status">Status</label>'
+      + '<select id="rl-status">' + buildSelectOptions(RELATION_STATUS_OPTIONS, 'NEUTRAL') + '</select></div>'
+      + '</form>';
+
+    const footerHtml = '<button class="btn btn-secondary" id="relation-create-cancel">Cancel</button>'
+      + ' <button class="btn btn-primary" id="relation-create-submit">Create</button>';
+
+    modal.open('Create Faction Relation', bodyHtml, footerHtml);
+
+    document.getElementById('relation-create-cancel').addEventListener('click', modal.close);
+    document.getElementById('relation-create-submit').addEventListener('click', handleUpsertFactionRelation);
+  } catch (err) {
+    notify.error('Failed to load factions: ' + err.message);
+  }
+}
+
+/** 종족 관계 수정 모달 표시 (A/B 고정) */
+function showEditFactionRelationModal(a, b, value, status) {
+  const bodyHtml = '<form id="relation-form">'
+    + '<div class="form-group"><label for="rl-a">Faction A</label>'
+    + '<input type="text" id="rl-a" value="' + escapeHtml(a) + '" disabled></div>'
+    + '<div class="form-group"><label for="rl-b">Faction B</label>'
+    + '<input type="text" id="rl-b" value="' + escapeHtml(b) + '" disabled></div>'
+    + '<div class="form-group"><label for="rl-value">Relation Value (-100 ~ 100)</label>'
+    + '<input type="number" id="rl-value" value="' + escapeHtml(value != null ? value : 0) + '" min="-100" max="100"></div>'
+    + '<div class="form-group"><label for="rl-status">Status</label>'
+    + '<select id="rl-status">' + buildSelectOptions(RELATION_STATUS_OPTIONS, status || 'NEUTRAL') + '</select></div>'
+    + '</form>';
+
+  const footerHtml = '<button class="btn btn-secondary" id="relation-edit-cancel">Cancel</button>'
+    + ' <button class="btn btn-primary" id="relation-edit-submit">Save</button>';
+
+  modal.open('Edit Relation: ' + a + ' → ' + b, bodyHtml, footerHtml);
+
+  document.getElementById('relation-edit-cancel').addEventListener('click', modal.close);
+  document.getElementById('relation-edit-submit').addEventListener('click', function () {
+    handleUpsertFactionRelation(a, b);
+  });
+}
+
+/** 종족 관계 생성/수정 처리 (upsert) */
+async function handleUpsertFactionRelation(fixedA, fixedB) {
+  const a = typeof fixedA === 'string' ? fixedA : document.getElementById('rl-a').value;
+  const b = typeof fixedB === 'string' ? fixedB : document.getElementById('rl-b').value;
+
+  if (a === b) {
+    notify.error('Faction A and B must be different.');
+    return;
+  }
+
+  const body = {
+    faction_a_id: a,
+    faction_b_id: b,
+    relation_value: parseInt(document.getElementById('rl-value').value, 10) || 0,
+    relation_status: document.getElementById('rl-status').value,
+  };
+
+  try {
+    await api.post('/faction-relations', body);
+    modal.close();
+    notify.success('Faction relation saved successfully.');
+    renderFactionRelations();
+  } catch (err) {
+    notify.error('Failed to save faction relation: ' + err.message);
   }
 }
