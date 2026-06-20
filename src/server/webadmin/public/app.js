@@ -228,7 +228,7 @@ async function checkSession() {
 /* ================================================================
  * 해시 기반 라우팅
  * ================================================================ */
-const SECTIONS = ['dashboard', 'players', 'rooms', 'monsters', 'objects'];
+const SECTIONS = ['dashboard', 'players', 'rooms', 'monsters', 'objects', 'item-prices'];
 
 /** 현재 해시에서 섹션 이름 추출 */
 function getCurrentSection() {
@@ -272,6 +272,7 @@ function navigate() {
     rooms:     renderRooms,
     monsters:  renderMonsters,
     objects:   renderObjects,
+    'item-prices': renderItemPrices,
   };
 
   if (renderers[section]) {
@@ -2314,3 +2315,213 @@ document.addEventListener('DOMContentLoaded', async () => {
     showLogin();
   }
 });
+
+/* ================================================================
+ * 아이템 가격 (item_prices) 섹션
+ * ================================================================ */
+
+// 아이템 가격 페이지네이션 상태
+let _itemPricesPage = 1;
+const _itemPricesLimit = 20;
+
+/** 아이템 가격 섹션 렌더링 */
+async function renderItemPrices() {
+  const container = document.getElementById('section-item-prices');
+  container.innerHTML = '<p class="text-muted">Loading item prices...</p>';
+
+  try {
+    const result = await api.get('/item-prices?page=' + _itemPricesPage + '&limit=' + _itemPricesLimit);
+    const prices = result.data || [];
+    const pagination = result.pagination || {};
+
+    let html = '<div class="section-header">'
+      + '<h2>Item Prices</h2>'
+      + '<button class="btn btn-primary" id="btn-create-item-price">Create Price</button>'
+      + '</div>';
+
+    html += '<div class="table-container"><table class="data-table">';
+    html += '<thead><tr>'
+      + '<th>Template ID</th>'
+      + '<th>Buy Price</th>'
+      + '<th>Sell Price</th>'
+      + '<th>Actions</th>'
+      + '</tr></thead>';
+    html += '<tbody>';
+
+    if (prices.length === 0) {
+      html += '<tr><td colspan="4" class="text-muted text-center">No item prices found.</td></tr>';
+    } else {
+      for (const p of prices) {
+        html += '<tr>'
+          + '<td>' + escapeHtml(p.template_id) + '</td>'
+          + '<td>' + escapeHtml(p.buy_price) + '</td>'
+          + '<td>' + escapeHtml(p.sell_price) + '</td>'
+          + '<td class="actions-cell">'
+          + '<button class="btn btn-sm btn-secondary btn-edit-item-price" data-id="' + escapeHtml(p.template_id) + '">Edit</button> '
+          + '<button class="btn btn-sm btn-danger btn-delete-item-price" data-id="' + escapeHtml(p.template_id) + '">Delete</button>'
+          + '</td>'
+          + '</tr>';
+      }
+    }
+
+    html += '</tbody></table></div>';
+    html += buildItemPricesPagination(pagination);
+
+    container.innerHTML = html;
+    bindItemPricesEvents();
+  } catch (err) {
+    container.innerHTML = '<p class="text-danger">Failed to load item prices: ' + escapeHtml(err.message) + '</p>';
+  }
+}
+
+/** 아이템 가격 페이지네이션 HTML */
+function buildItemPricesPagination(pagination) {
+  const page = pagination.page || 1;
+  const totalPages = pagination.totalPages || 1;
+
+  let html = '<div class="pagination">';
+  html += '<button class="btn btn-sm btn-secondary" id="item-prices-prev"'
+    + (page <= 1 ? ' disabled' : '') + '>&laquo; Prev</button>';
+  html += '<span class="pagination-info">Page ' + page + ' / ' + totalPages + '</span>';
+  html += '<button class="btn btn-sm btn-secondary" id="item-prices-next"'
+    + (page >= totalPages ? ' disabled' : '') + '>Next &raquo;</button>';
+  html += '</div>';
+  return html;
+}
+
+/** 아이템 가격 섹션 이벤트 바인딩 */
+function bindItemPricesEvents() {
+  const createBtn = document.getElementById('btn-create-item-price');
+  if (createBtn) {
+    createBtn.addEventListener('click', showCreateItemPriceModal);
+  }
+
+  document.querySelectorAll('.btn-edit-item-price').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      showEditItemPriceModal(btn.getAttribute('data-id'));
+    });
+  });
+
+  document.querySelectorAll('.btn-delete-item-price').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const templateId = btn.getAttribute('data-id');
+      confirm.open('Are you sure you want to delete the price for \'' + templateId + '\'?', async function () {
+        try {
+          await api.del('/item-prices/' + encodeURIComponent(templateId));
+          notify.success('Item price deleted successfully.');
+          renderItemPrices();
+        } catch (err) {
+          notify.error('Failed to delete item price: ' + err.message);
+        }
+      });
+    });
+  });
+
+  const prevBtn = document.getElementById('item-prices-prev');
+  if (prevBtn) {
+    prevBtn.addEventListener('click', function () {
+      if (_itemPricesPage > 1) {
+        _itemPricesPage--;
+        renderItemPrices();
+      }
+    });
+  }
+
+  const nextBtn = document.getElementById('item-prices-next');
+  if (nextBtn) {
+    nextBtn.addEventListener('click', function () {
+      _itemPricesPage++;
+      renderItemPrices();
+    });
+  }
+}
+
+/** 아이템 가격 생성 모달 표시 */
+function showCreateItemPriceModal() {
+  const bodyHtml = '<form id="item-price-create-form">'
+    + '<div class="form-group"><label for="ipf-template">Template ID *</label>'
+    + '<input type="text" id="ipf-template" required placeholder="e.g. health_potion"></div>'
+    + '<div class="form-group"><label for="ipf-buy">Buy Price</label>'
+    + '<input type="number" id="ipf-buy" value="0" min="0"></div>'
+    + '<div class="form-group"><label for="ipf-sell">Sell Price</label>'
+    + '<input type="number" id="ipf-sell" value="0" min="0"></div>'
+    + '</form>';
+
+  const footerHtml = '<button class="btn btn-secondary" id="item-price-create-cancel">Cancel</button>'
+    + ' <button class="btn btn-primary" id="item-price-create-submit">Create</button>';
+
+  modal.open('Create Item Price', bodyHtml, footerHtml);
+
+  document.getElementById('item-price-create-cancel').addEventListener('click', modal.close);
+  document.getElementById('item-price-create-submit').addEventListener('click', handleCreateItemPrice);
+}
+
+/** 아이템 가격 생성 처리 */
+async function handleCreateItemPrice() {
+  const templateId = document.getElementById('ipf-template').value.trim();
+  if (templateId === '') {
+    notify.error('Template ID is required.');
+    return;
+  }
+
+  const body = {
+    template_id: templateId,
+    buy_price: parseInt(document.getElementById('ipf-buy').value, 10) || 0,
+    sell_price: parseInt(document.getElementById('ipf-sell').value, 10) || 0,
+  };
+
+  try {
+    await api.post('/item-prices', body);
+    modal.close();
+    notify.success('Item price created successfully.');
+    renderItemPrices();
+  } catch (err) {
+    notify.error('Failed to create item price: ' + err.message);
+  }
+}
+
+/** 아이템 가격 수정 모달 표시 */
+async function showEditItemPriceModal(templateId) {
+  try {
+    const result = await api.get('/item-prices/' + encodeURIComponent(templateId));
+    const p = result.data || result;
+
+    const bodyHtml = '<form id="item-price-edit-form">'
+      + '<div class="form-group"><label>Template ID</label>'
+      + '<input type="text" value="' + escapeHtml(p.template_id) + '" disabled></div>'
+      + '<div class="form-group"><label for="ipe-buy">Buy Price</label>'
+      + '<input type="number" id="ipe-buy" value="' + escapeHtml(p.buy_price != null ? p.buy_price : 0) + '" min="0"></div>'
+      + '<div class="form-group"><label for="ipe-sell">Sell Price</label>'
+      + '<input type="number" id="ipe-sell" value="' + escapeHtml(p.sell_price != null ? p.sell_price : 0) + '" min="0"></div>'
+      + '</form>';
+
+    const footerHtml = '<button class="btn btn-secondary" id="item-price-edit-cancel">Cancel</button>'
+      + ' <button class="btn btn-primary" id="item-price-edit-submit">Save</button>';
+
+    modal.open('Edit Item Price: ' + p.template_id, bodyHtml, footerHtml);
+
+    document.getElementById('item-price-edit-cancel').addEventListener('click', modal.close);
+    document.getElementById('item-price-edit-submit').addEventListener('click', function () {
+      handleEditItemPrice(templateId);
+    });
+  } catch (err) {
+    notify.error('Failed to load item price: ' + err.message);
+  }
+}
+
+/** 아이템 가격 수정 처리 */
+async function handleEditItemPrice(templateId) {
+  const body = {
+    buy_price: parseInt(document.getElementById('ipe-buy').value, 10) || 0,
+    sell_price: parseInt(document.getElementById('ipe-sell').value, 10) || 0,
+  };
+
+  try {
+    await api.put('/item-prices/' + encodeURIComponent(templateId), body);
+    modal.close();
+    notify.success('Item price updated successfully.');
+    renderItemPrices();
+  } catch (err) {
+    notify.error('Failed to update item price: ' + err.message);
+  }
+}

@@ -283,6 +283,25 @@ export interface UpdateMonsterInput {
   faction_id?: string;
 }
 
+// ── 아이템 가격 타입 ──
+
+export interface ItemPrice {
+  template_id: string;
+  buy_price: number;
+  sell_price: number;
+}
+
+export interface CreateItemPriceInput {
+  template_id: string;
+  buy_price?: number;
+  sell_price?: number;
+}
+
+export interface UpdateItemPriceInput {
+  buy_price?: number;
+  sell_price?: number;
+}
+
 export class DBClient {
   private db: DatabaseType;
 
@@ -1481,6 +1500,141 @@ export class DBClient {
     } catch (error) {
       logger.error('Failed to delete game object', {
         id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  }
+
+  // ── 아이템 가격 CRUD ──
+
+  /**
+   * 페이지네이션된 아이템 가격 목록 조회
+   */
+  getItemPrices(page: number, limit: number): PaginatedResult<ItemPrice> {
+    const countSql = 'SELECT COUNT(*) AS count FROM item_prices';
+    const dataSql = `
+      SELECT template_id, buy_price, sell_price
+      FROM item_prices
+      ORDER BY template_id ASC`;
+
+    return this.paginate<ItemPrice>(countSql, dataSql, {}, page, limit);
+  }
+
+  /**
+   * 아이템 가격 상세 조회
+   * 없으면 null 반환
+   */
+  getItemPriceById(templateId: string): ItemPrice | null {
+    try {
+      const row = this.db.prepare(`
+        SELECT template_id, buy_price, sell_price
+        FROM item_prices
+        WHERE template_id = @templateId
+      `).get({ templateId }) as ItemPrice | undefined;
+
+      return row ?? null;
+    } catch (error) {
+      logger.error('Failed to get item price by id', {
+        templateId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * 새 아이템 가격 생성
+   * - template_id 중복 시 UniqueConstraintError throw
+   * - buy_price/sell_price 기본값 0
+   */
+  createItemPrice(data: CreateItemPriceInput): ItemPrice {
+    const existing = this.db.prepare(
+      'SELECT template_id FROM item_prices WHERE template_id = @templateId',
+    ).get({ templateId: data.template_id });
+
+    if (existing) {
+      const dupError = new Error(`Item price for '${data.template_id}' already exists`);
+      dupError.name = 'UniqueConstraintError';
+      throw dupError;
+    }
+
+    try {
+      this.db.prepare(`
+        INSERT INTO item_prices (template_id, buy_price, sell_price)
+        VALUES (@template_id, @buy_price, @sell_price)
+      `).run({
+        template_id: data.template_id,
+        buy_price: data.buy_price ?? 0,
+        sell_price: data.sell_price ?? 0,
+      });
+    } catch (error) {
+      logger.error('Failed to create item price', {
+        template_id: data.template_id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+
+    return this.getItemPriceById(data.template_id) as ItemPrice;
+  }
+
+  /**
+   * 아이템 가격 수정 (전달된 필드만 업데이트)
+   * 없으면 null 반환
+   */
+  updateItemPrice(templateId: string, data: UpdateItemPriceInput): ItemPrice | null {
+    const existing = this.getItemPriceById(templateId);
+    if (!existing) return null;
+
+    const setClauses: string[] = [];
+    const params: Record<string, unknown> = { templateId };
+
+    if (data.buy_price !== undefined) {
+      setClauses.push('buy_price = @buy_price');
+      params.buy_price = data.buy_price;
+    }
+    if (data.sell_price !== undefined) {
+      setClauses.push('sell_price = @sell_price');
+      params.sell_price = data.sell_price;
+    }
+
+    if (setClauses.length === 0) {
+      return existing;
+    }
+
+    try {
+      this.db.prepare(`
+        UPDATE item_prices SET ${setClauses.join(', ')} WHERE template_id = @templateId
+      `).run(params);
+    } catch (error) {
+      logger.error('Failed to update item price', {
+        templateId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+
+    return this.getItemPriceById(templateId);
+  }
+
+  /**
+   * 아이템 가격 삭제
+   * 없으면 false
+   */
+  deleteItemPrice(templateId: string): boolean {
+    const existing = this.db.prepare(
+      'SELECT template_id FROM item_prices WHERE template_id = @templateId',
+    ).get({ templateId });
+
+    if (!existing) return false;
+
+    try {
+      this.db.prepare('DELETE FROM item_prices WHERE template_id = @templateId').run({ templateId });
+      return true;
+    } catch (error) {
+      logger.error('Failed to delete item price', {
+        templateId,
         error: error instanceof Error ? error.message : String(error),
       });
       throw error;

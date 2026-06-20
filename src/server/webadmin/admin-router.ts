@@ -233,6 +233,9 @@ export class AdminRouter {
         case 'objects':
           this.handleObjectsApi(req, res, method, params);
           break;
+        case 'item-prices':
+          this.handleItemPricesApi(req, res, method, params);
+          break;
         default:
           this.sendError(res, 404, 'API endpoint not found');
       }
@@ -702,6 +705,92 @@ export class AdminRouter {
       }
     } catch (error) {
       logger.error('Objects API handler error', {
+        method,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      this.sendError(res, 500, 'Internal server error');
+    }
+  }
+
+  /** /webadmin/api/item-prices/* */
+  private async handleItemPricesApi(
+    req: http.IncomingMessage,
+    res: http.ServerResponse,
+    method: string,
+    params: RouteParams,
+  ): Promise<void> {
+    try {
+      // /webadmin/api/item-prices/:templateId (단일 리소스)
+      if (params.id) {
+        switch (method) {
+          case 'GET': {
+            const price = this.db.getItemPriceById(params.id);
+            if (!price) {
+              this.sendError(res, 404, 'Item price not found');
+              return;
+            }
+            this.sendJson(res, 200, price);
+            return;
+          }
+          case 'PUT': {
+            const body = await this.parseBody(req);
+            const updated = this.db.updateItemPrice(params.id, body);
+            if (!updated) {
+              this.sendError(res, 404, 'Item price not found');
+              return;
+            }
+            this.sendJson(res, 200, updated);
+            return;
+          }
+          case 'DELETE': {
+            const deleted = this.db.deleteItemPrice(params.id);
+            if (!deleted) {
+              this.sendError(res, 404, 'Item price not found');
+              return;
+            }
+            this.sendJson(res, 200, { success: true });
+            return;
+          }
+          default:
+            this.sendError(res, 405, 'Method not allowed');
+            return;
+        }
+      }
+
+      // /webadmin/api/item-prices (컬렉션)
+      switch (method) {
+        case 'GET': {
+          const page = parseInt(params.query.get('page') ?? '1', 10) || 1;
+          const limit = parseInt(params.query.get('limit') ?? '20', 10) || 20;
+          const result = this.db.getItemPrices(page, limit);
+          this.sendJson(res, 200, result);
+          return;
+        }
+        case 'POST': {
+          const body = await this.parseBody(req);
+          // 필수 필드 검증: template_id
+          if (!body.template_id || typeof body.template_id !== 'string') {
+            this.sendError(res, 400, 'template_id is required', 'template_id');
+            return;
+          }
+          try {
+            const created = this.db.createItemPrice(body as import('./db-client.js').CreateItemPriceInput);
+            this.sendJson(res, 201, created);
+          } catch (error) {
+            if (error instanceof Error && error.name === 'UniqueConstraintError') {
+              this.sendError(res, 409, error.message);
+              return;
+            }
+            throw error;
+          }
+          return;
+        }
+        default:
+          this.sendError(res, 405, 'Method not allowed');
+          return;
+      }
+    } catch (error) {
+      logger.error('Item prices API handler error', {
         method,
         error: error instanceof Error ? error.message : String(error),
       });
