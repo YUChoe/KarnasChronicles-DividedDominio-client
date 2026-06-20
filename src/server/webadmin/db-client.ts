@@ -19,6 +19,7 @@ export interface MapRoom {
   id: string;
   x: number;
   y: number;
+  room_type: string;
   description_en: string | null;
   description_ko: string | null;
   blocked_exits: string[];
@@ -125,6 +126,7 @@ export interface Room {
   id: string;
   x: number;
   y: number;
+  room_type: string;
   description_en: string | null;
   description_ko: string | null;
   blocked_exits: string[];
@@ -135,6 +137,7 @@ export interface Room {
 export interface CreateRoomInput {
   x: number;
   y: number;
+  room_type?: string;
   description_en?: string;
   description_ko?: string;
   blocked_exits?: string[];
@@ -143,6 +146,7 @@ export interface CreateRoomInput {
 export interface UpdateRoomInput {
   x?: number;
   y?: number;
+  room_type?: string;
   description_en?: string;
   description_ko?: string;
   blocked_exits?: string[];
@@ -379,11 +383,12 @@ export class DBClient {
     try {
       // 1) 전체 방 목록 조회
       const rooms = this.db.prepare(
-        'SELECT id, x, y, description_en, description_ko, blocked_exits FROM rooms',
+        'SELECT id, x, y, room_type, description_en, description_ko, blocked_exits FROM rooms',
       ).all() as Array<{
         id: string;
         x: number;
         y: number;
+        room_type: string | null;
         description_en: string | null;
         description_ko: string | null;
         blocked_exits: string | null;
@@ -520,6 +525,7 @@ export class DBClient {
           id: r.id,
           x: r.x,
           y: r.y,
+          room_type: r.room_type ?? 'unknown',
           description_en: r.description_en,
           description_ko: r.description_ko,
           blocked_exits: blockedExits,
@@ -811,7 +817,7 @@ export class DBClient {
   getRooms(page: number, limit: number): PaginatedResult<Room> {
     const countSql = 'SELECT COUNT(*) AS count FROM rooms';
     const dataSql = `
-      SELECT id, x, y, description_en, description_ko, blocked_exits,
+      SELECT id, x, y, room_type, description_en, description_ko, blocked_exits,
              created_at, updated_at
       FROM rooms
       ORDER BY x ASC, y ASC`;
@@ -834,7 +840,7 @@ export class DBClient {
   getRoomById(id: string): Room | null {
     try {
       const row = this.db.prepare(`
-        SELECT id, x, y, description_en, description_ko, blocked_exits,
+        SELECT id, x, y, room_type, description_en, description_ko, blocked_exits,
                created_at, updated_at
         FROM rooms
         WHERE id = @id
@@ -879,12 +885,13 @@ export class DBClient {
 
     try {
       this.db.prepare(`
-        INSERT INTO rooms (id, x, y, description_en, description_ko, blocked_exits, created_at, updated_at)
-        VALUES (@id, @x, @y, @description_en, @description_ko, @blocked_exits, @created_at, @updated_at)
+        INSERT INTO rooms (id, x, y, room_type, description_en, description_ko, blocked_exits, created_at, updated_at)
+        VALUES (@id, @x, @y, @room_type, @description_en, @description_ko, @blocked_exits, @created_at, @updated_at)
       `).run({
         id,
         x: data.x,
         y: data.y,
+        room_type: data.room_type ?? 'unknown',
         description_en: data.description_en ?? null,
         description_ko: data.description_ko ?? null,
         blocked_exits: blockedExitsJson,
@@ -921,6 +928,10 @@ export class DBClient {
     if (data.y !== undefined) {
       setClauses.push('y = @y');
       params.y = data.y;
+    }
+    if (data.room_type !== undefined) {
+      setClauses.push('room_type = @room_type');
+      params.room_type = data.room_type;
     }
     if (data.description_en !== undefined) {
       setClauses.push('description_en = @description_en');

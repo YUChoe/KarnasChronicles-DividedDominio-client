@@ -300,6 +300,50 @@ function getFactionColour(factionId) {
   return FACTION_COLOURS[factionId] || '#4a9eff';
 }
 
+// 방 유형(지형) 목록 — 서버 room_type 값과 일치
+const ROOM_TYPES = [
+  'unknown', 'forest', 'grassland', 'coast', 'road', 'castle', 'field',
+  'pasture', 'wilderness', 'town', 'water', 'hedge', 'trail', 'cave',
+  'crypt', 'building', 'harbour', 'cliff', 'stable', 'ruins', 'gate', 'farmland',
+];
+
+// 지형별 맵 배경색 (인디케이터 가독성을 위해 채도 낮은 색 사용)
+const TERRAIN_COLOURS = {
+  forest: '#2e5d34',
+  grassland: '#4a7c3a',
+  coast: '#c2b280',
+  road: '#8a7f6b',
+  castle: '#6d6a73',
+  field: '#7a8c4a',
+  pasture: '#5e8c4a',
+  wilderness: '#3f6b4a',
+  town: '#8c7350',
+  water: '#2f6f9e',
+  hedge: '#3d6b3d',
+  trail: '#9c8f6b',
+  cave: '#3a3540',
+  crypt: '#4a3f4f',
+  building: '#7a6f5a',
+  harbour: '#3a6f8c',
+  cliff: '#7a6a5a',
+  stable: '#8c6f4a',
+  ruins: '#6b6258',
+  gate: '#6d6a73',
+  farmland: '#8a7c3a',
+  unknown: '',
+};
+
+function getTerrainColour(roomType) {
+  return TERRAIN_COLOURS[roomType] || '';
+}
+
+/** room_type 드롭다운 options HTML 생성 */
+function buildRoomTypeOptions(selected) {
+  return ROOM_TYPES.map(function (t) {
+    return '<option value="' + t + '"' + (t === selected ? ' selected' : '') + '>' + t + '</option>';
+  }).join('');
+}
+
 /** 대시보드 자동 새로고침 타이머 정리 */
 function clearDashboardTimer() {
   if (_dashboardRefreshInterval) {
@@ -392,7 +436,10 @@ function buildMapGrid(rooms) {
       if (room) {
         // 출구 방향별 테두리 색상 계산
         var borderStyle = computeExitBorders(room, roomMap);
-        html += '<td class="room" data-x="' + x + '" data-y="' + y + '" style="' + borderStyle + '">';
+        // 지형별 배경색
+        var terrainColour = getTerrainColour(room.room_type);
+        var cellStyle = borderStyle + (terrainColour ? 'background-color:' + terrainColour + ';' : '');
+        html += '<td class="room" data-x="' + x + '" data-y="' + y + '" style="' + cellStyle + '">';
         html += buildIndicators(room);
         html += '<div class="map-tooltip"></div>';
         html += '</td>';
@@ -539,6 +586,8 @@ function showRoomDetail(room) {
     }
   }
   var titleHtml = escapeHtml('Room (' + room.x + ', ' + room.y + ')') + titleNavHtml;
+  // 지형 유형
+  html += '<div style="margin-bottom:6px;color:var(--text-muted);">Type: ' + escapeHtml(room.room_type || 'unknown') + '</div>';
   // 한국어/영어 설명 (라벨 없이)
   html += '<div class="description">';
   html += '<div>' + escapeHtml(room.description_ko || '설명 없음') + '</div>';
@@ -1259,6 +1308,7 @@ async function renderRooms() {
     html += '<div class="table-container"><table class="data-table">';
     html += '<thead><tr>'
       + '<th>Coords</th>'
+      + '<th>Type</th>'
       + '<th>Exits</th>'
       + '<th>Description (EN)</th>'
       + '<th>Description (KO)</th>'
@@ -1267,7 +1317,7 @@ async function renderRooms() {
     html += '<tbody>';
 
     if (rooms.length === 0) {
-      html += '<tr><td colspan="5" class="text-muted text-center">No rooms found.</td></tr>';
+      html += '<tr><td colspan="6" class="text-muted text-center">No rooms found.</td></tr>';
     } else {
       // 출구 화살표 계산을 위해 전체 방 좌표 맵 구축
       // _roomsCoordsMap은 renderRooms 시작 시 맵 API에서 로드
@@ -1276,6 +1326,7 @@ async function renderRooms() {
         const exits = computeRoomExits(r.x, r.y, blocked);
         html += '<tr>'
           + '<td>' + escapeHtml(r.x) + ', ' + escapeHtml(r.y) + '</td>'
+          + '<td>' + escapeHtml(r.room_type || 'unknown') + '</td>'
           + '<td>' + escapeHtml(exits) + '</td>'
           + '<td>' + escapeHtml(r.description_en || '-') + '</td>'
           + '<td>' + escapeHtml(r.description_ko || '-') + '</td>'
@@ -1395,6 +1446,8 @@ function showCreateRoomModal() {
     + '<input type="number" id="rf-x" required></div>'
     + '<div class="form-group"><label for="rf-y">Y *</label>'
     + '<input type="number" id="rf-y" required></div>'
+    + '<div class="form-group"><label for="rf-type">Room Type</label>'
+    + '<select id="rf-type">' + buildRoomTypeOptions('unknown') + '</select></div>'
     + '<div class="form-group"><label for="rf-desc-en">Description (EN)</label>'
     + '<textarea id="rf-desc-en" rows="3"></textarea></div>'
     + '<div class="form-group"><label for="rf-desc-ko">Description (KO)</label>'
@@ -1436,6 +1489,7 @@ async function handleCreateRoom() {
   const descKo = document.getElementById('rf-desc-ko').value.trim();
   const blockedStr = document.getElementById('rf-blocked').value.trim();
 
+  body.room_type = document.getElementById('rf-type').value;
   if (descEn) body.description_en = descEn;
   if (descKo) body.description_ko = descKo;
   if (blockedStr) {
@@ -1465,6 +1519,8 @@ async function showEditRoomModal(roomId) {
       + '<input type="number" id="re-x" value="' + escapeHtml(r.x != null ? r.x : '') + '"></div>'
       + '<div class="form-group"><label for="re-y">Y</label>'
       + '<input type="number" id="re-y" value="' + escapeHtml(r.y != null ? r.y : '') + '"></div>'
+      + '<div class="form-group"><label for="re-type">Room Type</label>'
+      + '<select id="re-type">' + buildRoomTypeOptions(r.room_type || 'unknown') + '</select></div>'
       + '<div class="form-group"><label for="re-desc-en">Description (EN)</label>'
       + '<textarea id="re-desc-en" rows="3">' + escapeHtml(r.description_en || '') + '</textarea></div>'
       + '<div class="form-group"><label for="re-desc-ko">Description (KO)</label>'
@@ -1497,6 +1553,7 @@ async function handleEditRoom(roomId) {
   if (xVal !== '') body.x = parseInt(xVal, 10);
   if (yVal !== '') body.y = parseInt(yVal, 10);
 
+  body.room_type = document.getElementById('re-type').value;
   body.description_en = document.getElementById('re-desc-en').value.trim() || null;
   body.description_ko = document.getElementById('re-desc-ko').value.trim() || null;
 
