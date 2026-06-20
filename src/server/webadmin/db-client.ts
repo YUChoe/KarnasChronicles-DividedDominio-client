@@ -90,6 +90,9 @@ export interface Player {
   stat_wisdom: number;
   stat_constitution: number;
   stat_charisma: number;
+  stat_current: Record<string, unknown>;
+  completed_quests: unknown[];
+  quest_progress: Record<string, unknown>;
   created_at: string;
 }
 
@@ -614,6 +617,7 @@ export class DBClient {
                last_room_x, last_room_y,
                stat_strength, stat_dexterity, stat_intelligence,
                stat_wisdom, stat_constitution, stat_charisma,
+               stat_current, completed_quests, quest_progress,
                created_at
         FROM players
         WHERE id = @id
@@ -624,6 +628,9 @@ export class DBClient {
       return {
         ...row,
         is_admin: Boolean(row.is_admin),
+        stat_current: this.parseJsonField<Record<string, unknown>>(row.stat_current, {}),
+        completed_quests: this.parseJsonField<unknown[]>(row.completed_quests, []),
+        quest_progress: this.parseJsonField<Record<string, unknown>>(row.quest_progress, {}),
       };
     } catch (error) {
       logger.error('Failed to get player by id', {

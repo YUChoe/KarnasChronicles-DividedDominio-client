@@ -1202,7 +1202,19 @@ async function showPlayerStatsModal(playerId, playerName) {
       { key: 'stat_charisma', label: 'Charisma' },
     ];
 
-    var bodyHtml = '<form id="player-stats-form">';
+    var bodyHtml = '';
+
+    // 읽기 전용 현재 상태 (HP) 및 퀘스트 정보
+    var hp = (p.stat_current && p.stat_current.hp != null) ? p.stat_current.hp : '-';
+    var completedCount = Array.isArray(p.completed_quests) ? p.completed_quests.length : 0;
+    var activeCount = (p.quest_progress && typeof p.quest_progress === 'object')
+      ? Object.keys(p.quest_progress).length : 0;
+    bodyHtml += '<div style="margin-bottom:12px;padding:8px;background:var(--bg-muted, rgba(0,0,0,0.15));border-radius:4px;font-size:13px;">'
+      + '<div>HP: ' + escapeHtml(hp) + '</div>'
+      + '<div style="color:var(--text-muted);">Quests — completed: ' + completedCount + ', active: ' + activeCount + '</div>'
+      + '</div>';
+
+    bodyHtml += '<form id="player-stats-form">';
     for (var s of stats) {
       bodyHtml += '<div class="form-group">'
         + '<label for="ps-' + s.key + '">' + s.label + '</label>'
