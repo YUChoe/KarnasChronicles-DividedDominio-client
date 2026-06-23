@@ -228,7 +228,7 @@ async function checkSession() {
 /* ================================================================
  * 해시 기반 라우팅
  * ================================================================ */
-const SECTIONS = ['dashboard', 'players', 'rooms', 'monsters', 'objects'];
+const SECTIONS = ['dashboard', 'players', 'rooms', 'monsters', 'objects', 'item-prices', 'factions', 'faction-relations'];
 
 /** 현재 해시에서 섹션 이름 추출 */
 function getCurrentSection() {
@@ -272,6 +272,9 @@ function navigate() {
     rooms:     renderRooms,
     monsters:  renderMonsters,
     objects:   renderObjects,
+    'item-prices': renderItemPrices,
+    factions:  renderFactions,
+    'faction-relations': renderFactionRelations,
   };
 
   if (renderers[section]) {
@@ -298,6 +301,50 @@ const FACTION_COLOURS = {
 
 function getFactionColour(factionId) {
   return FACTION_COLOURS[factionId] || '#4a9eff';
+}
+
+// 방 유형(지형) 목록 — 서버 room_type 값과 일치
+const ROOM_TYPES = [
+  'unknown', 'forest', 'grassland', 'coast', 'road', 'castle', 'field',
+  'pasture', 'wilderness', 'town', 'water', 'hedge', 'trail', 'cave',
+  'crypt', 'building', 'harbour', 'cliff', 'stable', 'ruins', 'gate', 'farmland',
+];
+
+// 지형별 맵 배경색 (인디케이터 가독성을 위해 채도 낮은 색 사용)
+const TERRAIN_COLOURS = {
+  forest: '#2e5d34',
+  grassland: '#4a7c3a',
+  coast: '#c2b280',
+  road: '#8a7f6b',
+  castle: '#6d6a73',
+  field: '#7a8c4a',
+  pasture: '#5e8c4a',
+  wilderness: '#3f6b4a',
+  town: '#8c7350',
+  water: '#2f6f9e',
+  hedge: '#3d6b3d',
+  trail: '#9c8f6b',
+  cave: '#3a3540',
+  crypt: '#4a3f4f',
+  building: '#7a6f5a',
+  harbour: '#3a6f8c',
+  cliff: '#7a6a5a',
+  stable: '#8c6f4a',
+  ruins: '#6b6258',
+  gate: '#6d6a73',
+  farmland: '#8a7c3a',
+  unknown: '',
+};
+
+function getTerrainColour(roomType) {
+  return TERRAIN_COLOURS[roomType] || '';
+}
+
+/** room_type 드롭다운 options HTML 생성 */
+function buildRoomTypeOptions(selected) {
+  return ROOM_TYPES.map(function (t) {
+    return '<option value="' + t + '"' + (t === selected ? ' selected' : '') + '>' + t + '</option>';
+  }).join('');
 }
 
 /** 대시보드 자동 새로고침 타이머 정리 */
@@ -392,7 +439,10 @@ function buildMapGrid(rooms) {
       if (room) {
         // 출구 방향별 테두리 색상 계산
         var borderStyle = computeExitBorders(room, roomMap);
-        html += '<td class="room" data-x="' + x + '" data-y="' + y + '" style="' + borderStyle + '">';
+        // 지형별 배경색
+        var terrainColour = getTerrainColour(room.room_type);
+        var cellStyle = borderStyle + (terrainColour ? 'background-color:' + terrainColour + ';' : '');
+        html += '<td class="room" data-x="' + x + '" data-y="' + y + '" style="' + cellStyle + '">';
         html += buildIndicators(room);
         html += '<div class="map-tooltip"></div>';
         html += '</td>';
@@ -539,6 +589,8 @@ function showRoomDetail(room) {
     }
   }
   var titleHtml = escapeHtml('Room (' + room.x + ', ' + room.y + ')') + titleNavHtml;
+  // 지형 유형
+  html += '<div style="margin-bottom:6px;color:var(--text-muted);">Type: ' + escapeHtml(room.room_type || 'unknown') + '</div>';
   // 한국어/영어 설명 (라벨 없이)
   html += '<div class="description">';
   html += '<div>' + escapeHtml(room.description_ko || '설명 없음') + '</div>';
@@ -1153,7 +1205,19 @@ async function showPlayerStatsModal(playerId, playerName) {
       { key: 'stat_charisma', label: 'Charisma' },
     ];
 
-    var bodyHtml = '<form id="player-stats-form">';
+    var bodyHtml = '';
+
+    // 읽기 전용 현재 상태 (HP) 및 퀘스트 정보
+    var hp = (p.stat_current && p.stat_current.hp != null) ? p.stat_current.hp : '-';
+    var completedCount = Array.isArray(p.completed_quests) ? p.completed_quests.length : 0;
+    var activeCount = (p.quest_progress && typeof p.quest_progress === 'object')
+      ? Object.keys(p.quest_progress).length : 0;
+    bodyHtml += '<div style="margin-bottom:12px;padding:8px;background:var(--bg-muted, rgba(0,0,0,0.15));border-radius:4px;font-size:13px;">'
+      + '<div>HP: ' + escapeHtml(hp) + '</div>'
+      + '<div style="color:var(--text-muted);">Quests — completed: ' + completedCount + ', active: ' + activeCount + '</div>'
+      + '</div>';
+
+    bodyHtml += '<form id="player-stats-form">';
     for (var s of stats) {
       bodyHtml += '<div class="form-group">'
         + '<label for="ps-' + s.key + '">' + s.label + '</label>'
@@ -1259,6 +1323,7 @@ async function renderRooms() {
     html += '<div class="table-container"><table class="data-table">';
     html += '<thead><tr>'
       + '<th>Coords</th>'
+      + '<th>Type</th>'
       + '<th>Exits</th>'
       + '<th>Description (EN)</th>'
       + '<th>Description (KO)</th>'
@@ -1267,7 +1332,7 @@ async function renderRooms() {
     html += '<tbody>';
 
     if (rooms.length === 0) {
-      html += '<tr><td colspan="5" class="text-muted text-center">No rooms found.</td></tr>';
+      html += '<tr><td colspan="6" class="text-muted text-center">No rooms found.</td></tr>';
     } else {
       // 출구 화살표 계산을 위해 전체 방 좌표 맵 구축
       // _roomsCoordsMap은 renderRooms 시작 시 맵 API에서 로드
@@ -1276,6 +1341,7 @@ async function renderRooms() {
         const exits = computeRoomExits(r.x, r.y, blocked);
         html += '<tr>'
           + '<td>' + escapeHtml(r.x) + ', ' + escapeHtml(r.y) + '</td>'
+          + '<td>' + escapeHtml(r.room_type || 'unknown') + '</td>'
           + '<td>' + escapeHtml(exits) + '</td>'
           + '<td>' + escapeHtml(r.description_en || '-') + '</td>'
           + '<td>' + escapeHtml(r.description_ko || '-') + '</td>'
@@ -1395,6 +1461,8 @@ function showCreateRoomModal() {
     + '<input type="number" id="rf-x" required></div>'
     + '<div class="form-group"><label for="rf-y">Y *</label>'
     + '<input type="number" id="rf-y" required></div>'
+    + '<div class="form-group"><label for="rf-type">Room Type</label>'
+    + '<select id="rf-type">' + buildRoomTypeOptions('unknown') + '</select></div>'
     + '<div class="form-group"><label for="rf-desc-en">Description (EN)</label>'
     + '<textarea id="rf-desc-en" rows="3"></textarea></div>'
     + '<div class="form-group"><label for="rf-desc-ko">Description (KO)</label>'
@@ -1436,6 +1504,7 @@ async function handleCreateRoom() {
   const descKo = document.getElementById('rf-desc-ko').value.trim();
   const blockedStr = document.getElementById('rf-blocked').value.trim();
 
+  body.room_type = document.getElementById('rf-type').value;
   if (descEn) body.description_en = descEn;
   if (descKo) body.description_ko = descKo;
   if (blockedStr) {
@@ -1465,6 +1534,8 @@ async function showEditRoomModal(roomId) {
       + '<input type="number" id="re-x" value="' + escapeHtml(r.x != null ? r.x : '') + '"></div>'
       + '<div class="form-group"><label for="re-y">Y</label>'
       + '<input type="number" id="re-y" value="' + escapeHtml(r.y != null ? r.y : '') + '"></div>'
+      + '<div class="form-group"><label for="re-type">Room Type</label>'
+      + '<select id="re-type">' + buildRoomTypeOptions(r.room_type || 'unknown') + '</select></div>'
       + '<div class="form-group"><label for="re-desc-en">Description (EN)</label>'
       + '<textarea id="re-desc-en" rows="3">' + escapeHtml(r.description_en || '') + '</textarea></div>'
       + '<div class="form-group"><label for="re-desc-ko">Description (KO)</label>'
@@ -1497,6 +1568,7 @@ async function handleEditRoom(roomId) {
   if (xVal !== '') body.x = parseInt(xVal, 10);
   if (yVal !== '') body.y = parseInt(yVal, 10);
 
+  body.room_type = document.getElementById('re-type').value;
   body.description_en = document.getElementById('re-desc-en').value.trim() || null;
   body.description_ko = document.getElementById('re-desc-ko').value.trim() || null;
 
@@ -2245,3 +2317,603 @@ document.addEventListener('DOMContentLoaded', async () => {
     showLogin();
   }
 });
+
+/* ================================================================
+ * 아이템 가격 (item_prices) 섹션
+ * ================================================================ */
+
+// 아이템 가격 페이지네이션 상태
+let _itemPricesPage = 1;
+const _itemPricesLimit = 20;
+
+/** 아이템 가격 섹션 렌더링 */
+async function renderItemPrices() {
+  const container = document.getElementById('section-item-prices');
+  container.innerHTML = '<p class="text-muted">Loading item prices...</p>';
+
+  try {
+    const result = await api.get('/item-prices?page=' + _itemPricesPage + '&limit=' + _itemPricesLimit);
+    const prices = result.data || [];
+    const pagination = result.pagination || {};
+
+    let html = '<div class="section-header">'
+      + '<h2>Item Prices</h2>'
+      + '<button class="btn btn-primary" id="btn-create-item-price">Create Price</button>'
+      + '</div>';
+
+    html += '<div class="table-container"><table class="data-table">';
+    html += '<thead><tr>'
+      + '<th>Template ID</th>'
+      + '<th>Buy Price</th>'
+      + '<th>Sell Price</th>'
+      + '<th>Actions</th>'
+      + '</tr></thead>';
+    html += '<tbody>';
+
+    if (prices.length === 0) {
+      html += '<tr><td colspan="4" class="text-muted text-center">No item prices found.</td></tr>';
+    } else {
+      for (const p of prices) {
+        html += '<tr>'
+          + '<td>' + escapeHtml(p.template_id) + '</td>'
+          + '<td>' + escapeHtml(p.buy_price) + '</td>'
+          + '<td>' + escapeHtml(p.sell_price) + '</td>'
+          + '<td class="actions-cell">'
+          + '<button class="btn btn-sm btn-secondary btn-edit-item-price" data-id="' + escapeHtml(p.template_id) + '">Edit</button> '
+          + '<button class="btn btn-sm btn-danger btn-delete-item-price" data-id="' + escapeHtml(p.template_id) + '">Delete</button>'
+          + '</td>'
+          + '</tr>';
+      }
+    }
+
+    html += '</tbody></table></div>';
+    html += buildItemPricesPagination(pagination);
+
+    container.innerHTML = html;
+    bindItemPricesEvents();
+  } catch (err) {
+    container.innerHTML = '<p class="text-danger">Failed to load item prices: ' + escapeHtml(err.message) + '</p>';
+  }
+}
+
+/** 아이템 가격 페이지네이션 HTML */
+function buildItemPricesPagination(pagination) {
+  const page = pagination.page || 1;
+  const totalPages = pagination.totalPages || 1;
+
+  let html = '<div class="pagination">';
+  html += '<button class="btn btn-sm btn-secondary" id="item-prices-prev"'
+    + (page <= 1 ? ' disabled' : '') + '>&laquo; Prev</button>';
+  html += '<span class="pagination-info">Page ' + page + ' / ' + totalPages + '</span>';
+  html += '<button class="btn btn-sm btn-secondary" id="item-prices-next"'
+    + (page >= totalPages ? ' disabled' : '') + '>Next &raquo;</button>';
+  html += '</div>';
+  return html;
+}
+
+/** 아이템 가격 섹션 이벤트 바인딩 */
+function bindItemPricesEvents() {
+  const createBtn = document.getElementById('btn-create-item-price');
+  if (createBtn) {
+    createBtn.addEventListener('click', showCreateItemPriceModal);
+  }
+
+  document.querySelectorAll('.btn-edit-item-price').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      showEditItemPriceModal(btn.getAttribute('data-id'));
+    });
+  });
+
+  document.querySelectorAll('.btn-delete-item-price').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const templateId = btn.getAttribute('data-id');
+      confirm.open('Are you sure you want to delete the price for \'' + templateId + '\'?', async function () {
+        try {
+          await api.del('/item-prices/' + encodeURIComponent(templateId));
+          notify.success('Item price deleted successfully.');
+          renderItemPrices();
+        } catch (err) {
+          notify.error('Failed to delete item price: ' + err.message);
+        }
+      });
+    });
+  });
+
+  const prevBtn = document.getElementById('item-prices-prev');
+  if (prevBtn) {
+    prevBtn.addEventListener('click', function () {
+      if (_itemPricesPage > 1) {
+        _itemPricesPage--;
+        renderItemPrices();
+      }
+    });
+  }
+
+  const nextBtn = document.getElementById('item-prices-next');
+  if (nextBtn) {
+    nextBtn.addEventListener('click', function () {
+      _itemPricesPage++;
+      renderItemPrices();
+    });
+  }
+}
+
+/** 아이템 가격 생성 모달 표시 */
+function showCreateItemPriceModal() {
+  const bodyHtml = '<form id="item-price-create-form">'
+    + '<div class="form-group"><label for="ipf-template">Template ID *</label>'
+    + '<input type="text" id="ipf-template" required placeholder="e.g. health_potion"></div>'
+    + '<div class="form-group"><label for="ipf-buy">Buy Price</label>'
+    + '<input type="number" id="ipf-buy" value="0" min="0"></div>'
+    + '<div class="form-group"><label for="ipf-sell">Sell Price</label>'
+    + '<input type="number" id="ipf-sell" value="0" min="0"></div>'
+    + '</form>';
+
+  const footerHtml = '<button class="btn btn-secondary" id="item-price-create-cancel">Cancel</button>'
+    + ' <button class="btn btn-primary" id="item-price-create-submit">Create</button>';
+
+  modal.open('Create Item Price', bodyHtml, footerHtml);
+
+  document.getElementById('item-price-create-cancel').addEventListener('click', modal.close);
+  document.getElementById('item-price-create-submit').addEventListener('click', handleCreateItemPrice);
+}
+
+/** 아이템 가격 생성 처리 */
+async function handleCreateItemPrice() {
+  const templateId = document.getElementById('ipf-template').value.trim();
+  if (templateId === '') {
+    notify.error('Template ID is required.');
+    return;
+  }
+
+  const body = {
+    template_id: templateId,
+    buy_price: parseInt(document.getElementById('ipf-buy').value, 10) || 0,
+    sell_price: parseInt(document.getElementById('ipf-sell').value, 10) || 0,
+  };
+
+  try {
+    await api.post('/item-prices', body);
+    modal.close();
+    notify.success('Item price created successfully.');
+    renderItemPrices();
+  } catch (err) {
+    notify.error('Failed to create item price: ' + err.message);
+  }
+}
+
+/** 아이템 가격 수정 모달 표시 */
+async function showEditItemPriceModal(templateId) {
+  try {
+    const result = await api.get('/item-prices/' + encodeURIComponent(templateId));
+    const p = result.data || result;
+
+    const bodyHtml = '<form id="item-price-edit-form">'
+      + '<div class="form-group"><label>Template ID</label>'
+      + '<input type="text" value="' + escapeHtml(p.template_id) + '" disabled></div>'
+      + '<div class="form-group"><label for="ipe-buy">Buy Price</label>'
+      + '<input type="number" id="ipe-buy" value="' + escapeHtml(p.buy_price != null ? p.buy_price : 0) + '" min="0"></div>'
+      + '<div class="form-group"><label for="ipe-sell">Sell Price</label>'
+      + '<input type="number" id="ipe-sell" value="' + escapeHtml(p.sell_price != null ? p.sell_price : 0) + '" min="0"></div>'
+      + '</form>';
+
+    const footerHtml = '<button class="btn btn-secondary" id="item-price-edit-cancel">Cancel</button>'
+      + ' <button class="btn btn-primary" id="item-price-edit-submit">Save</button>';
+
+    modal.open('Edit Item Price: ' + p.template_id, bodyHtml, footerHtml);
+
+    document.getElementById('item-price-edit-cancel').addEventListener('click', modal.close);
+    document.getElementById('item-price-edit-submit').addEventListener('click', function () {
+      handleEditItemPrice(templateId);
+    });
+  } catch (err) {
+    notify.error('Failed to load item price: ' + err.message);
+  }
+}
+
+/** 아이템 가격 수정 처리 */
+async function handleEditItemPrice(templateId) {
+  const body = {
+    buy_price: parseInt(document.getElementById('ipe-buy').value, 10) || 0,
+    sell_price: parseInt(document.getElementById('ipe-sell').value, 10) || 0,
+  };
+
+  try {
+    await api.put('/item-prices/' + encodeURIComponent(templateId), body);
+    modal.close();
+    notify.success('Item price updated successfully.');
+    renderItemPrices();
+  } catch (err) {
+    notify.error('Failed to update item price: ' + err.message);
+  }
+}
+
+/* ================================================================
+ * 종족 (factions) 섹션
+ * ================================================================ */
+
+const STANCE_OPTIONS = ['FRIENDLY', 'NEUTRAL', 'HOSTILE'];
+const RELATION_STATUS_OPTIONS = ['ALLIED', 'FRIENDLY', 'NEUTRAL', 'UNFRIENDLY', 'HOSTILE'];
+
+function buildSelectOptions(values, selected) {
+  return values.map(function (v) {
+    return '<option value="' + v + '"' + (v === selected ? ' selected' : '') + '>' + v + '</option>';
+  }).join('');
+}
+
+/** 종족 섹션 렌더링 */
+async function renderFactions() {
+  const container = document.getElementById('section-factions');
+  container.innerHTML = '<p class="text-muted">Loading factions...</p>';
+
+  try {
+    const result = await api.get('/factions');
+    const factions = Array.isArray(result) ? result : (result.data || []);
+
+    let html = '<div class="section-header">'
+      + '<h2>Factions</h2>'
+      + '<button class="btn btn-primary" id="btn-create-faction">Create Faction</button>'
+      + '</div>';
+
+    html += '<div class="table-container"><table class="data-table">';
+    html += '<thead><tr>'
+      + '<th>ID</th>'
+      + '<th>Name (EN)</th>'
+      + '<th>Name (KO)</th>'
+      + '<th>Default Stance</th>'
+      + '<th>Actions</th>'
+      + '</tr></thead><tbody>';
+
+    if (factions.length === 0) {
+      html += '<tr><td colspan="5" class="text-muted text-center">No factions found.</td></tr>';
+    } else {
+      for (const f of factions) {
+        html += '<tr>'
+          + '<td>' + escapeHtml(f.id) + '</td>'
+          + '<td>' + escapeHtml(f.name_en || '') + '</td>'
+          + '<td>' + escapeHtml(f.name_ko || '') + '</td>'
+          + '<td>' + escapeHtml(f.default_stance || '-') + '</td>'
+          + '<td class="actions-cell">'
+          + '<button class="btn btn-sm btn-secondary btn-edit-faction" data-id="' + escapeHtml(f.id) + '">Edit</button> '
+          + '<button class="btn btn-sm btn-danger btn-delete-faction" data-id="' + escapeHtml(f.id) + '">Delete</button>'
+          + '</td>'
+          + '</tr>';
+      }
+    }
+
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+    bindFactionsEvents();
+  } catch (err) {
+    container.innerHTML = '<p class="text-danger">Failed to load factions: ' + escapeHtml(err.message) + '</p>';
+  }
+}
+
+/** 종족 섹션 이벤트 바인딩 */
+function bindFactionsEvents() {
+  const createBtn = document.getElementById('btn-create-faction');
+  if (createBtn) {
+    createBtn.addEventListener('click', showCreateFactionModal);
+  }
+
+  document.querySelectorAll('.btn-edit-faction').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      showEditFactionModal(btn.getAttribute('data-id'));
+    });
+  });
+
+  document.querySelectorAll('.btn-delete-faction').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const id = btn.getAttribute('data-id');
+      confirm.open('Are you sure you want to delete faction \'' + id + '\'?', async function () {
+        try {
+          await api.del('/factions/' + encodeURIComponent(id));
+          notify.success('Faction deleted successfully.');
+          renderFactions();
+        } catch (err) {
+          notify.error('Failed to delete faction: ' + err.message);
+        }
+      });
+    });
+  });
+}
+
+/** 종족 폼 본문 HTML (생성/수정 공용) */
+function buildFactionFormHtml(f, isEdit) {
+  const propsStr = f.properties ? JSON.stringify(f.properties, null, 2) : '{}';
+  return '<form id="faction-form">'
+    + '<div class="form-group"><label for="ff-id">ID *</label>'
+    + '<input type="text" id="ff-id" value="' + escapeHtml(f.id || '') + '"' + (isEdit ? ' disabled' : ' placeholder="e.g. goblins"') + '></div>'
+    + '<div class="form-group"><label for="ff-name-en">Name (EN) *</label>'
+    + '<input type="text" id="ff-name-en" value="' + escapeHtml(f.name_en || '') + '"></div>'
+    + '<div class="form-group"><label for="ff-name-ko">Name (KO) *</label>'
+    + '<input type="text" id="ff-name-ko" value="' + escapeHtml(f.name_ko || '') + '"></div>'
+    + '<div class="form-group"><label for="ff-desc-en">Description (EN)</label>'
+    + '<textarea id="ff-desc-en" rows="2">' + escapeHtml(f.description_en || '') + '</textarea></div>'
+    + '<div class="form-group"><label for="ff-desc-ko">Description (KO)</label>'
+    + '<textarea id="ff-desc-ko" rows="2">' + escapeHtml(f.description_ko || '') + '</textarea></div>'
+    + '<div class="form-group"><label for="ff-stance">Default Stance</label>'
+    + '<select id="ff-stance">' + buildSelectOptions(STANCE_OPTIONS, f.default_stance || 'NEUTRAL') + '</select></div>'
+    + '<div class="form-group"><label for="ff-properties">Properties (JSON)</label>'
+    + '<textarea id="ff-properties" rows="3">' + escapeHtml(propsStr) + '</textarea></div>'
+    + '</form>';
+}
+
+/** 종족 폼에서 입력값 수집 (JSON 파싱 포함). 오류 시 null 반환하고 notify */
+function collectFactionForm(includeId) {
+  const nameEn = document.getElementById('ff-name-en').value.trim();
+  const nameKo = document.getElementById('ff-name-ko').value.trim();
+  if (nameEn === '' || nameKo === '') {
+    notify.error('Name (EN) and Name (KO) are required.');
+    return null;
+  }
+
+  let properties;
+  const propsRaw = document.getElementById('ff-properties').value.trim();
+  try {
+    properties = propsRaw === '' ? {} : JSON.parse(propsRaw);
+  } catch (e) {
+    notify.error('Properties must be valid JSON.');
+    return null;
+  }
+
+  const body = {
+    name_en: nameEn,
+    name_ko: nameKo,
+    description_en: document.getElementById('ff-desc-en').value.trim() || null,
+    description_ko: document.getElementById('ff-desc-ko').value.trim() || null,
+    default_stance: document.getElementById('ff-stance').value,
+    properties: properties,
+  };
+
+  if (includeId) {
+    const id = document.getElementById('ff-id').value.trim();
+    if (id === '') {
+      notify.error('ID is required.');
+      return null;
+    }
+    body.id = id;
+  }
+
+  return body;
+}
+
+/** 종족 생성 모달 표시 */
+function showCreateFactionModal() {
+  const footerHtml = '<button class="btn btn-secondary" id="faction-create-cancel">Cancel</button>'
+    + ' <button class="btn btn-primary" id="faction-create-submit">Create</button>';
+
+  modal.open('Create Faction', buildFactionFormHtml({}, false), footerHtml);
+
+  document.getElementById('faction-create-cancel').addEventListener('click', modal.close);
+  document.getElementById('faction-create-submit').addEventListener('click', handleCreateFaction);
+}
+
+/** 종족 생성 처리 */
+async function handleCreateFaction() {
+  const body = collectFactionForm(true);
+  if (!body) return;
+
+  try {
+    await api.post('/factions', body);
+    modal.close();
+    notify.success('Faction created successfully.');
+    renderFactions();
+  } catch (err) {
+    notify.error('Failed to create faction: ' + err.message);
+  }
+}
+
+/** 종족 수정 모달 표시 */
+async function showEditFactionModal(factionId) {
+  try {
+    const result = await api.get('/factions/' + encodeURIComponent(factionId));
+    const f = result.data || result;
+
+    const footerHtml = '<button class="btn btn-secondary" id="faction-edit-cancel">Cancel</button>'
+      + ' <button class="btn btn-primary" id="faction-edit-submit">Save</button>';
+
+    modal.open('Edit Faction: ' + f.id, buildFactionFormHtml(f, true), footerHtml);
+
+    document.getElementById('faction-edit-cancel').addEventListener('click', modal.close);
+    document.getElementById('faction-edit-submit').addEventListener('click', function () {
+      handleEditFaction(factionId);
+    });
+  } catch (err) {
+    notify.error('Failed to load faction: ' + err.message);
+  }
+}
+
+/** 종족 수정 처리 */
+async function handleEditFaction(factionId) {
+  const body = collectFactionForm(false);
+  if (!body) return;
+
+  try {
+    await api.put('/factions/' + encodeURIComponent(factionId), body);
+    modal.close();
+    notify.success('Faction updated successfully.');
+    renderFactions();
+  } catch (err) {
+    notify.error('Failed to update faction: ' + err.message);
+  }
+}
+
+/* ================================================================
+ * 종족 관계 (faction_relations) 섹션
+ * ================================================================ */
+
+/** 종족 관계 섹션 렌더링 */
+async function renderFactionRelations() {
+  const container = document.getElementById('section-faction-relations');
+  container.innerHTML = '<p class="text-muted">Loading faction relations...</p>';
+
+  try {
+    const result = await api.get('/faction-relations');
+    const relations = Array.isArray(result) ? result : (result.data || []);
+
+    let html = '<div class="section-header">'
+      + '<h2>Faction Relations</h2>'
+      + '<button class="btn btn-primary" id="btn-create-relation">Create Relation</button>'
+      + '</div>';
+
+    html += '<div class="table-container"><table class="data-table">';
+    html += '<thead><tr>'
+      + '<th>Faction A</th>'
+      + '<th>Faction B</th>'
+      + '<th>Value</th>'
+      + '<th>Status</th>'
+      + '<th>Actions</th>'
+      + '</tr></thead><tbody>';
+
+    if (relations.length === 0) {
+      html += '<tr><td colspan="5" class="text-muted text-center">No faction relations found.</td></tr>';
+    } else {
+      for (const r of relations) {
+        html += '<tr>'
+          + '<td>' + escapeHtml(r.faction_a_id) + '</td>'
+          + '<td>' + escapeHtml(r.faction_b_id) + '</td>'
+          + '<td>' + escapeHtml(r.relation_value) + '</td>'
+          + '<td>' + escapeHtml(r.relation_status || '-') + '</td>'
+          + '<td class="actions-cell">'
+          + '<button class="btn btn-sm btn-secondary btn-edit-relation" data-a="' + escapeHtml(r.faction_a_id) + '" data-b="' + escapeHtml(r.faction_b_id) + '" data-value="' + escapeHtml(r.relation_value) + '" data-status="' + escapeHtml(r.relation_status || 'NEUTRAL') + '">Edit</button> '
+          + '<button class="btn btn-sm btn-danger btn-delete-relation" data-a="' + escapeHtml(r.faction_a_id) + '" data-b="' + escapeHtml(r.faction_b_id) + '">Delete</button>'
+          + '</td>'
+          + '</tr>';
+      }
+    }
+
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+    bindFactionRelationsEvents();
+  } catch (err) {
+    container.innerHTML = '<p class="text-danger">Failed to load faction relations: ' + escapeHtml(err.message) + '</p>';
+  }
+}
+
+/** 종족 관계 섹션 이벤트 바인딩 */
+function bindFactionRelationsEvents() {
+  const createBtn = document.getElementById('btn-create-relation');
+  if (createBtn) {
+    createBtn.addEventListener('click', showCreateFactionRelationModal);
+  }
+
+  document.querySelectorAll('.btn-edit-relation').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      showEditFactionRelationModal(
+        btn.getAttribute('data-a'),
+        btn.getAttribute('data-b'),
+        btn.getAttribute('data-value'),
+        btn.getAttribute('data-status')
+      );
+    });
+  });
+
+  document.querySelectorAll('.btn-delete-relation').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const a = btn.getAttribute('data-a');
+      const b = btn.getAttribute('data-b');
+      confirm.open('Delete relation \'' + a + '\' → \'' + b + '\'?', async function () {
+        try {
+          await api.del('/faction-relations/' + encodeURIComponent(a) + '/' + encodeURIComponent(b));
+          notify.success('Faction relation deleted successfully.');
+          renderFactionRelations();
+        } catch (err) {
+          notify.error('Failed to delete faction relation: ' + err.message);
+        }
+      });
+    });
+  });
+}
+
+/** 종족 목록 조회 (관계 폼 드롭다운용) */
+async function fetchFactionList() {
+  const result = await api.get('/factions');
+  return Array.isArray(result) ? result : (result.data || []);
+}
+
+/** 종족 관계 생성 모달 표시 */
+async function showCreateFactionRelationModal() {
+  try {
+    const factions = await fetchFactionList();
+    if (factions.length === 0) {
+      notify.error('No factions available. Create factions first.');
+      return;
+    }
+    const factionOpts = factions.map(function (f) {
+      return '<option value="' + escapeHtml(f.id) + '">' + escapeHtml(f.id) + '</option>';
+    }).join('');
+
+    const bodyHtml = '<form id="relation-form">'
+      + '<div class="form-group"><label for="rl-a">Faction A *</label>'
+      + '<select id="rl-a">' + factionOpts + '</select></div>'
+      + '<div class="form-group"><label for="rl-b">Faction B *</label>'
+      + '<select id="rl-b">' + factionOpts + '</select></div>'
+      + '<div class="form-group"><label for="rl-value">Relation Value (-100 ~ 100)</label>'
+      + '<input type="number" id="rl-value" value="0" min="-100" max="100"></div>'
+      + '<div class="form-group"><label for="rl-status">Status</label>'
+      + '<select id="rl-status">' + buildSelectOptions(RELATION_STATUS_OPTIONS, 'NEUTRAL') + '</select></div>'
+      + '</form>';
+
+    const footerHtml = '<button class="btn btn-secondary" id="relation-create-cancel">Cancel</button>'
+      + ' <button class="btn btn-primary" id="relation-create-submit">Create</button>';
+
+    modal.open('Create Faction Relation', bodyHtml, footerHtml);
+
+    document.getElementById('relation-create-cancel').addEventListener('click', modal.close);
+    document.getElementById('relation-create-submit').addEventListener('click', handleUpsertFactionRelation);
+  } catch (err) {
+    notify.error('Failed to load factions: ' + err.message);
+  }
+}
+
+/** 종족 관계 수정 모달 표시 (A/B 고정) */
+function showEditFactionRelationModal(a, b, value, status) {
+  const bodyHtml = '<form id="relation-form">'
+    + '<div class="form-group"><label for="rl-a">Faction A</label>'
+    + '<input type="text" id="rl-a" value="' + escapeHtml(a) + '" disabled></div>'
+    + '<div class="form-group"><label for="rl-b">Faction B</label>'
+    + '<input type="text" id="rl-b" value="' + escapeHtml(b) + '" disabled></div>'
+    + '<div class="form-group"><label for="rl-value">Relation Value (-100 ~ 100)</label>'
+    + '<input type="number" id="rl-value" value="' + escapeHtml(value != null ? value : 0) + '" min="-100" max="100"></div>'
+    + '<div class="form-group"><label for="rl-status">Status</label>'
+    + '<select id="rl-status">' + buildSelectOptions(RELATION_STATUS_OPTIONS, status || 'NEUTRAL') + '</select></div>'
+    + '</form>';
+
+  const footerHtml = '<button class="btn btn-secondary" id="relation-edit-cancel">Cancel</button>'
+    + ' <button class="btn btn-primary" id="relation-edit-submit">Save</button>';
+
+  modal.open('Edit Relation: ' + a + ' → ' + b, bodyHtml, footerHtml);
+
+  document.getElementById('relation-edit-cancel').addEventListener('click', modal.close);
+  document.getElementById('relation-edit-submit').addEventListener('click', function () {
+    handleUpsertFactionRelation(a, b);
+  });
+}
+
+/** 종족 관계 생성/수정 처리 (upsert) */
+async function handleUpsertFactionRelation(fixedA, fixedB) {
+  const a = typeof fixedA === 'string' ? fixedA : document.getElementById('rl-a').value;
+  const b = typeof fixedB === 'string' ? fixedB : document.getElementById('rl-b').value;
+
+  if (a === b) {
+    notify.error('Faction A and B must be different.');
+    return;
+  }
+
+  const body = {
+    faction_a_id: a,
+    faction_b_id: b,
+    relation_value: parseInt(document.getElementById('rl-value').value, 10) || 0,
+    relation_status: document.getElementById('rl-status').value,
+  };
+
+  try {
+    await api.post('/faction-relations', body);
+    modal.close();
+    notify.success('Faction relation saved successfully.');
+    renderFactionRelations();
+  } catch (err) {
+    notify.error('Failed to save faction relation: ' + err.message);
+  }
+}

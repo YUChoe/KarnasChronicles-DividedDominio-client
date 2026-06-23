@@ -19,6 +19,7 @@ export interface MapRoom {
   id: string;
   x: number;
   y: number;
+  room_type: string;
   description_en: string | null;
   description_ko: string | null;
   blocked_exits: string[];
@@ -89,6 +90,9 @@ export interface Player {
   stat_wisdom: number;
   stat_constitution: number;
   stat_charisma: number;
+  stat_current: Record<string, unknown>;
+  completed_quests: unknown[];
+  quest_progress: Record<string, unknown>;
   created_at: string;
 }
 
@@ -125,6 +129,7 @@ export interface Room {
   id: string;
   x: number;
   y: number;
+  room_type: string;
   description_en: string | null;
   description_ko: string | null;
   blocked_exits: string[];
@@ -135,6 +140,7 @@ export interface Room {
 export interface CreateRoomInput {
   x: number;
   y: number;
+  room_type?: string;
   description_en?: string;
   description_ko?: string;
   blocked_exits?: string[];
@@ -143,6 +149,7 @@ export interface CreateRoomInput {
 export interface UpdateRoomInput {
   x?: number;
   y?: number;
+  room_type?: string;
   description_en?: string;
   description_ko?: string;
   blocked_exits?: string[];
@@ -276,6 +283,74 @@ export interface UpdateMonsterInput {
   faction_id?: string;
 }
 
+// ── 아이템 가격 타입 ──
+
+export interface ItemPrice {
+  template_id: string;
+  buy_price: number;
+  sell_price: number;
+}
+
+export interface CreateItemPriceInput {
+  template_id: string;
+  buy_price?: number;
+  sell_price?: number;
+}
+
+export interface UpdateItemPriceInput {
+  buy_price?: number;
+  sell_price?: number;
+}
+
+// ── 종족(faction) 타입 ──
+
+export interface Faction {
+  id: string;
+  name_en: string;
+  name_ko: string;
+  description_en: string | null;
+  description_ko: string | null;
+  default_stance: string;
+  properties: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface CreateFactionInput {
+  id: string;
+  name_en: string;
+  name_ko: string;
+  description_en?: string;
+  description_ko?: string;
+  default_stance?: string;
+  properties?: Record<string, unknown>;
+}
+
+export interface UpdateFactionInput {
+  name_en?: string;
+  name_ko?: string;
+  description_en?: string;
+  description_ko?: string;
+  default_stance?: string;
+  properties?: Record<string, unknown>;
+}
+
+// ── 종족 관계(faction_relations) 타입 ──
+
+export interface FactionRelation {
+  faction_a_id: string;
+  faction_b_id: string;
+  relation_value: number;
+  relation_status: string;
+  updated_at: string;
+}
+
+export interface UpsertFactionRelationInput {
+  faction_a_id: string;
+  faction_b_id: string;
+  relation_value?: number;
+  relation_status?: string;
+}
+
 export class DBClient {
   private db: DatabaseType;
 
@@ -379,11 +454,12 @@ export class DBClient {
     try {
       // 1) 전체 방 목록 조회
       const rooms = this.db.prepare(
-        'SELECT id, x, y, description_en, description_ko, blocked_exits FROM rooms',
+        'SELECT id, x, y, room_type, description_en, description_ko, blocked_exits FROM rooms',
       ).all() as Array<{
         id: string;
         x: number;
         y: number;
+        room_type: string | null;
         description_en: string | null;
         description_ko: string | null;
         blocked_exits: string | null;
@@ -520,6 +596,7 @@ export class DBClient {
           id: r.id,
           x: r.x,
           y: r.y,
+          room_type: r.room_type ?? 'unknown',
           description_en: r.description_en,
           description_ko: r.description_ko,
           blocked_exits: blockedExits,
@@ -608,6 +685,7 @@ export class DBClient {
                last_room_x, last_room_y,
                stat_strength, stat_dexterity, stat_intelligence,
                stat_wisdom, stat_constitution, stat_charisma,
+               stat_current, completed_quests, quest_progress,
                created_at
         FROM players
         WHERE id = @id
@@ -618,6 +696,9 @@ export class DBClient {
       return {
         ...row,
         is_admin: Boolean(row.is_admin),
+        stat_current: this.parseJsonField<Record<string, unknown>>(row.stat_current, {}),
+        completed_quests: this.parseJsonField<unknown[]>(row.completed_quests, []),
+        quest_progress: this.parseJsonField<Record<string, unknown>>(row.quest_progress, {}),
       };
     } catch (error) {
       logger.error('Failed to get player by id', {
@@ -811,7 +892,7 @@ export class DBClient {
   getRooms(page: number, limit: number): PaginatedResult<Room> {
     const countSql = 'SELECT COUNT(*) AS count FROM rooms';
     const dataSql = `
-      SELECT id, x, y, description_en, description_ko, blocked_exits,
+      SELECT id, x, y, room_type, description_en, description_ko, blocked_exits,
              created_at, updated_at
       FROM rooms
       ORDER BY x ASC, y ASC`;
@@ -834,7 +915,7 @@ export class DBClient {
   getRoomById(id: string): Room | null {
     try {
       const row = this.db.prepare(`
-        SELECT id, x, y, description_en, description_ko, blocked_exits,
+        SELECT id, x, y, room_type, description_en, description_ko, blocked_exits,
                created_at, updated_at
         FROM rooms
         WHERE id = @id
@@ -879,12 +960,13 @@ export class DBClient {
 
     try {
       this.db.prepare(`
-        INSERT INTO rooms (id, x, y, description_en, description_ko, blocked_exits, created_at, updated_at)
-        VALUES (@id, @x, @y, @description_en, @description_ko, @blocked_exits, @created_at, @updated_at)
+        INSERT INTO rooms (id, x, y, room_type, description_en, description_ko, blocked_exits, created_at, updated_at)
+        VALUES (@id, @x, @y, @room_type, @description_en, @description_ko, @blocked_exits, @created_at, @updated_at)
       `).run({
         id,
         x: data.x,
         y: data.y,
+        room_type: data.room_type ?? 'unknown',
         description_en: data.description_en ?? null,
         description_ko: data.description_ko ?? null,
         blocked_exits: blockedExitsJson,
@@ -921,6 +1003,10 @@ export class DBClient {
     if (data.y !== undefined) {
       setClauses.push('y = @y');
       params.y = data.y;
+    }
+    if (data.room_type !== undefined) {
+      setClauses.push('room_type = @room_type');
+      params.room_type = data.room_type;
     }
     if (data.description_en !== undefined) {
       setClauses.push('description_en = @description_en');
@@ -1463,6 +1549,409 @@ export class DBClient {
     } catch (error) {
       logger.error('Failed to delete game object', {
         id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  }
+
+  // ── 아이템 가격 CRUD ──
+
+  /**
+   * 페이지네이션된 아이템 가격 목록 조회
+   */
+  getItemPrices(page: number, limit: number): PaginatedResult<ItemPrice> {
+    const countSql = 'SELECT COUNT(*) AS count FROM item_prices';
+    const dataSql = `
+      SELECT template_id, buy_price, sell_price
+      FROM item_prices
+      ORDER BY template_id ASC`;
+
+    return this.paginate<ItemPrice>(countSql, dataSql, {}, page, limit);
+  }
+
+  /**
+   * 아이템 가격 상세 조회
+   * 없으면 null 반환
+   */
+  getItemPriceById(templateId: string): ItemPrice | null {
+    try {
+      const row = this.db.prepare(`
+        SELECT template_id, buy_price, sell_price
+        FROM item_prices
+        WHERE template_id = @templateId
+      `).get({ templateId }) as ItemPrice | undefined;
+
+      return row ?? null;
+    } catch (error) {
+      logger.error('Failed to get item price by id', {
+        templateId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * 새 아이템 가격 생성
+   * - template_id 중복 시 UniqueConstraintError throw
+   * - buy_price/sell_price 기본값 0
+   */
+  createItemPrice(data: CreateItemPriceInput): ItemPrice {
+    const existing = this.db.prepare(
+      'SELECT template_id FROM item_prices WHERE template_id = @templateId',
+    ).get({ templateId: data.template_id });
+
+    if (existing) {
+      const dupError = new Error(`Item price for '${data.template_id}' already exists`);
+      dupError.name = 'UniqueConstraintError';
+      throw dupError;
+    }
+
+    try {
+      this.db.prepare(`
+        INSERT INTO item_prices (template_id, buy_price, sell_price)
+        VALUES (@template_id, @buy_price, @sell_price)
+      `).run({
+        template_id: data.template_id,
+        buy_price: data.buy_price ?? 0,
+        sell_price: data.sell_price ?? 0,
+      });
+    } catch (error) {
+      logger.error('Failed to create item price', {
+        template_id: data.template_id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+
+    return this.getItemPriceById(data.template_id) as ItemPrice;
+  }
+
+  /**
+   * 아이템 가격 수정 (전달된 필드만 업데이트)
+   * 없으면 null 반환
+   */
+  updateItemPrice(templateId: string, data: UpdateItemPriceInput): ItemPrice | null {
+    const existing = this.getItemPriceById(templateId);
+    if (!existing) return null;
+
+    const setClauses: string[] = [];
+    const params: Record<string, unknown> = { templateId };
+
+    if (data.buy_price !== undefined) {
+      setClauses.push('buy_price = @buy_price');
+      params.buy_price = data.buy_price;
+    }
+    if (data.sell_price !== undefined) {
+      setClauses.push('sell_price = @sell_price');
+      params.sell_price = data.sell_price;
+    }
+
+    if (setClauses.length === 0) {
+      return existing;
+    }
+
+    try {
+      this.db.prepare(`
+        UPDATE item_prices SET ${setClauses.join(', ')} WHERE template_id = @templateId
+      `).run(params);
+    } catch (error) {
+      logger.error('Failed to update item price', {
+        templateId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+
+    return this.getItemPriceById(templateId);
+  }
+
+  /**
+   * 아이템 가격 삭제
+   * 없으면 false
+   */
+  deleteItemPrice(templateId: string): boolean {
+    const existing = this.db.prepare(
+      'SELECT template_id FROM item_prices WHERE template_id = @templateId',
+    ).get({ templateId });
+
+    if (!existing) return false;
+
+    try {
+      this.db.prepare('DELETE FROM item_prices WHERE template_id = @templateId').run({ templateId });
+      return true;
+    } catch (error) {
+      logger.error('Failed to delete item price', {
+        templateId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  }
+
+  // ── 종족(faction) CRUD ──
+
+  /**
+   * 전체 종족 목록 조회 (종족 수가 적어 페이지네이션 없음)
+   */
+  getFactions(): Faction[] {
+    try {
+      const rows = this.db.prepare(`
+        SELECT id, name_en, name_ko, description_en, description_ko,
+               default_stance, properties, created_at
+        FROM factions
+        ORDER BY id ASC
+      `).all() as any[];
+
+      return rows.map((row) => ({
+        ...row,
+        properties: this.parseJsonField<Record<string, unknown>>(row.properties, {}),
+      }));
+    } catch (error) {
+      logger.error('Failed to get factions', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * 종족 상세 조회
+   * 없으면 null 반환
+   */
+  getFactionById(id: string): Faction | null {
+    try {
+      const row = this.db.prepare(`
+        SELECT id, name_en, name_ko, description_en, description_ko,
+               default_stance, properties, created_at
+        FROM factions
+        WHERE id = @id
+      `).get({ id }) as any | undefined;
+
+      if (!row) return null;
+
+      return {
+        ...row,
+        properties: this.parseJsonField<Record<string, unknown>>(row.properties, {}),
+      };
+    } catch (error) {
+      logger.error('Failed to get faction by id', {
+        id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * 새 종족 생성
+   * - id(PK) 중복 시 UniqueConstraintError throw
+   * - default_stance 기본값 NEUTRAL, properties 기본값 {}
+   */
+  createFaction(data: CreateFactionInput): Faction {
+    const existing = this.db.prepare(
+      'SELECT id FROM factions WHERE id = @id',
+    ).get({ id: data.id });
+
+    if (existing) {
+      const dupError = new Error(`Faction '${data.id}' already exists`);
+      dupError.name = 'UniqueConstraintError';
+      throw dupError;
+    }
+
+    try {
+      this.db.prepare(`
+        INSERT INTO factions (id, name_en, name_ko, description_en, description_ko, default_stance, properties)
+        VALUES (@id, @name_en, @name_ko, @description_en, @description_ko, @default_stance, @properties)
+      `).run({
+        id: data.id,
+        name_en: data.name_en,
+        name_ko: data.name_ko,
+        description_en: data.description_en ?? null,
+        description_ko: data.description_ko ?? null,
+        default_stance: data.default_stance ?? 'NEUTRAL',
+        properties: JSON.stringify(data.properties ?? {}),
+      });
+    } catch (error) {
+      logger.error('Failed to create faction', {
+        id: data.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+
+    return this.getFactionById(data.id) as Faction;
+  }
+
+  /**
+   * 종족 수정 (전달된 필드만 업데이트)
+   * 없으면 null 반환
+   */
+  updateFaction(id: string, data: UpdateFactionInput): Faction | null {
+    const existing = this.getFactionById(id);
+    if (!existing) return null;
+
+    const allowedFields = [
+      'name_en', 'name_ko', 'description_en', 'description_ko', 'default_stance', 'properties',
+    ];
+
+    const setClauses: string[] = [];
+    const params: Record<string, unknown> = { id };
+
+    for (const field of allowedFields) {
+      if ((data as any)[field] !== undefined) {
+        let value = (data as any)[field];
+        if (field === 'properties') {
+          value = JSON.stringify(value);
+        }
+        setClauses.push(`${field} = @${field}`);
+        params[field] = value;
+      }
+    }
+
+    if (setClauses.length === 0) {
+      return existing;
+    }
+
+    try {
+      this.db.prepare(`
+        UPDATE factions SET ${setClauses.join(', ')} WHERE id = @id
+      `).run(params);
+    } catch (error) {
+      logger.error('Failed to update faction', {
+        id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+
+    return this.getFactionById(id);
+  }
+
+  /**
+   * 종족이 players/monsters/faction_relations에서 참조되는 횟수 조회
+   */
+  getFactionUsage(id: string): { players: number; monsters: number; relations: number } {
+    const countOf = (sql: string, p: Record<string, unknown>): number => {
+      const row = this.db.prepare(sql).get(p) as { count: number };
+      return row.count;
+    };
+    return {
+      players: countOf('SELECT COUNT(*) AS count FROM players WHERE faction_id = @id', { id }),
+      monsters: countOf('SELECT COUNT(*) AS count FROM monsters WHERE faction_id = @id', { id }),
+      relations: countOf(
+        'SELECT COUNT(*) AS count FROM faction_relations WHERE faction_a_id = @id OR faction_b_id = @id',
+        { id },
+      ),
+    };
+  }
+
+  /**
+   * 종족 삭제
+   * - players/monsters/faction_relations에서 참조 중이면 FactionInUseError throw
+   * - 없으면 false
+   */
+  deleteFaction(id: string): boolean {
+    const existing = this.db.prepare('SELECT id FROM factions WHERE id = @id').get({ id });
+    if (!existing) return false;
+
+    const usage = this.getFactionUsage(id);
+    if (usage.players > 0 || usage.monsters > 0 || usage.relations > 0) {
+      const inUseError = new Error(
+        `Faction '${id}' is in use (players: ${usage.players}, monsters: ${usage.monsters}, relations: ${usage.relations})`,
+    );
+      inUseError.name = 'FactionInUseError';
+      throw inUseError;
+    }
+
+    try {
+      this.db.prepare('DELETE FROM factions WHERE id = @id').run({ id });
+      return true;
+    } catch (error) {
+      logger.error('Failed to delete faction', {
+        id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  }
+
+  // ── 종족 관계(faction_relations) CRUD ──
+
+  /**
+   * 전체 종족 관계 목록 조회
+   */
+  getFactionRelations(): FactionRelation[] {
+    try {
+      return this.db.prepare(`
+        SELECT faction_a_id, faction_b_id, relation_value, relation_status, updated_at
+        FROM faction_relations
+        ORDER BY faction_a_id ASC, faction_b_id ASC
+      `).all() as FactionRelation[];
+    } catch (error) {
+      logger.error('Failed to get faction relations', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * 종족 관계 생성 또는 수정 (복합 PK upsert)
+   * - relation_value 기본값 0, relation_status 기본값 NEUTRAL
+   */
+  upsertFactionRelation(data: UpsertFactionRelationInput): FactionRelation {
+    try {
+      this.db.prepare(`
+        INSERT INTO faction_relations (faction_a_id, faction_b_id, relation_value, relation_status, updated_at)
+        VALUES (@faction_a_id, @faction_b_id, @relation_value, @relation_status, CURRENT_TIMESTAMP)
+        ON CONFLICT (faction_a_id, faction_b_id)
+        DO UPDATE SET relation_value = @relation_value,
+                      relation_status = @relation_status,
+                      updated_at = CURRENT_TIMESTAMP
+      `).run({
+        faction_a_id: data.faction_a_id,
+        faction_b_id: data.faction_b_id,
+        relation_value: data.relation_value ?? 0,
+        relation_status: data.relation_status ?? 'NEUTRAL',
+      });
+    } catch (error) {
+      logger.error('Failed to upsert faction relation', {
+        faction_a_id: data.faction_a_id,
+        faction_b_id: data.faction_b_id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+
+    return this.db.prepare(`
+      SELECT faction_a_id, faction_b_id, relation_value, relation_status, updated_at
+      FROM faction_relations
+      WHERE faction_a_id = @a AND faction_b_id = @b
+    `).get({ a: data.faction_a_id, b: data.faction_b_id }) as FactionRelation;
+  }
+
+  /**
+   * 종족 관계 삭제 (복합 PK)
+   * 없으면 false
+   */
+  deleteFactionRelation(factionAId: string, factionBId: string): boolean {
+    const existing = this.db.prepare(
+      'SELECT faction_a_id FROM faction_relations WHERE faction_a_id = @a AND faction_b_id = @b',
+    ).get({ a: factionAId, b: factionBId });
+
+    if (!existing) return false;
+
+    try {
+      this.db.prepare(
+        'DELETE FROM faction_relations WHERE faction_a_id = @a AND faction_b_id = @b',
+      ).run({ a: factionAId, b: factionBId });
+      return true;
+    } catch (error) {
+      logger.error('Failed to delete faction relation', {
+        factionAId,
+        factionBId,
         error: error instanceof Error ? error.message : String(error),
       });
       throw error;
