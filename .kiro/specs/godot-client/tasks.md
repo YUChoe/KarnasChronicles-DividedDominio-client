@@ -1,0 +1,252 @@
+# Implementation Plan
+
+## Overview
+
+Godot 4.x + GDScript로 게임 클라이언트를 구현한다. 프로토콜 계약(`docs/protocol/`, 서버 저장소)이 유일한 접점이므로 서버 구현과 병렬로 진행할 수 있다.
+
+각 단계는 독립 커밋으로 진행한다. 검증은 두 층으로 한다. 서버 없이 가능한 것(번역 치환, 액션 규칙, 메시지 디스패치)은 단위 테스트로, 통신이 필요한 것은 서버 하니스가 동작하는 서버에 붙여 확인한다.
+
+계약의 예시 페이로드를 테스트 픽스처로 재사용해 서버 구현과의 정합성을 함께 확인한다.
+
+## Tasks
+
+- [ ] 1. 프로젝트 기반과 연결 계층
+- [ ] 1.1 Godot 프로젝트 초기화
+  - `godot/` 아래 Godot 4.x 프로젝트를 만든다. 디렉터리 구조는 design.md의 배치를 따른다. autoload로 `game_state.gd`와 `translator.gd`를 등록한다.
+  - _Requirements: 1.1, 13.1_
+- [ ] 1.2 WebSocket 연결 관리
+  - `scripts/net/connection.gd`에 `WebSocketPeer` 래퍼를 만든다. 접속, 프레임 송수신, 상태 전이(`DISCONNECTED`, `CONNECTING`, `WAITING_WELCOME`, `READY`)를 구현한다. `welcome` 수신 전에는 송신하지 않는다.
+  - 접속 대상 호스트와 포트를 설정으로 변경할 수 있게 한다.
+  - _Requirements: 1.2, 1.9, 1.11_
+- [ ] 1.3 재연결과 유휴 유지
+  - 연결이 끊기면 지수 백오프(1초 시작, 2배씩, 30초 상한)로 재시도한다. 사용자가 취소할 수 있게 한다. 60초 이상 송신이 없으면 `ping`을 보낸다.
+  - _Requirements: 1.7, 1.8_
+- [ ] 1.4 메시지 디스패처
+  - `scripts/net/dispatcher.gd`가 수신 프레임을 JSON 파싱하고 `type`별로 분기한다. 계약에 없는 `type`은 무시하고 경고를 기록한다. 파싱 실패도 같이 처리한다.
+  - `scripts/net/protocol.gd`에 타입 상수와 거절 코드 상수를 정의한다.
+  - _Requirements: 1.3, 1.4_
+- [ ] 1.5 액션 송신과 seq 관리
+  - `scripts/net/action_sender.gd`가 `seq`를 1부터 증가시켜 부여하고 발신 시각과 verb를 기록한다. 응답 대응과 10초 타임아웃 판정을 구현한다. 응답 수신까지 해당 버튼을 비활성화한다.
+  - _Requirements: 1.5, 6.8_
+- [ ] 1.6 프로토콜 버전 확인
+  - `welcome`의 `protocol_version`이 지원 범위를 벗어나면 클라이언트 업데이트를 안내하고 연결을 종료한다.
+  - _Requirements: 1.10_
+- [ ] 1.7 상태 저장소
+  - `scripts/state/game_state.gd`에 player, room, entities, nearby_rooms, inventory, equipped, combat, dialogue, shop, chat_log, event_log, connection_status를 둔다. 변경을 신호로 전파한다. `entities`는 uuid 키 딕셔너리로 관리한다. 로그는 최근 500건으로 제한한다.
+  - _Requirements: 13.1, 13.2_
+- [ ] 1.8 연결 상태 표시
+  - 연결 중, 연결됨, 끊김, 재연결 시도를 화면에 표시한다.
+  - _Requirements: 1.6_
+- [ ] 1.9 클라이언트 정보 통지
+  - 접속 후 `client_info`로 클라이언트 버전, 플랫폼, Locale을 통지한다. 응답을 기다리지 않는 단방향 통지다.
+  - _Requirements: 1.12_
+
+- [ ] 2. 다국어 처리
+- [ ] 2.1 번역 파일 이관
+  - 서버의 `data/translations/` 9개 파일을 `godot/resources/translations/`로 옮긴다. Python `str.format` 포맷 스펙(`{value:>10}`, `{value!r}`)과 리터럴 중괄호(`{{`)가 있는 값을 전수 확인해 GDScript 호환 형태로 정리한다.
+  - 선행 조건: 서버 `server-json-protocol` Task 6.5(번역 파일 이관 시점). 서버가 추가한 새 키 목록을 함께 받는다.
+  - _Requirements: 3.1, 3.4_
+- [ ] 2.2 Translator 구현
+  - `scripts/i18n/translator.gd`에 `t(key, params)`를 구현한다. GDScript `String.format`이 딕셔너리 키를 `{name}` 자리표시자로 지원하므로 문법 변환 없이 사용한다. `params` 값이 언어별 dict면 현재 locale 값을 고르고 스칼라면 그대로 치환한다.
+  - 키가 없으면 키 문자열을 반환하고 경고를 기록한다. 현재 locale 번역이 없으면 `en`으로 폴백한다.
+  - _Requirements: 3.2, 3.3, 3.5, 3.6_
+- [ ] 2.3 Locale 전환
+  - Locale 전환 UI를 제공하고 선택을 로컬에 저장한다. 전환 시 화면을 다시 그리며 재접속을 요구하지 않는다.
+  - _Requirements: 3.8, 3.9_
+- [ ] 2.4 엔티티 이름 선택과 조사 처리
+  - 서버가 보낸 언어별 dict에서 현재 locale 값을 선택하는 공통 함수를 제공한다. 한국어 조사는 번역 값의 완성형(`{item}을(를)`)을 그대로 표시한다. 채팅 본문은 번역하지 않는다.
+  - _Requirements: 3.7, 3.10, 3.11_
+- [ ] 2.5 번역 단위 테스트
+  - 키와 params 조합으로 기대 문자열을 검증한다. 언어별 dict params, 키 없음 폴백, locale 폴백을 포함한다.
+  - _Requirements: 13.5_
+
+- [ ] 3. 로그인과 로그아웃
+  - `scenes/login/login.tscn`을 만든다. 사용자명과 비밀번호 입력, `login` 메시지 송신, `reason_code`별 안내 표시를 구현한다. 회원가입 기능을 제공하지 않고 랜딩 사이트 링크만 표시한다. 자동 로그인 옵션을 제공하며 자격 정보를 평문으로 보관하지 않는다. 로그아웃은 `logout` 송신 후 로그인 화면으로 전환하고 연결을 유지한다. `is_admin`이 참일 때만 어드민 진입 버튼을 노출한다. `room_info`, `player_state`, `inventory`를 모두 받은 뒤 게임 화면을 표시한다.
+  - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8_
+
+- [ ] 4. 액션 규칙 테이블
+- [ ] 4.1 규칙 구현
+  - `scripts/rules/action_rules.gd`에 design.md의 규칙 표를 구현한다. 몬스터(방), 오브젝트(방), 오브젝트(인벤토리), 플레이어(방), 전투 중 각각의 조건별 동사 목록을 반환한다. 서버가 보낸 속성만 판단 근거로 사용한다.
+  - _Requirements: 6.1, 6.2, 6.3_
+- [ ] 4.2 거절 응답 처리
+  - Rejection_Code별 처리를 구현한다. `NOT_APPLICABLE`은 버튼 제거만 하고 오류로 표시하지 않는다. `NOT_FOUND`는 `look`으로 재동기화, `NOT_AUTHENTICATED`는 로그인 화면 전환이다. 나머지는 design.md의 표를 따른다.
+  - _Requirements: 6.4, 6.5, 6.6, 6.7_
+- [ ] 4.3 규칙 단위 테스트
+  - 엔티티 속성 조합을 넣어 기대 버튼 목록을 검증한다.
+  - _Requirements: 13.5_
+
+- [ ] 5. 방 정보와 이동
+- [ ] 5.1 방 표시
+  - `scenes/main/main.tscn`에 방 설명, 시간대, 좌표를 표시한다. 방 이름을 표시하지 않는다. `rooms` 테이블에 이름 컬럼이 없다.
+  - _Requirements: 5.1, 5.2_
+- [ ] 5.2 출구와 진입 버튼
+  - 이동 가능한 출구를 버튼으로, 막힌 출구를 비활성 상태로 표시한다. `move` verb에 `direction` params를 담아 전송한다.
+  - `room.has_passage`가 참이면 진입 버튼을 표시하고 `enter` verb를 전송한다. `enter`는 `room_connections` 기반이므로 target이 없다.
+  - _Requirements: 5.3, 2.3_
+- [ ] 5.3 엔티티 버튼 렌더링
+  - `scenes/main/entity_button.tscn`을 만들고 방 엔티티를 버튼으로 표시한다. `disposition`에 따라 인물(friendly), 동물(neutral), 적(hostile) 구역으로 나눈다. 오브젝트는 스택 수량을 함께 표시한다. 화면을 넘칠 경우 구역별 스크롤을 적용한다.
+  - _Requirements: 5.4, 5.5, 5.8, 2.1_
+- [ ] 5.4 미니맵
+  - `scenes/main/minimap.tscn`에서 `nearby_rooms` 좌표 배열로 미니맵을 렌더링한다. 북쪽이 y 증가 방향이므로 화면 y축을 반전한다. 현재 위치는 `room.x`, `room.y` 비교로 판별한다.
+  - _Requirements: 5.6, 5.11_
+- [ ] 5.5 지형 매핑
+  - `scripts/rules/terrain.gd`에 22종 지형의 아이콘과 색상을 매핑한다. 목록에 없는 값은 `unknown`으로 처리한다.
+  - _Requirements: 5.7_
+- [ ] 5.6 부분 갱신
+  - `entity_enter`, `entity_leave`, `entity_update`로 방 상태를 부분 갱신한다. `entity_update` 대상이 사본에 없으면 `look` verb로 전체를 재요청한다.
+  - _Requirements: 5.9, 5.10_
+- [ ] 5.7 채팅
+  - 채팅 입력 수단과 채널 선택(`room`, `whisper`)을 제공하고 `chat` 메시지로 전송한다. 귓속말은 수신 플레이어의 Entity_UUID를 `to`에 담는다. 수신한 `chat`을 채널별로 구분해 표시하며 본문은 번역하지 않는다. 이곳이 자유 문자 입력이 허용되는 지점이다.
+  - _Requirements: 5.12, 5.13, 5.14, 2.4_
+- [ ] 5.8 접속자 목록
+  - `who`와 `players_here` verb로 목록을 조회하고 `who_result`를 표시한다. 이 목록에서 귓속말 대상 Entity_UUID를 확보한다. 서버가 좌표를 포함하지 않음을 전제한다.
+  - _Requirements: 5.15_
+- [ ] 5.9 이벤트 로그
+  - 수신한 `event`를 번역해 로그에 누적하고 `category`(combat, movement, item, social, system, dialogue)로 채널을 분류한다. 로그 상한은 최근 500건이다.
+  - _Requirements: 5.16_
+- [ ] 5.10 따라가기와 감정 표현
+  - `unfollow` 액션을 제공한다. `emote`는 목록에서 선택하는 방식으로 제공하며 자유 문자 입력을 받지 않는다.
+  - _Requirements: 5.17_
+
+- [ ] 6. 대상 선택 UI
+  - `scenes/main/action_popover.tscn`을 만든다. 엔티티 버튼 클릭으로 대상을 선택하고 이름, 설명, 상태(HP, 종족, 관계)와 적용 가능한 동사 버튼을 표시한다. 선택 상태를 시각적으로 표시하고 대상이 방에서 사라지면 선택을 해제한다. Entity_UUID를 사용자에게 노출하지 않고 전송에만 사용한다. 인라인 팝오버를 기본으로 하되 고정 사이드 패널 대안을 함께 검토한다.
+  - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5, 7.6, 7.7_
+
+- [ ] 7. 인벤토리와 아이템
+- [ ] 7.1 인벤토리 화면
+  - `scenes/inventory/inventory.tscn`을 만든다. 아이템 목록, 개별 무게(`weight × stack_count`), 총 무게와 최대 무게, 골드를 표시한다. 스택 아이템을 하나의 항목으로 표시하고 수량을 보여준다. 카테고리 필터(weapon, armor, consumable, misc)를 제공한다.
+  - _Requirements: 8.1, 8.2, 8.3, 8.5_
+- [ ] 7.2 장착 슬롯
+  - 슬롯별 현재 장비를 표시하고 빈 슬롯을 구분한다. `equip`, `unequip` 액션을 제공한다.
+  - _Requirements: 8.4_
+- [ ] 7.3 수량 지정
+  - `drop`, `put`, `shop_sell`에서 수량 선택 수단을 제공한다. 순서 번호로 아이템을 지정하지 않는다.
+  - _Requirements: 8.6, 8.7_
+- [ ] 7.4 컨테이너
+  - `container_contents` 응답으로 컨테이너 내용을 표시하고 `put`, `take_from`을 제공한다.
+  - _Requirements: 8.8_
+
+- [ ] 8. 전투 UI
+  - `scenes/combat/combat.tscn`을 만든다. 라운드, 현재 턴, 턴 순서를 표시하고 적과 우리 편 HP를 시각화한다. 액션 버튼(공격, 아이템, 도주, 턴 종료)에 키보드 단축키(1, 4, 3, 9)를 병기하되 숫자를 서버로 보내지 않고 대응 verb로 변환해 전송한다. 공격 대상을 선택해 `attack` verb의 `target`에 담는다. 내 턴이 아니면 액션 버튼을 비활성화한다. `is_over`가 참이면 전투 화면을 닫고 탐험 화면으로 전환한다. 전투 로그는 Message_Key_Payload를 번역해 누적한다.
+  - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 9.9, 2.6_
+
+- [ ] 9. 대화와 상점
+- [ ] 9.1 대화 화면
+  - `scenes/dialogue/dialogue.tscn`을 만든다. NPC 발화와 선택지를 표시하고 선택 시 `dialogue_choice` verb의 `params.choice`에 로컬 번호를 담아 전송한다. `is_active`가 거짓이면 창을 닫는다.
+  - _Requirements: 10.1, 10.2, 10.3, 10.4_
+- [ ] 9.2 상점 화면
+  - `scenes/shop/shop.tscn`을 만든다. 상점 목록과 매수가, 매도가를 표시한다. 구매는 `template_id`, 판매는 Entity_UUID를 사용한다. `buy_price` 또는 `sell_price`가 0이면 해당 방향 버튼을 숨긴다. `INSUFFICIENT_FUNDS` 거절 시 부족 금액을 안내한다.
+  - _Requirements: 10.5, 10.6, 10.7, 10.8_
+
+- [ ] 10. 상태 화면
+  - `scenes/status/status.tscn`을 만든다. 능력치 6종, HP와 스태미나, 장비 보너스와 임시 효과, 표시 이름과 사용자명과 종족을 표시한다. `changename` 액션으로 표시 이름 변경을 제공하고 `COOLDOWN` 거절 시 남은 시간을 안내한다.
+  - _Requirements: 11.1, 11.2, 11.3, 11.4, 11.5, 11.6_
+
+- [ ] 11. 어드민 패널
+  - 선행 조건: 서버 `server-json-protocol` Task 7 완료, `gateway-landing` Task 3.2(어드민 프록시) 완료
+- [ ] 11.1 어드민 접속 계층
+  - `scripts/admin/admin_connection.gd`가 Admin_Channel(`/admin`)로 별도 접속한다. 게임 연결과 독립적이다. `admin_login`으로 별도 인증하고 세션 만료(2시간)를 처리해 재인증을 요구한다. 게임 로그인 상태가 어드민 권한을 부여하지 않는다.
+  - `scripts/admin/admin_dispatcher.gd`가 어드민 메시지를 처리한다. 거절 응답에 번역 키가 없으므로 Rejection_Code별 안내 문구를 자체 보유한다.
+  - _Requirements: 12.1, 12.2, 12.13, 12.14_
+- [ ] 11.2 월드 맵 뷰
+  - `scenes/admin/map_view.tscn`에 방 그리드를 렌더링한다. 지형 색상, 종족 색상, 막힌 출구를 표시한다. 방 선택 시 상세(좌표, 지형, 설명, 막힌 출구, 엔티티 수, 종족 분포)를 표시한다. 자동 갱신을 제공하고 켜고 끌 수 있게 한다.
+  - _Requirements: 12.3, 12.4, 12.5_
+- [ ] 11.3 리소스 테이블
+  - `scenes/admin/resource_table.tscn`에 8개 리소스(players, rooms, room_connections, monsters, objects, item_prices, factions, faction_relations)의 목록을 표시한다. 페이지네이션, 필터, 정렬을 제공한다. 데이터는 원본 컬럼명(`name_en`, `name_ko`)으로 표시한다.
+  - _Requirements: 12.6, 12.7, 12.8_
+- [ ] 11.4 CRUD 폼
+  - 리소스별 생성, 수정, 삭제 폼을 제공한다. 삭제 시 확인을 요구하고 `REFERENCED` 응답에서 참조 목록을 표시한다.
+  - _Requirements: 12.6, 12.9_
+- [ ] 11.5 통계와 실시간 액션
+  - 통계(방, 몬스터, 플레이어, 접속자, 오브젝트, 종족 수)를 표시한다. 실시간 액션 14종(`goto`, `kick`, `spawn_monster`, `spawn_item`, `terminate`, `create_room`, `update_room`, `create_exit`, `validate_world`, `list_monster_templates`, `list_item_templates`, `scheduler`, `change_display_name`, `room_info`)을 제공한다.
+  - _Requirements: 12.10, 12.11_
+- [ ] 11.6 플레이어 상세
+  - 플레이어 인벤토리와 능력치를 조회하는 화면을 제공한다.
+  - _Requirements: 12.12_
+
+- [ ] 12. 품질 정리와 최종 검증
+- [ ] 12.1 입력 제약 확인
+  - 자유 문자 입력이 채팅, 로그인, `changename`, 어드민 CRUD 폼에만 존재함을 확인한다. 명령어 입력창이 없고 verb나 uuid를 직접 입력하는 경로가 없음을 확인한다.
+  - _Requirements: 2.4, 2.5, 2.7_
+- [ ] 12.2 구조 정리
+  - 스크립트 파일 길이를 500행 이내로 유지한다. 뷰가 커지면 하위 씬으로 분리한다. 게임 규칙 판정이 클라이언트에 없음을 확인한다.
+  - _Requirements: 13.3, 13.4_
+- [ ] 12.3 메시지 디스패치 테스트
+  - 프로토콜 계약의 예시 페이로드를 픽스처로 사용해 상태 반영을 검증한다. `entity_update` 부분 갱신 병합을 포함한다.
+  - _Requirements: 13.5_
+- [ ] 12.4 영국 영어 확인
+  - 영어 텍스트에 영국 영어 철자와 어휘가 적용됐는지 확인한다. `-ise`, `-our`, `-re`, `defence` 표기를 따른다.
+  - _Requirements: 13.6_
+- [ ] 12.5 통합 검증
+  - 서버와 게이트웨이를 기동하고 로그인부터 전투, 대화, 상점, 인벤토리, 어드민까지 전체 흐름을 확인한다. 계약에 정의된 모든 서버 메시지에 수신 처리가 있고 모든 클라이언트 메시지가 서버에서 처리되는지 점검한다.
+  - _Requirements: 1.3, 1.4_
+
+## Task Dependency Graph
+
+```mermaid
+flowchart TD
+    T1[1. 기반과 연결] --> T2[2. 다국어]
+    T1 --> T3[3. 로그인]
+    T2 --> T4[4. 액션 규칙]
+    T3 --> T5[5. 방 정보와 이동]
+    T4 --> T5
+    T5 --> T6[6. 대상 선택]
+    T6 --> T7[7. 인벤토리]
+    T6 --> T8[8. 전투]
+    T6 --> T9[9. 대화와 상점]
+    T5 --> T10[10. 상태 화면]
+    T1 --> T11[11. 어드민]
+    T7 --> T12[12. 최종 검증]
+    T8 --> T12
+    T9 --> T12
+    T10 --> T12
+    T11 --> T12
+    S65[서버 Task 6.5<br/>번역 파일 이관] -.-> T2
+    S7[서버 Task 7<br/>어드민 채널] -.-> T11
+    G32[게이트웨이 3.2<br/>어드민 프록시] -.-> T11
+```
+
+```json
+{
+  "waves": [
+    { "wave": 1, "tasks": ["1.1", "1.2", "1.3", "1.4", "1.5", "1.6", "1.7", "1.8", "1.9"] },
+    { "wave": 2, "tasks": ["2.1", "2.2", "2.3", "2.4", "2.5"] },
+    { "wave": 3, "tasks": ["3"] },
+    { "wave": 4, "tasks": ["4.1", "4.2", "4.3"] },
+    { "wave": 5, "tasks": ["5.1", "5.2", "5.3", "5.4", "5.5", "5.6", "5.7", "5.8", "5.9", "5.10"] },
+    { "wave": 6, "tasks": ["6"] },
+    { "wave": 7, "tasks": ["7.1", "7.2", "7.3", "7.4", "8", "9.1", "9.2", "10"] },
+    { "wave": 8, "tasks": ["11.1", "11.2", "11.3", "11.4", "11.5", "11.6"] },
+    { "wave": 9, "tasks": ["12.1", "12.2", "12.3", "12.4", "12.5"] }
+  ]
+}
+```
+
+의존성 요약:
+
+- 1은 모든 작업의 전제다. 연결과 상태 저장소 없이 어떤 화면도 만들 수 없다.
+- 2는 화면 구현 전에 필요하다. 모든 텍스트가 번역을 거친다.
+- 4는 5보다 먼저 있어야 엔티티 버튼에 동사를 붙일 수 있다.
+- 6은 7, 8, 9의 전제다. 대상 선택 방식이 확정돼야 각 화면이 일관된다.
+- 11은 게임 화면과 독립적이므로 병렬 진행이 가능하나 서버와 게이트웨이의 어드민 경로가 필요하다.
+- 7, 8, 9, 10은 서로 독립적이므로 병렬 진행이 가능하다.
+
+## 저장소 간 조율
+
+| 이 스펙의 작업 | 대응 | 관계 |
+|---|---|---|
+| 2.1 번역 파일 이관 | 서버 Task 6.5 | 서버가 파일과 추가 키 목록 제공 |
+| 5, 6, 7, 8, 9, 10 | 서버 Task 3~6 | 서버 JSON 프로토콜 완성 후 통합 검증 가능 |
+| 11 어드민 | 서버 Task 7, 게이트웨이 3.2 | 양쪽 선행 |
+| 3 로그인 | 게이트웨이 Task 2 | 라인 프레이밍이 있어야 통신 성립 |
+
+단위 테스트가 가능한 작업(2.5, 4.3, 12.3)은 서버 상태와 무관하게 진행할 수 있다. 계약의 예시 페이로드를 픽스처로 쓴다.
+
+## Notes
+
+- 프로토콜 계약(서버 저장소 `docs/protocol/`)이 유일한 접점이다. 계약이 바뀌면 즉시 반영한다.
+- GDScript `String.format`이 `{name}` 문법을 지원하므로 번역 파일을 변환 없이 재사용한다. 단 Python 포맷 스펙과 `{{` 이스케이프는 지원하지 않으므로 이관 시 확인한다.
+- 게임 규칙은 판정하지 않는다. 액션 규칙 테이블은 버튼 구성을 위한 표시 규칙이다.
+- 낙관적 버튼 구성이므로 `NOT_APPLICABLE` 거절은 정상 동작이다. 오류로 표시하지 않는다.
+- 어드민 패널은 기존 웹 UI 3,846행에 대응하는 규모다. 맵 뷰어와 리소스 테이블을 우선하고 개별 CRUD 폼은 점진적으로 채운다.
+- 이모지 아이콘은 초기 구현용이다. 최종적으로 스프라이트로 교체하되 매핑 구조는 유지한다.

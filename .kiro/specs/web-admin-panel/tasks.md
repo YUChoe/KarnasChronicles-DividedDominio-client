@@ -252,3 +252,20 @@
 - 프론트엔드는 순수 HTML/CSS/JS SPA로 빌드 도구 불필요
 - better-sqlite3는 동기 API이므로 async/await 불필요
 - 대시보드 월드 맵은 DB에서 데이터를 조회하여 동적으로 렌더링 (iframe 임베드 아님)
+
+## 폐기 기록 (2026-08-08)
+
+이 스펙은 페이즈2 아키텍처 전환으로 폐기되었다. 대상 기능인 웹 어드민(`src/server/webadmin/**`)이 제거되고 어드민 기능이 MUD 서버와 Godot 클라이언트로 이전된다.
+
+폐기 사유는 데이터 접근 구조의 문제다. 기존 웹 어드민은 `better-sqlite3`로 MUD 서버의 SQLite를 직접 열어 조작했다. 서버가 메모리에 보유한 캐시를 우회하므로 변경이 실행 중인 게임에 반영되지 않거나 어긋났다. 페이즈2에서는 서버가 어드민 채널을 제공하고 자신의 리포지토리 계층을 경유하므로 이 불일치가 사라진다.
+
+부수적으로 인증 방식도 개선된다. 기존 구현은 환경변수 값과 평문을 비교했으나 이전 후에는 `players` 테이블의 `is_admin` 계정과 `bcrypt` 해시를 사용한다.
+
+내용은 이력 보존을 위해 삭제하지 않는다.
+
+| 항목 | 후속 |
+|---|---|
+| 어드민 채널과 리소스 CRUD | 서버 저장소 `.kiro/specs/server-json-protocol/` Task 7 |
+| 어드민 UI | `.kiro/specs/godot-client/` Task 11 |
+| 웹 어드민 코드 삭제 | `.kiro/specs/gateway-landing/` Task 4 |
+| 어드민 프로토콜 | 서버 저장소 `docs/protocol/admin.md` |
