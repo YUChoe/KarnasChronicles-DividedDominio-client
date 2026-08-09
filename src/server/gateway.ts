@@ -4,7 +4,8 @@ import { randomUUID } from 'crypto';
 import { logger } from './logger';
 import { ConnectionPool, ClientConnection } from './connection-pool';
 import { TelnetClient } from './telnet-client';
-import { WSMessage } from '../shared/types';
+import { GatewayMessage } from '../shared/types';
+import { LineFramer, LineTooLongError } from './line-framer';
 import { sanitize, containsDangerousPatterns } from './sanitizer';
 import { AdminRouter } from './webadmin/admin-router';
 
@@ -15,7 +16,6 @@ export class GatewayServer {
   private port: number;
   private telnetHost: string;
   private telnetPort: number;
-  private readonly serverVersion: string = '1.0.0';
   private adminRouter?: AdminRouter;
 
   constructor(
@@ -128,6 +128,7 @@ export class GatewayServer {
       id: clientId,
       ws,
       telnet: telnetClient,
+      framer: new LineFramer(),
       createdAt: new Date()
     };
 
@@ -191,16 +192,9 @@ export class GatewayServer {
       this.connectionPool.remove(clientId);
     });
 
-    // 연결 성공 메시지 전송
+    // 연결 성공 통지. 서버 버전은 MUD 서버의 welcome 메시지가 제공한다.
     this.sendMessage(ws, {
-      type: 'connect',
-      timestamp: Date.now()
-    });
-
-    // 서버 버전 정보 전송
-    this.sendMessage(ws, {
-      type: 'version',
-      payload: this.serverVersion,
+      type: 'gateway_connected',
       timestamp: Date.now()
     });
   }
@@ -212,48 +206,30 @@ export class GatewayServer {
       return;
     }
 
-    // JSON 메시지 파싱
-    let message: WSMessage;
-    try {
-      message = JSON.parse(data.toString('utf-8')) as WSMessage;
-    } catch (error) {
-      logger.error('Invalid message format', { clientId, error });
-      this.sendError(connection.ws, 'Invalid message format');
-      return;
-    }
-
-    logger.debug('Message received', { clientId, type: message.type });
-
-    // 메시지 타입별 처리
-    switch (message.type) {
-      case 'data':
-        if (message.payload !== undefined) {
-          this.forwardWebSocketToTelnet(clientId, message.payload);
-        }
-        break;
-      case 'resize':
-        if (message.cols !== undefined && message.rows !== undefined) {
-          logger.debug('Terminal resize', {
-            clientId,
-            cols: message.cols,
-            rows: message.rows
-          });
-        }
-        break;
-      default:
-        logger.warn('Unknown message type', { clientId, type: message.type });
-    }
+    // 게이트웨이는 내용을 해석하지 않는다. 프레임을 라인으로 바꿔 전달만 한다.
+    this.forwardWebSocketToTelnet(clientId, data.toString('utf-8'));
   }
 
-  private forwardWebSocketToTelnet(clientId: string, payload: string): void {
+  private forwardWebSocketToTelnet(clientId: string, frame: string): void {
     const connection = this.connectionPool.get(clientId);
     if (!connection) {
       logger.warn('Cannot forward - connection not found', { clientId });
       return;
     }
 
-    connection.telnet.send(payload);
-    logger.debug('Data forwarded to telnet', { clientId, length: payload.length });
+    // 프레임 내용의 개행은 라인 경계를 깨뜨리므로 프로토콜 위반이다.
+    // JSON 문자열 값의 개행은 \n 이스케이프로 표현되므로 나타날 이유가 없다.
+    if (frame.includes('\n') || frame.includes('\r')) {
+      logger.error('Frame contains newline - discarded', {
+        clientId,
+        length: frame.length
+      });
+      this.sendError(connection.ws, 'Protocol violation: frame contains newline');
+      return;
+    }
+
+    connection.telnet.sendLine(frame);
+    logger.debug('Frame forwarded to telnet', { clientId, length: frame.length });
   }
 
   private forwardTelnetToWebSocket(clientId: string, data: Buffer): void {
@@ -263,22 +239,40 @@ export class GatewayServer {
       return;
     }
 
-    if (connection.ws.readyState === WebSocket.OPEN) {
-      // Telnet IAC (0xFF) 시퀀스 필터링
-      const filtered = this.filterTelnetCommands(data);
+    if (connection.ws.readyState !== WebSocket.OPEN) {
+      return;
+    }
 
-      // Buffer를 UTF-8 문자열로 변환하여 JSON으로 전송
-      const text = filtered.toString('utf-8');
+    // IAC 협상 바이트는 라인 구조를 갖지 않으므로 프레이머 앞에서 제거한다
+    const filtered = this.filterTelnetCommands(data);
 
-      const message: WSMessage = {
-        type: 'data',
-        payload: text,
-        timestamp: Date.now()
-      };
-      connection.ws.send(JSON.stringify(message));
-      logger.debug('Data forwarded to WebSocket', {
+    let lines: string[];
+    try {
+      lines = connection.framer.push(filtered);
+    } catch (error) {
+      if (error instanceof LineTooLongError) {
+        logger.error('Line length limit exceeded', {
+          clientId,
+          bytes: error.bytes,
+          limit: error.limit
+        });
+        this.sendError(connection.ws, 'Protocol violation: line too long');
+        connection.ws.close(1009, 'Line too long');
+        this.connectionPool.remove(clientId);
+        return;
+      }
+      throw error;
+    }
+
+    // 서버 JSON 라인을 봉투로 감싸지 않고 그대로 텍스트 프레임으로 전달한다
+    for (const line of lines) {
+      connection.ws.send(line);
+    }
+
+    if (lines.length > 0) {
+      logger.debug('Lines forwarded to WebSocket', {
         clientId,
-        length: text.length
+        count: lines.length
       });
     }
   }
@@ -340,19 +334,18 @@ export class GatewayServer {
     return Buffer.from(result);
   }
 
-  private sendMessage(ws: WebSocket, message: WSMessage): void {
+  private sendMessage(ws: WebSocket, message: GatewayMessage): void {
     if (ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(message));
     }
   }
 
-  private sendError(ws: WebSocket, errorMessage: string): void {
-    const message: WSMessage = {
-      type: 'error',
-      payload: errorMessage,
+  private sendError(ws: WebSocket, reason: string): void {
+    this.sendMessage(ws, {
+      type: 'gateway_error',
+      reason,
       timestamp: Date.now()
-    };
-    this.sendMessage(ws, message);
+    });
   }
 
   async stop(): Promise<void> {

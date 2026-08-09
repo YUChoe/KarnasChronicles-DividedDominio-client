@@ -59,11 +59,15 @@ export class TelnetClient {
     });
   }
 
-  send(data: string): void {
+  /**
+   * 라인 하나를 전송한다. 개행을 붙여 라인 경계를 만든다.
+   * 내용에 개행이 있으면 경계가 깨지므로 호출자가 미리 검증해야 한다.
+   */
+  sendLine(line: string): void {
     if (this.socket && !this.socket.destroyed) {
-      this.socket.write(data);
-      logger.debug('Data sent to telnet', { 
-        length: data.length 
+      this.socket.write(line + '\n');
+      logger.debug('Line sent to telnet', {
+        length: line.length
       });
     } else {
       logger.warn('Attempted to send data to closed telnet connection');

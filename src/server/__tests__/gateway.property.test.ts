@@ -3,17 +3,38 @@ import * as fc from 'fast-check';
 import { GatewayServer } from '../gateway';
 import { WebSocket } from 'ws';
 import { createServer, Server as NetServer } from 'net';
-import { WSMessage } from '../../shared/types';
 
 /**
- * Feature: browser-telnet-terminal, Property 1: WebSocket to Telnet 연결 체인
- * 
- * 모든 브라우저 클라이언트로부터의 유효한 WebSocket 연결에 대해,
- * WebSocket Gateway는 localhost:4000에 대응하는 텔넷 연결을 설정하고
- * 초기 서버 출력을 클라이언트로 전달해야 합니다.
- * 
- * Validates: Requirements 1.1, 1.2, 1.3
+ * 게이트웨이 통합 속성 테스트.
+ *
+ * 페이즈2에서 게이트웨이는 텍스트를 중계하지 않고 JSON 라인을 WebSocket
+ * 프레임으로 변환한다. 서버 라인은 봉투 없이 그대로 통과하며, 게이트웨이가
+ * 자체 생성하는 제어 메시지만 `gateway_` 접두어 타입을 갖는다.
+ *
+ * Validates: gateway-landing Requirements 3.1~3.10, 4.7
  */
+
+/** 모의 MUD 서버가 접속 즉시 보내는 환영 라인 */
+const WELCOME_LINE = JSON.stringify({
+  type: 'welcome',
+  protocol_version: 1,
+  server_version: 'test@mock'
+});
+
+/** 개행을 포함하지 않는 임의 텍스트. 프레임 내용으로 쓸 수 있다. */
+const frameTextArbitrary = fc
+  .fullUnicodeString({ minLength: 1, maxLength: 60 })
+  .filter((s) => !s.includes('\n') && !s.includes('\r'));
+
+/** 게이트웨이가 스스로 만든 제어 메시지인지 판별한다 */
+function isGatewayControl(json: unknown): boolean {
+  return (
+    typeof json === 'object' &&
+    json !== null &&
+    typeof (json as { type?: unknown }).type === 'string' &&
+    (json as { type: string }).type.startsWith('gateway_')
+  );
+}
 
 describe('Gateway Property Tests', () => {
   let gateway: GatewayServer;
@@ -22,14 +43,37 @@ describe('Gateway Property Tests', () => {
   const TELNET_PORT = 4001;
 
   beforeEach(async () => {
-    // Mock Telnet 서버 시작
     mockTelnetServer = createServer((socket) => {
-      // 연결 시 초기 메시지 전송
-      socket.write('Welcome to the game!\r\n');
-      
-      // 클라이언트 데이터 수신 시 에코
+      // CRLF로 종결해 보낸다. 게이트웨이가 CR을 제거해야 한다.
+      socket.write(WELCOME_LINE + '\r\n');
+
       socket.on('data', (data) => {
-        socket.write(`Echo: ${data.toString()}`);
+        // 게이트웨이가 개행으로 종결한 프레임이 도착한다. 테스트 프레임은
+        // 작아서 한 번의 write가 통째로 도착하므로 단순 분할로 충분하다.
+        for (const line of data.toString('utf-8').split('\n')) {
+          if (line.length === 0) {
+            continue;
+          }
+
+          let request: { type?: string; count?: number };
+          try {
+            request = JSON.parse(line);
+          } catch {
+            continue;
+          }
+
+          // 여러 JSON 라인을 한 번의 write로 보내 청크 뭉침을 재현한다
+          if (request.type === 'burst' && typeof request.count === 'number') {
+            let payload = '';
+            for (let i = 0; i < request.count; i++) {
+              payload += JSON.stringify({ type: 'burst_item', index: i }) + '\n';
+            }
+            socket.write(payload);
+            continue;
+          }
+
+          socket.write(JSON.stringify({ type: 'echo', command: line }) + '\n');
+        }
       });
     });
 
@@ -39,7 +83,6 @@ describe('Gateway Property Tests', () => {
       });
     });
 
-    // Gateway 서버 시작
     gateway = new GatewayServer(WS_PORT, 'localhost', TELNET_PORT, 200);
     await gateway.start();
   });
@@ -51,260 +94,246 @@ describe('Gateway Property Tests', () => {
     });
   });
 
+  /**
+   * Property 1: WebSocket to MUD 서버 연결 체인
+   *
+   * 유효한 WebSocket 연결에 대해 게이트웨이는 MUD 서버에 대응하는 TCP 연결을
+   * 설정하고, gateway_connected 통지와 서버의 첫 JSON 라인을 전달해야 한다.
+   *
+   * Validates: Requirements 3.1, 3.6
+   */
   it('Property 1: WebSocket to Telnet 연결 체인', async () => {
     await fc.assert(
-      fc.asyncProperty(
-        fc.constant(null), // 연결 자체를 테스트하므로 입력 데이터 불필요
-        async () => {
-          return new Promise<void>((resolve, reject) => {
-            const ws = new WebSocket(`ws://localhost:${WS_PORT}`);
-            let receivedInitialData = false;
-            let receivedConnectMessage = false;
+      fc.asyncProperty(fc.constant(null), async () => {
+        return new Promise<void>((resolve, reject) => {
+          const ws = new WebSocket(`ws://localhost:${WS_PORT}`);
+          let receivedWelcome = false;
+          let receivedConnectMessage = false;
 
-            const timeout = setTimeout(() => {
+          const timeout = setTimeout(() => {
+            ws.close();
+            reject(new Error('Timeout waiting for initial data'));
+          }, 5000);
+
+          ws.on('message', (data: Buffer) => {
+            try {
+              const raw = data.toString('utf-8');
+              const message = JSON.parse(raw);
+
+              if (message.type === 'gateway_connected') {
+                receivedConnectMessage = true;
+              }
+
+              // 서버 라인은 봉투 없이, CR이 제거된 상태로 그대로 도착한다
+              if (message.type === 'welcome') {
+                expect(raw).toBe(WELCOME_LINE);
+                receivedWelcome = true;
+              }
+
+              if (receivedConnectMessage && receivedWelcome) {
+                clearTimeout(timeout);
+                ws.close();
+                resolve();
+              }
+            } catch (error) {
+              clearTimeout(timeout);
               ws.close();
-              reject(new Error('Timeout waiting for initial data'));
-            }, 5000);
+              reject(error);
+            }
+          });
 
-            ws.on('open', () => {
-              // WebSocket 연결 성공
-            });
+          ws.on('error', (error) => {
+            clearTimeout(timeout);
+            reject(error);
+          });
 
-            ws.on('message', (data: Buffer) => {
-              try {
-                const message: WSMessage = JSON.parse(data.toString());
-                
-                if (message.type === 'connect') {
-                  receivedConnectMessage = true;
-                }
-                
-                if (message.type === 'data' && message.payload) {
-                  if (message.payload.includes('Welcome to the game!')) {
-                    receivedInitialData = true;
-                  }
-                }
+          ws.on('close', () => {
+            clearTimeout(timeout);
+            if (!receivedConnectMessage || !receivedWelcome) {
+              reject(
+                new Error('Connection closed before receiving all expected messages')
+              );
+            }
+          });
+        });
+      }),
+      { numRuns: 10 }
+    );
+  });
 
-                // 두 조건 모두 만족하면 성공
-                if (receivedConnectMessage && receivedInitialData) {
+  /**
+   * Property 6: 서버 데이터 전달
+   *
+   * 하나의 TCP 청크에 여러 JSON 라인이 담겨 도착하면 게이트웨이는 각 라인을
+   * 개별 WebSocket 프레임으로 전달해야 한다.
+   *
+   * Validates: Requirements 3.1, 3.4
+   */
+  it('Property 6: 서버 데이터 전달', async () => {
+    await fc.assert(
+      fc.asyncProperty(fc.integer({ min: 1, max: 20 }), async (count: number) => {
+        return new Promise<void>((resolve, reject) => {
+          const ws = new WebSocket(`ws://localhost:${WS_PORT}`);
+          const items: number[] = [];
+
+          const timeout = setTimeout(() => {
+            ws.close();
+            reject(new Error('Timeout waiting for server data'));
+          }, 5000);
+
+          ws.on('message', (data: Buffer) => {
+            try {
+              const message = JSON.parse(data.toString('utf-8'));
+
+              if (message.type === 'gateway_connected') {
+                ws.send(JSON.stringify({ type: 'burst', count }));
+              }
+
+              if (message.type === 'burst_item') {
+                items.push(message.index);
+
+                if (items.length === count) {
+                  // 라인 수와 순서가 보존되어야 한다
+                  expect(items).toEqual(
+                    Array.from({ length: count }, (_, i) => i)
+                  );
                   clearTimeout(timeout);
                   ws.close();
                   resolve();
                 }
-              } catch (error) {
-                clearTimeout(timeout);
-                ws.close();
-                reject(error);
               }
-            });
-
-            ws.on('error', (error) => {
+            } catch (error) {
               clearTimeout(timeout);
-              reject(error);
-            });
-
-            ws.on('close', () => {
-              clearTimeout(timeout);
-              if (!receivedConnectMessage || !receivedInitialData) {
-                reject(new Error('Connection closed before receiving all expected messages'));
-              }
-            });
-          });
-        }
-      ),
-      { numRuns: 10 } // 연결 테스트이므로 10회 반복
-    );
-  });
-
-  /**
-   * Feature: browser-telnet-terminal, Property 6: 서버 데이터 전달
-   * 
-   * 모든 텔넷 서버로부터 수신된 데이터에 대해, WebSocket Gateway는 이를
-   * Terminal Client로 전달해야 하며, 클라이언트는 이를 Terminal Buffer에 렌더링해야 합니다.
-   * 
-   * Validates: Requirements 2.4, 2.5
-   */
-  it('Property 6: 서버 데이터 전달', async () => {
-    await fc.assert(
-      fc.asyncProperty(
-        fc.string({ minLength: 1, maxLength: 100 }), // 랜덤 서버 데이터
-        async (serverData: string) => {
-          return new Promise<void>((resolve, reject) => {
-            const ws = new WebSocket(`ws://localhost:${WS_PORT}`);
-            let receivedData = false;
-
-            const timeout = setTimeout(() => {
               ws.close();
-              reject(new Error('Timeout waiting for server data'));
-            }, 5000);
-
-            ws.on('open', () => {
-              // 연결 성공
-            });
-
-            ws.on('message', (data: Buffer) => {
-              try {
-                const message: WSMessage = JSON.parse(data.toString());
-                
-                if (message.type === 'data' && message.payload) {
-                  // 초기 환영 메시지 또는 에코 메시지 확인
-                  if (message.payload.includes('Welcome') || message.payload.length > 0) {
-                    receivedData = true;
-                    clearTimeout(timeout);
-                    ws.close();
-                    resolve();
-                  }
-                }
-              } catch (error) {
-                clearTimeout(timeout);
-                ws.close();
-                reject(error);
-              }
-            });
-
-            ws.on('error', (error) => {
-              clearTimeout(timeout);
               reject(error);
-            });
-
-            ws.on('close', () => {
-              clearTimeout(timeout);
-              if (!receivedData) {
-                reject(new Error('Connection closed before receiving data'));
-              }
-            });
+            }
           });
-        }
-      ),
-      { numRuns: 100 } // 100회 반복
+
+          ws.on('error', (error) => {
+            clearTimeout(timeout);
+            reject(error);
+          });
+
+          ws.on('close', () => {
+            clearTimeout(timeout);
+            if (items.length !== count) {
+              reject(new Error('Connection closed before receiving all lines'));
+            }
+          });
+        });
+      }),
+      { numRuns: 30 }
     );
   });
 
   /**
-   * Feature: browser-telnet-terminal, Property 14: 리소스 정리
-   * 
-   * 모든 닫히는 연결(정상적으로 또는 오류로 인해)에 대해, WebSocket Gateway는
-   * 모든 관련 리소스(텔넷 연결, 버퍼, 이벤트 리스너)를 정리해야 합니다.
-   * 
-   * Validates: Requirements 5.4
+   * Property 14: 리소스 정리
+   *
+   * 닫히는 모든 연결에 대해 게이트웨이는 관련 리소스를 정리해야 한다.
+   *
+   * Validates: Requirements 4.4
    */
   it('Property 14: 리소스 정리', async () => {
     await fc.assert(
       fc.asyncProperty(
-        fc.integer({ min: 1, max: 3 }), // 연결 수 (안정성을 위해 줄임)
+        fc.integer({ min: 1, max: 3 }),
         async (connectionCount: number) => {
           const connections: WebSocket[] = [];
           const connectionPromises: Promise<void>[] = [];
-          
-          // 여러 연결 생성
+
           for (let i = 0; i < connectionCount; i++) {
             const ws = new WebSocket(`ws://localhost:${WS_PORT}`);
             connections.push(ws);
-            
+
             const promise = new Promise<void>((resolve, reject) => {
               const timeout = setTimeout(() => {
                 reject(new Error('Connection timeout'));
               }, 2000);
-              
+
               ws.on('open', () => {
                 clearTimeout(timeout);
                 resolve();
               });
-              
+
               ws.on('error', (error) => {
                 clearTimeout(timeout);
                 reject(error);
               });
             });
-            
+
             connectionPromises.push(promise);
           }
-          
-          // 모든 연결이 열릴 때까지 대기
+
           await Promise.all(connectionPromises);
-          
-          // 연결이 완전히 설정될 때까지 대기
-          await new Promise(resolve => setTimeout(resolve, 300));
-          
-          // 초기 연결 수 확인
+          await new Promise((resolve) => setTimeout(resolve, 300));
+
           const initialCount = gateway.getConnectionCount();
           expect(initialCount).toBe(connectionCount);
-          
-          // 모든 연결 종료
-          const closePromises = connections.map(ws => {
+
+          const closePromises = connections.map((ws) => {
             return new Promise<void>((resolve) => {
               ws.on('close', () => resolve());
               ws.close();
             });
           });
-          
+
           await Promise.all(closePromises);
-          
-          // 리소스 정리 대기
-          await new Promise(resolve => setTimeout(resolve, 300));
-          
-          // 모든 연결이 정리되었는지 확인
+          await new Promise((resolve) => setTimeout(resolve, 300));
+
           const finalCount = gateway.getConnectionCount();
           expect(finalCount).toBe(0);
-          
+
           return true;
         }
       ),
-      { numRuns: 20, timeout: 10000 } // 20회 반복, 타임아웃 10초
+      { numRuns: 20, timeout: 10000 }
     );
-  }, 15000); // 테스트 타임아웃 15초
+  }, 15000);
 
   /**
-   * Feature: browser-telnet-terminal, Property 13: 연결 용량
-   * 
-   * 모든 최대 200개까지의 동시 연결 수에 대해, WebSocket Gateway는
-   * 모든 연결을 성공적으로 수락하고 유지해야 합니다.
-   * 
-   * Validates: Requirements 5.1
+   * Property 13: 연결 용량
+   *
+   * 상한 이내의 동시 연결은 모두 수락되고 유지되어야 한다.
+   *
+   * Validates: Requirements 4.4
    */
   it('Property 13: 연결 용량', async () => {
-    // 소규모 테스트 (전체 200개는 시간이 오래 걸림)
     const testConnectionCount = 10;
     const connections: WebSocket[] = [];
-    
+
     try {
-      // 여러 연결 생성
       for (let i = 0; i < testConnectionCount; i++) {
         const ws = new WebSocket(`ws://localhost:${WS_PORT}`);
         connections.push(ws);
-        
+
         await new Promise<void>((resolve, reject) => {
           const timeout = setTimeout(() => {
             reject(new Error('Connection timeout'));
           }, 2000);
-          
+
           ws.on('open', () => {
             clearTimeout(timeout);
             resolve();
           });
-          
+
           ws.on('error', (error) => {
             clearTimeout(timeout);
             reject(error);
           });
         });
       }
-      
-      // 모든 연결이 설정될 때까지 대기
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      // 모든 연결이 수락되었는지 확인
+
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
       const connectionCount = gateway.getConnectionCount();
       expect(connectionCount).toBe(testConnectionCount);
-      
-      // 모든 연결 종료
+
       for (const ws of connections) {
         ws.close();
       }
-      
-      // 정리 대기
-      await new Promise(resolve => setTimeout(resolve, 300));
+
+      await new Promise((resolve) => setTimeout(resolve, 300));
     } finally {
-      // 정리
       for (const ws of connections) {
         if (ws.readyState === WebSocket.OPEN) {
           ws.close();
@@ -314,77 +343,81 @@ describe('Gateway Property Tests', () => {
   }, 10000);
 
   /**
-   * Feature: browser-telnet-terminal, Property 15: 우아한 연결 거부
-   * 
-   * 모든 최대 용량에 도달했거나 근접했을 때의 연결 시도에 대해,
-   * WebSocket Gateway는 적절한 오류 메시지와 함께 연결을 우아하게 거부하고
-   * 경고를 로그해야 합니다.
-   * 
-   * Validates: Requirements 5.5
+   * Property 15: 우아한 연결 거부
+   *
+   * 용량에 도달한 상태의 연결 시도는 오류 통지와 함께 거부되어야 한다.
+   *
+   * Validates: Requirements 4.4
    */
   it('Property 15: 우아한 연결 거부', async () => {
-    // 작은 용량의 게이트웨이 생성 (테스트용)
     const smallGateway = new GatewayServer(3002, 'localhost', TELNET_PORT, 3);
     await smallGateway.start();
-    
+
     const connections: WebSocket[] = [];
-    
+
     try {
-      // 최대 용량까지 연결
       for (let i = 0; i < 3; i++) {
         const ws = new WebSocket(`ws://localhost:3002`);
         connections.push(ws);
-        
+
         await new Promise<void>((resolve, reject) => {
           const timeout = setTimeout(() => {
             reject(new Error('Connection timeout'));
           }, 2000);
-          
+
           ws.on('open', () => {
             clearTimeout(timeout);
             resolve();
           });
-          
+
           ws.on('error', (error) => {
             clearTimeout(timeout);
             reject(error);
           });
         });
       }
-      
-      // 연결 설정 대기
-      await new Promise(resolve => setTimeout(resolve, 300));
-      
-      // 용량 초과 연결 시도
+
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
       const rejectedWs = new WebSocket(`ws://localhost:3002`);
-      
+      let rejectionReason: string | undefined;
+
       const wasRejected = await new Promise<boolean>((resolve) => {
         const timeout = setTimeout(() => {
           resolve(false);
         }, 2000);
-        
+
+        rejectedWs.on('message', (data: Buffer) => {
+          const message = JSON.parse(data.toString('utf-8'));
+          if (message.type === 'gateway_error') {
+            rejectionReason = message.reason;
+          }
+        });
+
         rejectedWs.on('close', (code) => {
           clearTimeout(timeout);
           // 1008은 "Server at capacity" 코드
           resolve(code === 1008);
         });
-        
+
         rejectedWs.on('error', () => {
           clearTimeout(timeout);
           resolve(true);
         });
       });
-      
+
       expect(wasRejected).toBe(true);
-      
-      // 정리
+      // 거부 통지는 게이트웨이 제어 메시지여야 한다
+      if (rejectionReason !== undefined) {
+        expect(rejectionReason).toContain('capacity');
+      }
+
       for (const ws of connections) {
         ws.close();
       }
-      
-      await new Promise(resolve => setTimeout(resolve, 300));
+
+      await new Promise((resolve) => setTimeout(resolve, 300));
     } finally {
-      // 정리
       for (const ws of connections) {
         if (ws.readyState === WebSocket.OPEN) {
           ws.close();
@@ -395,211 +428,245 @@ describe('Gateway Property Tests', () => {
   }, 10000);
 
   /**
-   * Feature: browser-telnet-terminal, Property 17: 연결 이벤트 로깅
-   * 
-   * 모든 연결 이벤트(연결, 연결 해제, 오류)에 대해, 시스템은
-   * 디버깅을 위한 적절한 컨텍스트 정보와 함께 이를 로그해야 합니다.
-   * 
-   * Validates: Requirements 8.5
+   * Property 17: 연결 이벤트 로깅
+   *
+   * 연결과 해제가 연결 풀 상태에 정확히 반영되어야 한다.
+   *
+   * Validates: Requirements 4.4
    */
   it('Property 17: 연결 이벤트 로깅', async () => {
     await fc.assert(
       fc.asyncProperty(
-        fc.integer({ min: 1, max: 3 }), // 연결 수
+        fc.integer({ min: 1, max: 3 }),
         async (connectionCount: number) => {
           const connections: WebSocket[] = [];
-          
-          // 여러 연결 생성
+
           for (let i = 0; i < connectionCount; i++) {
             const ws = new WebSocket(`ws://localhost:${WS_PORT}`);
             connections.push(ws);
-            
+
             await new Promise<void>((resolve, reject) => {
               const timeout = setTimeout(() => {
                 reject(new Error('Connection timeout'));
               }, 2000);
-              
+
               ws.on('open', () => {
                 clearTimeout(timeout);
                 resolve();
               });
-              
+
               ws.on('error', (error) => {
                 clearTimeout(timeout);
                 reject(error);
               });
             });
           }
-          
-          // 연결이 완전히 설정될 때까지 대기
-          await new Promise(resolve => setTimeout(resolve, 300));
-          
-          // 연결 수 확인 (로깅이 제대로 되었다면 연결이 추가되었을 것)
+
+          await new Promise((resolve) => setTimeout(resolve, 300));
+
           const currentCount = gateway.getConnectionCount();
           expect(currentCount).toBe(connectionCount);
-          
-          // 모든 연결 종료
-          const closePromises = connections.map(ws => {
+
+          const closePromises = connections.map((ws) => {
             return new Promise<void>((resolve) => {
               ws.on('close', () => resolve());
               ws.close();
             });
           });
-          
+
           await Promise.all(closePromises);
-          await new Promise(resolve => setTimeout(resolve, 300));
-          
-          // 모든 연결이 정리되었는지 확인 (로깅이 제대로 되었다면 정리되었을 것)
+          await new Promise((resolve) => setTimeout(resolve, 300));
+
           const finalCount = gateway.getConnectionCount();
           expect(finalCount).toBe(0);
-          
+
           return true;
         }
       ),
-      { numRuns: 20, timeout: 10000 } // 20회 반복
+      { numRuns: 20, timeout: 10000 }
     );
   }, 15000);
 
   /**
-   * Feature: browser-telnet-terminal, Property 16: 메시지 형식 일관성
-   * 
-   * 모든 WebSocket을 통해 전송되는 메시지에 대해, type, payload, timestamp 필드를 가진
-   * 정의된 WSMessage 형식을 준수해야 합니다.
-   * 
-   * Validates: Requirements 8.4
+   * Property 16: 프레임 형식 일관성
+   *
+   * 게이트웨이 제어 메시지는 `gateway_` 접두어 타입과 timestamp를 갖는다.
+   * 서버 라인은 어떤 필드도 추가되지 않은 상태로 통과한다.
+   *
+   * Validates: Requirements 3.7, 3.10, 4.7
    */
   it('Property 16: 메시지 형식 일관성', async () => {
     await fc.assert(
-      fc.asyncProperty(
-        fc.constant(null), // 메시지 형식 검증이므로 입력 불필요
-        async () => {
-          return new Promise<void>((resolve, reject) => {
-            const ws = new WebSocket(`ws://localhost:${WS_PORT}`);
-            const receivedMessages: any[] = [];
+      fc.asyncProperty(fc.constant(null), async () => {
+        return new Promise<void>((resolve, reject) => {
+          const ws = new WebSocket(`ws://localhost:${WS_PORT}`);
+          const receivedMessages: unknown[] = [];
 
-            const timeout = setTimeout(() => {
-              ws.close();
-              reject(new Error('Timeout waiting for messages'));
-            }, 5000);
+          const timeout = setTimeout(() => {
+            ws.close();
+            reject(new Error('Timeout waiting for messages'));
+          }, 5000);
 
-            ws.on('open', () => {
-              // 연결 성공
-            });
+          ws.on('message', (data: Buffer, isBinary: boolean) => {
+            try {
+              // 텍스트 프레임만 사용한다
+              expect(isBinary).toBe(false);
 
-            ws.on('message', (data: Buffer) => {
-              try {
-                const message = JSON.parse(data.toString());
-                receivedMessages.push(message);
-                
-                // 모든 메시지가 WSMessage 형식을 준수하는지 확인
-                expect(message).toHaveProperty('type');
-                expect(message).toHaveProperty('timestamp');
-                expect(typeof message.type).toBe('string');
+              const raw = data.toString('utf-8');
+              const message = JSON.parse(raw);
+              receivedMessages.push(message);
+
+              expect(message).toHaveProperty('type');
+              expect(typeof message.type).toBe('string');
+
+              if (isGatewayControl(message)) {
                 expect(typeof message.timestamp).toBe('number');
-                
-                // 충분한 메시지를 받았으면 종료
-                if (receivedMessages.length >= 2) {
-                  clearTimeout(timeout);
-                  ws.close();
-                  resolve();
-                }
-              } catch (error) {
+              } else {
+                // 서버 라인은 변형 없이 통과해야 한다
+                expect(raw).toBe(WELCOME_LINE);
+                expect(message).not.toHaveProperty('timestamp');
+                expect(message).not.toHaveProperty('payload');
+              }
+
+              if (receivedMessages.length >= 2) {
                 clearTimeout(timeout);
                 ws.close();
-                reject(error);
+                resolve();
               }
-            });
-
-            ws.on('error', (error) => {
+            } catch (error) {
               clearTimeout(timeout);
+              ws.close();
               reject(error);
-            });
-
-            ws.on('close', () => {
-              clearTimeout(timeout);
-              if (receivedMessages.length < 2) {
-                reject(new Error('Connection closed before receiving enough messages'));
-              }
-            });
+            }
           });
-        }
-      ),
-      { numRuns: 20 } // 20회 반복
+
+          ws.on('error', (error) => {
+            clearTimeout(timeout);
+            reject(error);
+          });
+
+          ws.on('close', () => {
+            clearTimeout(timeout);
+            if (receivedMessages.length < 2) {
+              reject(
+                new Error('Connection closed before receiving enough messages')
+              );
+            }
+          });
+        });
+      }),
+      { numRuns: 20 }
     );
   }, 15000);
 
   /**
-   * Feature: browser-telnet-terminal, Property 5: 명령 제출 왕복
-   * 
-   * 모든 입력 버퍼 상태에 대해, 사용자가 Enter를 누르면 완전한 명령이
-   * 적절한 줄 끝 문자와 함께 WebSocket Gateway를 통해 텔넷 서버로 전송되어야 합니다.
-   * 
-   * Validates: Requirements 2.2, 2.3
+   * Property 5: 프레임 왕복
+   *
+   * 클라이언트가 보낸 JSON 라인은 개행으로 종결되어 MUD 서버에 도달하고,
+   * 내용은 변형되지 않아야 한다.
+   *
+   * Validates: Requirements 3.5, 3.10
    */
   it('Property 5: 명령 제출 왕복', async () => {
     await fc.assert(
-      fc.asyncProperty(
-        fc.string({ minLength: 1, maxLength: 100 }), // 랜덤 명령어 생성
-        async (command: string) => {
-          return new Promise<void>((resolve, reject) => {
-            const ws = new WebSocket(`ws://localhost:${WS_PORT}`);
-            let connected = false;
-            let receivedEcho = false;
+      fc.asyncProperty(frameTextArbitrary, async (text: string) => {
+        const sentFrame = JSON.stringify({ type: 'chat', text });
 
-            const timeout = setTimeout(() => {
-              ws.close();
-              reject(new Error('Timeout waiting for command echo'));
-            }, 5000);
+        return new Promise<void>((resolve, reject) => {
+          const ws = new WebSocket(`ws://localhost:${WS_PORT}`);
+          let receivedEcho = false;
 
-            ws.on('open', () => {
-              connected = true;
-            });
+          const timeout = setTimeout(() => {
+            ws.close();
+            reject(new Error('Timeout waiting for command echo'));
+          }, 5000);
 
-            ws.on('message', (data: Buffer) => {
-              try {
-                const message: WSMessage = JSON.parse(data.toString());
-                
-                if (message.type === 'connect') {
-                  // 연결 메시지 수신 후 명령 전송
-                  const commandMessage: WSMessage = {
-                    type: 'data',
-                    payload: command + '\n',
-                    timestamp: Date.now()
-                  };
-                  ws.send(JSON.stringify(commandMessage));
-                }
-                
-                if (message.type === 'data' && message.payload) {
-                  // 에코 메시지 확인 (Mock 서버가 "Echo: " 접두사를 붙임)
-                  if (message.payload.includes(`Echo: ${command}`)) {
-                    receivedEcho = true;
-                    clearTimeout(timeout);
-                    ws.close();
-                    resolve();
-                  }
-                }
-              } catch (error) {
+          ws.on('message', (data: Buffer) => {
+            try {
+              const message = JSON.parse(data.toString('utf-8'));
+
+              if (message.type === 'gateway_connected') {
+                ws.send(sentFrame);
+              }
+
+              if (message.type === 'echo') {
+                // 서버가 라인으로 받은 내용이 보낸 프레임과 정확히 일치해야 한다
+                expect(message.command).toBe(sentFrame);
+                expect(JSON.parse(message.command).text).toBe(text);
+                receivedEcho = true;
                 clearTimeout(timeout);
                 ws.close();
-                reject(error);
+                resolve();
               }
-            });
-
-            ws.on('error', (error) => {
+            } catch (error) {
               clearTimeout(timeout);
+              ws.close();
               reject(error);
-            });
-
-            ws.on('close', () => {
-              clearTimeout(timeout);
-              if (!receivedEcho) {
-                reject(new Error('Connection closed before receiving echo'));
-              }
-            });
+            }
           });
-        }
-      ),
-      { numRuns: 100 } // 100회 반복
+
+          ws.on('error', (error) => {
+            clearTimeout(timeout);
+            reject(error);
+          });
+
+          ws.on('close', () => {
+            clearTimeout(timeout);
+            if (!receivedEcho) {
+              reject(new Error('Connection closed before receiving echo'));
+            }
+          });
+        });
+      }),
+      { numRuns: 50 }
     );
+  });
+
+  /**
+   * 개행을 포함한 프레임은 라인 경계를 깨뜨리므로 버려야 한다.
+   *
+   * Validates: Requirements 3.6
+   */
+  it('개행이 포함된 프레임을 버리고 오류를 통지한다', async () => {
+    await new Promise<void>((resolve, reject) => {
+      const ws = new WebSocket(`ws://localhost:${WS_PORT}`);
+      let echoed = false;
+
+      const timeout = setTimeout(() => {
+        ws.close();
+        reject(new Error('Timeout waiting for gateway_error'));
+      }, 5000);
+
+      ws.on('message', (data: Buffer) => {
+        try {
+          const message = JSON.parse(data.toString('utf-8'));
+
+          if (message.type === 'gateway_connected') {
+            ws.send('{"type":"chat","text":"a"}\n{"type":"chat","text":"b"}');
+          }
+
+          if (message.type === 'echo') {
+            echoed = true;
+          }
+
+          if (message.type === 'gateway_error') {
+            expect(message.reason).toContain('newline');
+            expect(echoed).toBe(false);
+            clearTimeout(timeout);
+            ws.close();
+            resolve();
+          }
+        } catch (error) {
+          clearTimeout(timeout);
+          ws.close();
+          reject(error);
+        }
+      });
+
+      ws.on('error', (error) => {
+        clearTimeout(timeout);
+        reject(error);
+      });
+    });
   });
 });

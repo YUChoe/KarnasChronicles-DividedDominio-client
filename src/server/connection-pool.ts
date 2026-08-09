@@ -1,11 +1,14 @@
 import { WebSocket } from 'ws';
 import { logger } from './logger';
 import { TelnetClient } from './telnet-client';
+import { LineFramer } from './line-framer';
 
 export interface ClientConnection {
   id: string;
   ws: WebSocket;
   telnet: TelnetClient;
+  /** TCP 청크를 라인으로 복원한다. 연결마다 하나씩 보유한다. */
+  framer: LineFramer;
   createdAt: Date;
 }
 

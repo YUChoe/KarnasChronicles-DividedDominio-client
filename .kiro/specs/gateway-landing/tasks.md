@@ -28,20 +28,21 @@
   - `src/server/__tests__/gateway.property.test.ts`, `src/__tests__/e2e.test.ts`, `src/__tests__/load.test.ts`가 통과함을 확인한다. 이들은 `GatewayServer`와 `ws`만 사용하므로 영향받지 않아야 한다.
   - _Requirements: 1.7, 6.3, 6.4_
 
-- [ ] 2. 라인 프레이밍 구현
-- [ ] 2.1 LineFramer 작성
+- [x] 2. 라인 프레이밍 구현
+- [x] 2.1 LineFramer 작성
   - `src/server/line-framer.ts`에 상태를 갖는 프레이머를 만든다. 청크를 누적하고 개행 경계에서 분할하며, 완성된 라인에 대해서만 UTF-8 디코딩을 수행한다. 개행 직전 CR을 제거하고 빈 라인은 버린다. 라인 길이 상한(256KB) 초과 시 예외를 던진다.
   - _Requirements: 3.1, 3.2, 3.3, 3.9_
-- [ ] 2.2 LineFramer 속성 테스트
+- [x] 2.2 LineFramer 속성 테스트
   - `fast-check`로 임의의 바이트 분할 지점에서 라인 복원이 원본과 일치하는지 검증한다. 한 청크에 여러 라인이 들어온 경우, 라인이 여러 청크에 걸친 경우, 멀티바이트 문자가 경계에서 분할된 경우를 포함한다. 한국어 문자열 왕복을 반드시 포함한다.
   - _Requirements: 6.5_
-- [ ] 2.3 게이트웨이 데이터 경로에 통합
+- [x] 2.3 게이트웨이 데이터 경로에 통합
   - `telnet-client.ts`와 `gateway.ts`의 수신 경로를 `filterTelnetCommands` → `LineFramer.push()` → 라인별 WebSocket 프레임 전송으로 바꾼다. 송신 경로는 프레임 텍스트에 개행을 붙여 TCP로 쓴다. 프레임 내용에 개행이 있으면 오류를 기록하고 버린다.
   - _Requirements: 3.4, 3.5, 3.6, 3.8_
-- [ ] 2.4 프레임 봉투 제거
+- [x] 2.4 프레임 봉투 제거
   - 서버 JSON 라인을 `{type:'data', payload:...}`로 다시 감싸지 않고 그대로 프레임으로 전달한다. 게이트웨이 자신의 제어 메시지에만 `gateway_` 접두어 타입을 사용한다. `src/shared/types.ts`의 `WSMessage`를 이에 맞게 갱신한다.
-  - _Requirements: 3.7, 3.10, 4.7_
-- [ ] 2.5 기존 테스트 갱신
+  - `WSMessage`를 `GatewayMessage` 유니온으로 교체했다. `data`/`connect`/`version`/`resize` 타입이 사라지면서 요구사항 4.5(하드코딩 `serverVersion` 제거)와 4.6(`resize` 폐기)이 함께 해소되었다. Task 3.4에서 다시 다루지 않는다.
+  - _Requirements: 3.7, 3.10, 4.5, 4.6, 4.7_
+- [x] 2.5 기존 테스트 갱신
   - `gateway.property.test.ts`에서 텍스트 프로토콜을 전제한 부분을 JSON 라인 전제로 갱신한다.
   - _Requirements: 6.6_
 
@@ -58,9 +59,8 @@
   - _Requirements: 4.1_
 - [ ] 3.4 설정 반영
   - `MAX_CONNECTIONS`와 `CONNECTION_TIMEOUT`을 `start.ts`에서 읽어 반영한다. 하드코딩된 상한 200을 환경변수 기본값으로 옮긴다. `ADMIN_PORT`를 추가한다.
-  - 하드코딩된 `serverVersion` 값을 제거한다. 서버 버전은 `welcome` 메시지가 제공한다.
-  - `resize` 메시지 타입의 존속 여부를 결정하고 처리한다. 현재 로그만 남기고 동작하지 않으며 터미널 클라이언트 전용이었다.
-  - _Requirements: 4.4, 4.5, 4.6_
+  - `serverVersion`(4.5)과 `resize`(4.6)는 Task 2.4에서 이미 제거되었다.
+  - _Requirements: 4.4_
 
 - [ ] 4. 웹 어드민 제거
   - 선행 조건: 서버 `server-json-protocol` Task 7 전체 완료. 두 어드민 경로가 같은 데이터베이스를 조작하는 기간을 최소화해야 한다.
