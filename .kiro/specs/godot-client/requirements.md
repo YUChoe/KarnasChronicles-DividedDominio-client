@@ -128,7 +128,7 @@ UI는 완전 버튼 기반이다. 플레이어는 채팅과 로그인을 제외�
 #### Acceptance Criteria
 
 1. THE Client SHALL Action_Rule_Table을 보유하고 엔티티 속성으로 표시할 동사를 결정한다.
-2. THE Client SHALL 서버가 보낸 속성만 판단 근거로 사용한다. 몬스터는 Disposition, `can_talk`, `is_alive`를, 오브젝트는 `category`, `equipment_slot`, `is_container`, `is_readable`, `is_usable`, `max_stack`, `is_equipped`를 사용한다.
+2. THE Client SHALL 서버가 보낸 속성만 판단 근거로 사용한다. 몬스터는 Disposition, `can_talk`, `is_alive`를, 오브젝트는 `category`, `equipment_slot`, `is_container`, `is_readable`, `is_usable`, `stack_count`, `is_equipped`를 사용한다.
 10. THE Client SHALL 거래 버튼을 상인 구분 없이 표시한다. 모든 캐릭터와 거래할 수 있으므로 서버가 상인 여부를 보내지 않는다.
 11. THE Client SHALL 레벨을 표시하지 않는다. 서버에 레벨 개념이 없으므로 강함은 `max_hp`, `armor_class`, `attack_power`로 표현한다.
 3. THE Client SHALL 서버가 가용 동사 목록을 보내지 않음을 전제한다.
@@ -159,7 +159,8 @@ UI는 완전 버튼 기반이다. 플레이어는 채팅과 로그인을 제외�
 #### Acceptance Criteria
 
 1. THE Client SHALL 인벤토리 아이템을 목록으로 표시하고 개별 무게와 총 무게, 최대 무게를 보여준다.
-2. THE Client SHALL 스택 아이템을 하나의 항목으로 표시하고 수량을 함께 보여준다.
+2. THE Client SHALL 같은 `template_id` 아이템을 묶어 수량과 함께 표시한다. 서버는 아이템을 묶지 않고 개별 엔티티로 보내므로 묶음은 클라이언트의 표시 규칙이다.
+9. THE Client SHALL 묶어 표시한 아이템에 액션을 적용할 때 개별 uuid를 `target`으로 보낸다. `stack_count`가 1을 초과하는 경우(현재 화폐뿐)에만 `quantity` params를 사용한다.
 3. THE Client SHALL 카테고리 필터를 제공한다. 값은 `weapon`, `armor`, `consumable`, `misc`다.
 4. THE Client SHALL 장착 슬롯별 현재 장비를 표시하고 빈 슬롯을 구분한다.
 5. THE Client SHALL 골드를 표시한다. 서버가 계산한 값을 사용한다.
