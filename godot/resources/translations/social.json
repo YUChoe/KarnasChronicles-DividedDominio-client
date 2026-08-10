@@ -1,0 +1,114 @@
+{
+    "follow.started": {
+        "en": "You start following {target}.",
+        "ko": "{target}님을 따라가기 시작했습니다."
+    },
+    "follow.stopped": {
+        "en": "You stop following.",
+        "ko": "따라가기를 중단했습니다."
+    },
+    "follow.broadcast": {
+        "en": "{username} starts following {target}.",
+        "ko": "{username}님이 {target}님을 따라가기 시작했습니다."
+    },
+    "follow.being_followed": {
+        "en": "{username} starts following you.",
+        "ko": "{username}님이 당신을 따라가기 시작했습니다."
+    },
+    "emote.wave.self": {
+        "en": "You wave.",
+        "ko": "당신은 손을 흔듭니다."
+    },
+    "emote.wave.other": {
+        "en": "{username} waves.",
+        "ko": "{username}님이 손을 흔듭니다."
+    },
+    "emote.bow.self": {
+        "en": "You bow.",
+        "ko": "당신은 고개를 숙입니다."
+    },
+    "emote.bow.other": {
+        "en": "{username} bows.",
+        "ko": "{username}님이 고개를 숙입니다."
+    },
+    "emote.nod.self": {
+        "en": "You nod.",
+        "ko": "당신은 고개를 끄덕입니다."
+    },
+    "emote.nod.other": {
+        "en": "{username} nods.",
+        "ko": "{username}님이 고개를 끄덕입니다."
+    },
+    "emote.shake_head.self": {
+        "en": "You shake your head.",
+        "ko": "당신은 고개를 젓습니다."
+    },
+    "emote.shake_head.other": {
+        "en": "{username} shakes their head.",
+        "ko": "{username}님이 고개를 젓습니다."
+    },
+    "emote.smile.self": {
+        "en": "You smile.",
+        "ko": "당신은 미소를 짓습니다."
+    },
+    "emote.smile.other": {
+        "en": "{username} smiles.",
+        "ko": "{username}님이 미소를 짓습니다."
+    },
+    "emote.laugh.self": {
+        "en": "You laugh.",
+        "ko": "당신은 웃음을 터뜨립니다."
+    },
+    "emote.laugh.other": {
+        "en": "{username} laughs.",
+        "ko": "{username}님이 웃음을 터뜨립니다."
+    },
+    "emote.cry.self": {
+        "en": "You cry.",
+        "ko": "당신은 흐느낍니다."
+    },
+    "emote.cry.other": {
+        "en": "{username} cries.",
+        "ko": "{username}님이 흐느낍니다."
+    },
+    "emote.sigh.self": {
+        "en": "You sigh.",
+        "ko": "당신은 한숨을 쉽니다."
+    },
+    "emote.sigh.other": {
+        "en": "{username} sighs.",
+        "ko": "{username}님이 한숨을 쉽니다."
+    },
+    "emote.shrug.self": {
+        "en": "You shrug.",
+        "ko": "당신은 어깨를 으쓱합니다."
+    },
+    "emote.shrug.other": {
+        "en": "{username} shrugs.",
+        "ko": "{username}님이 어깨를 으쓱합니다."
+    },
+    "emote.clap.self": {
+        "en": "You clap.",
+        "ko": "당신은 박수를 칩니다."
+    },
+    "emote.clap.other": {
+        "en": "{username} claps.",
+        "ko": "{username}님이 박수를 칩니다."
+    },
+    "emote.dance.self": {
+        "en": "You dance.",
+        "ko": "당신은 춤을 춥니다."
+    },
+    "emote.dance.other": {
+        "en": "{username} dances.",
+        "ko": "{username}님이 춤을 춥니다."
+    },
+    "emote.salute.self": {
+        "en": "You salute.",
+        "ko": "당신은 경례합니다."
+    },
+    "emote.salute.other": {
+        "en": "{username} salutes.",
+        "ko": "{username}님이 경례합니다."
+    }
+}

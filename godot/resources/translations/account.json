@@ -1,0 +1,6 @@
+{
+    "account.name_changed": {
+        "en": "Your display name changed from {old_name} to {new_name}.",
+        "ko": "표시 이름이 '{old_name}'에서 '{new_name}'(으)로 변경되었습니다."
+    }
+}
