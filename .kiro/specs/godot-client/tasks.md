@@ -42,9 +42,10 @@ Godot 4.x + GDScript로 게임 클라이언트를 구현한다. 프로토콜 계
   - _Requirements: 1.12_
 
 - [ ] 2. 다국어 처리
-- [ ] 2.1 번역 파일 이관
+- [x] 2.1 번역 파일 이관
   - 서버의 `data/translations/` 9개 파일을 `godot/resources/translations/`로 옮긴다. Python `str.format` 포맷 스펙(`{value:>10}`, `{value!r}`)과 리터럴 중괄호(`{{`)가 있는 값을 전수 확인해 GDScript 호환 형태로 정리한다.
   - 선행 조건: 서버 `server-json-protocol` Task 6.5(번역 파일 이관 시점). 서버가 추가한 새 키 목록을 함께 받는다.
+  - 커밋 `d1cbbc9`. 이관 9개 + 신규 2개(`account.json`, `social.json`) = 11개 파일. 포맷 스펙과 `{{` 리터럴은 전수 검사 결과 0건이므로 값 변환 없이 그대로 옮겼다. Godot 프로젝트가 아직 없어 리소스만 배치한 상태이며 `2.2 Translator` 에서 실제로 읽는다.
   - _Requirements: 3.1, 3.4_
 - [ ] 2.2 Translator 구현
   - `scripts/i18n/translator.gd`에 `t(key, params)`를 구현한다. GDScript `String.format`이 딕셔너리 키를 `{name}` 자리표시자로 지원하므로 문법 변환 없이 사용한다. `params` 값이 언어별 dict면 현재 locale 값을 고르고 스칼라면 그대로 치환한다.
