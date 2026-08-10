@@ -66,5 +66,13 @@
     "help.footer": {
         "en": "Type 'help <command>' for detailed information.",
         "ko": "'help <명령어>'로 자세한 정보를 확인하세요."
+    },
+    "system.server_shutdown": {
+        "en": "The server is shutting down. Your connection will close shortly.",
+        "ko": "서버가 종료됩니다. 연결이 곧 끊어집니다."
+    },
+    "system.duplicate_login": {
+        "en": "You have logged in from another location. This connection will close.",
+        "ko": "다른 위치에서 로그인하여 연결이 종료됩니다."
     }
 }
