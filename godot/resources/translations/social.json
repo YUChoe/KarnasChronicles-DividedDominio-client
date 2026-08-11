@@ -110,5 +110,9 @@
     "emote.salute.other": {
         "en": "{username} salutes.",
         "ko": "{username}님이 경례합니다."
+    },
+    "follow.stopped_disconnected": {
+        "en": "👥 {username} disconnected, so you stopped following.",
+        "ko": "👥 {username}님이 연결을 해제하여 따라가기가 중지되었습니다."
     }
 }

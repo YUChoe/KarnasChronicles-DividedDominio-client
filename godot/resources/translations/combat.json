@@ -162,5 +162,9 @@
     "combat.defending_reduction": {
         "en": "The target was defending, halving the damage.",
         "ko": "대상이 방어하여 피해가 절반으로 줄었습니다."
+    },
+    "combat.rejoined": {
+        "en": "⚔️ You rejoined the battle in progress.",
+        "ko": "⚔️ 진행 중인 전투에 복귀했습니다."
     }
 }

@@ -74,5 +74,9 @@
     "system.duplicate_login": {
         "en": "You have logged in from another location. This connection will close.",
         "ko": "다른 위치에서 로그인하여 연결이 종료됩니다."
+    },
+    "system.kicked": {
+        "en": "🚫 An administrator removed you from the server. Reason: {reason}",
+        "ko": "🚫 관리자에 의해 서버에서 추방되었습니다. 사유: {reason}"
     }
 }
