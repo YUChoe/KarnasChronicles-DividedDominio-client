@@ -145,10 +145,14 @@
   - `npm run type-check:server`, `npm test`, `npm run test:e2e`를 통과한다. Docker 이미지 빌드가 성공하고 컨테이너가 기동함을 확인한다.
   - _Requirements: 7.7_
 
-- [ ] 7. 폐기 스펙 처리
+- [x] 7. 폐기 스펙 처리
   - `.kiro/specs/browser-telnet-terminal/`에 폐기 기록을 추가한다. 터미널 클라이언트 제거로 대상이 사라졌음을 명시한다.
   - `.kiro/specs/web-admin-panel/`에 폐기 기록을 추가한다. 어드민 기능이 MUD 서버(`server-json-protocol` Task 7)와 Godot 클라이언트(`godot-client` Task 11)로 이전되었음을 명시한다.
   - 두 스펙의 내용은 삭제하지 않고 이력으로 보존한다.
+  - 두 스펙에 이미 계획 단계의 폐기 기록이 있었다(커밋 `8bf2030`). 제거가 실제로 끝났으므로 각 기록 뒤에 `### 제거 완료` 절을 붙여 대상별 처리와 커밋을 남겼다.
+  - `browser-telnet-terminal`: 이 스펙이 만든 게이트웨이는 살아 있다는 사실과, e2e·load 테스트가 Task 2 시점부터 조용히 실패하고 있었던 경위를 기록했다.
+  - `web-admin-panel`: 두 어드민 경로가 같은 데이터베이스를 조작하던 기간이 끝났음을 명시했다. 이것이 이 스펙의 핵심 문제였다. 어드민 UI 는 `godot-client` Task 11 로 남아 있다.
+  - 내용은 삭제하지 않았다. 두 스펙의 체크박스와 본문을 그대로 보존했다.
   - _Requirements: 8.1, 8.2, 8.3_
 
 ## Task Dependency Graph

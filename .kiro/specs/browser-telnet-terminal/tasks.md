@@ -249,3 +249,24 @@
 | 터미널 클라이언트 삭제 | `.kiro/specs/gateway-landing/` Task 1 |
 | 게임 클라이언트 | `.kiro/specs/godot-client/` |
 | 프로토콜 계약 | 서버 저장소 `docs/protocol/` |
+
+### 제거 완료 (2026-08-11)
+
+계획 단계에서 쓴 위 기록의 후속 작업이 끝났다.
+
+| 대상 | 처리 | 커밋 |
+|---|---|---|
+| `src/client/` 전체 | 삭제. `index.html`, `main.ts`, `terminal-manager.ts`, `i18n.ts`, `__tests__/` 4파일 | `bbaa74f` |
+| `src/shared/types.js` | 삭제. 커밋된 컴파일 산출물 잔재였다 | `bbaa74f` |
+| `vite.config.ts`, 루트 `tsconfig.json` | 삭제 | `bbaa74f` |
+| `@xterm/*` 4종, `jsdom`, `happy-dom`, `vite` | 의존성 제거 | `bbaa74f` |
+| 게이트웨이 | 유지. `gateway-landing` 으로 이어진다 | — |
+
+이 스펙의 Task 2(WebSocket Gateway)와 Task 3(라인 프레이밍 이전 구현)이 만든
+게이트웨이는 살아 있다. `gateway-landing` Task 2 에서 봉투를 제거하고 라인
+프레이밍으로 바꿨으며, Task 3 에서 어드민 채널 프록시를 추가했다.
+
+제거 과정에서 드러난 사실 하나를 남긴다. `src/__tests__/e2e.test.ts` 와
+`load.test.ts` 는 `gateway-landing` Task 2(봉투 제거) 시점부터 실패하고
+있었으나, `npm test` 가 `vite.config.ts`(클라이언트 테스트)를 쓰고 있어
+드러나지 않았다. 두 파일은 현재 JSON 라인 프로토콜로 다시 썼다.

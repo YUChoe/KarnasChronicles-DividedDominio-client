@@ -269,3 +269,23 @@
 | 어드민 UI | `.kiro/specs/godot-client/` Task 11 |
 | 웹 어드민 코드 삭제 | `.kiro/specs/gateway-landing/` Task 4 |
 | 어드민 프로토콜 | 서버 저장소 `docs/protocol/admin.md` |
+
+### 제거 완료 (2026-08-11)
+
+계획 단계에서 쓴 위 기록의 후속 작업이 끝났다.
+
+| 대상 | 처리 | 커밋 |
+|---|---|---|
+| `src/server/webadmin/` 6,986행 | 삭제. `admin-router.ts` 1,070행, `db-client.ts` 1,960행, `auth.ts` 110행, `public/` 3,846행 | `eecb132` |
+| `better-sqlite3` | 의존성 제거. 게이트웨이가 MUD 데이터베이스를 직접 열지 않는다 | `eecb132` |
+| `data` 볼륨 마운트 | `docker-compose.yml` 과 `Dockerfile` 에서 제거 | `eecb132` |
+| 어드민 채널 | 서버 저장소 TCP 4001 로 신설 완료 | 서버 `15bb145`~`fff422c` |
+| 어드민 프록시 | 게이트웨이 `/admin` WebSocket 경로 | `e1475bc` |
+
+두 어드민 경로가 같은 데이터베이스를 조작하던 기간이 끝났다. 이것이 이 스펙의
+핵심 문제였다. 웹 어드민은 SQLite 를 직접 열어 MUD 서버의 메모리 상태와
+어긋났다. 어드민 채널은 서버 안에서 동작하므로 변경 후 영향받는 플레이어에게
+방 정보를 다시 보낼 수 있다.
+
+어드민 UI 는 아직 없다. `godot-client` Task 11 이며 현재 프로토콜과 프록시만
+준비된 상태다. 그때까지 어드민 기능은 서버 저장소의 하니스로 검증한다.
