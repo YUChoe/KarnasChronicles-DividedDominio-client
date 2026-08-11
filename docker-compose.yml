@@ -14,7 +14,9 @@ services:
       - WS_PORT=3000
       - TELNET_HOST=host.docker.internal
       - TELNET_PORT=4000
+      - ADMIN_PORT=4001
       - MAX_CONNECTIONS=200
+      - CONNECTION_TIMEOUT=300000
       - LOG_LEVEL=info
     volumes:
       - ./logs:/app/logs

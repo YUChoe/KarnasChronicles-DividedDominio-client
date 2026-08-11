@@ -3,13 +3,24 @@ import { logger } from './logger';
 import { TelnetClient } from './telnet-client';
 import { LineFramer } from './line-framer';
 
+/**
+ * 연결이 붙은 채널.
+ *
+ * 게임은 TCP 4000, 어드민은 TCP 4001 로 중계한다. 어드민 채널은 IAC 협상을
+ * 하지 않으므로 필터를 적용하지 않는다.
+ */
+export type Channel = 'game' | 'admin';
+
 export interface ClientConnection {
   id: string;
   ws: WebSocket;
   telnet: TelnetClient;
   /** TCP 청크를 라인으로 복원한다. 연결마다 하나씩 보유한다. */
   framer: LineFramer;
+  channel: Channel;
   createdAt: Date;
+  /** 마지막으로 프레임이 오간 시각. 유휴 정리 판정에 쓴다. */
+  lastActivity: Date;
 }
 
 export class ConnectionPool {
@@ -96,6 +107,41 @@ export class ConnectionPool {
 
   getMaxConnections(): number {
     return this.maxConnections;
+  }
+
+  /** 프레임이 오갔음을 기록한다. */
+  touch(id: string): void {
+    const connection = this.connections.get(id);
+
+    if (connection) {
+      connection.lastActivity = new Date();
+    }
+  }
+
+  /**
+   * 지정한 시간 동안 프레임이 오가지 않은 연결을 닫는다.
+   *
+   * 계약은 클라이언트가 60초마다 ping 을 보내도록 규정한다. 그보다 오래 조용한
+   * 연결은 살아 있지 않다고 본다.
+   *
+   * @returns 닫은 연결 수
+   */
+  removeIdle(idleMs: number): number {
+    const deadline = Date.now() - idleMs;
+    const stale = Array.from(this.connections.values()).filter(
+      (connection) => connection.lastActivity.getTime() < deadline
+    );
+
+    for (const connection of stale) {
+      logger.info('Closing idle connection', {
+        clientId: connection.id,
+        channel: connection.channel,
+        idleMs: Date.now() - connection.lastActivity.getTime()
+      });
+      this.remove(connection.id);
+    }
+
+    return stale.length;
   }
 
   cleanup(): void {

@@ -46,20 +46,31 @@
   - `gateway.property.test.ts`에서 텍스트 프로토콜을 전제한 부분을 JSON 라인 전제로 갱신한다.
   - _Requirements: 6.6_
 
-- [ ] 3. 게이트웨이 정리
-- [ ] 3.1 업그레이드 경로 제한
+- [x] 3. 게이트웨이 정리
+- [x] 3.1 업그레이드 경로 제한
   - `upgrade` 핸들러에서 경로를 검증한다. `/ws`는 게임 채널, `/admin`은 어드민 채널로 라우팅하고 그 외는 404로 거부한다. 게임과 어드민에 별도 `WebSocketServer` 인스턴스를 둔다.
+  - `GAME_PATH`(`/ws`)와 `ADMIN_PATH`(`/admin`)를 상수로 두고 `upgrade` 핸들러가 경로로 라우팅한다. 채널마다 별도 `WebSocketServer`(noServer)를 둔다. 그 밖의 경로는 404 를 쓰고 소켓을 끊는다. 쿼리 문자열이 붙어도 경로만 비교한다.
+  - 이전에는 모든 경로를 수락했다. 클라이언트 개발 URL 도 경로 없이 접속했으므로 `/ws` 를 붙였다.
   - _Requirements: 4.2_
-- [ ] 3.2 어드민 채널 프록시
+- [x] 3.2 어드민 채널 프록시
   - `/admin` WebSocket을 MUD 서버 TCP 4001로 중계한다. IAC 협상이 없으므로 `filterTelnetCommands`를 적용하지 않고 `LineFramer`만 사용한다. 인증은 서버가 담당하므로 게이트웨이는 상태를 갖지 않는다.
   - _Requirements: 4.3_
+  - `ClientConnection` 에 `channel` 을 추가하고 채널에 맞는 상위 포트로 연결한다. 게임은 `TELNET_PORT`, 어드민은 `ADMIN_PORT` 다.
+  - 어드민 채널은 `filterTelnetCommands` 를 거치지 않고 `LineFramer` 만 쓴다. 서버가 IAC 협상을 하지 않는다.
+  - 게이트웨이는 인증 상태를 갖지 않는다. 서버가 두 주체(관리자·서비스)를 판정한다.
   - 선행 조건: 서버 `server-json-protocol` Task 7.1 완료
-- [ ] 3.3 데드 코드 제거
+- [x] 3.3 데드 코드 제거
   - `sanitizer.ts`와 `__tests__/sanitizer.test.ts`, `sanitizer.property.test.ts`를 제거하고 `gateway.ts`의 미사용 임포트를 정리한다. JSON 페이로드에는 터미널 제어 시퀀스가 문제되지 않으며 Godot은 이스케이프를 해석하지 않는다.
+  - `sanitizer.ts` 와 테스트 2개를 삭제하고 `gateway.ts` 의 미사용 임포트를 정리했다. `gateway.ts` 에서 임포트만 되고 호출되지 않는 데드 코드였다.
   - _Requirements: 4.1_
-- [ ] 3.4 설정 반영
+- [x] 3.4 설정 반영
   - `MAX_CONNECTIONS`와 `CONNECTION_TIMEOUT`을 `start.ts`에서 읽어 반영한다. 하드코딩된 상한 200을 환경변수 기본값으로 옮긴다. `ADMIN_PORT`를 추가한다.
   - `serverVersion`(4.5)과 `resize`(4.6)는 Task 2.4에서 이미 제거되었다.
+  - `GatewayServer` 생성자를 옵션 오브젝트로 바꿨다. 위치 인자 다섯 개가 늘어나 순서를 틀리기 쉬웠다.
+  - `MAX_CONNECTIONS`, `CONNECTION_TIMEOUT`, `ADMIN_PORT` 를 `start.ts` 에서 읽는다. 하드코딩된 상한 200 은 기본값으로 옮겼다.
+  - `CONNECTION_TIMEOUT` 은 붙을 곳이 없었다. 유휴 연결 정리를 새로 구현했다. `ClientConnection.lastActivity` 를 프레임이 오갈 때마다 갱신하고 30초 주기로 기준을 넘은 연결을 닫는다. 계약이 클라이언트에 60초 ping 을 요구하므로 기본값을 300초로 뒀다. `.env.example` 의 30000 은 그 요구와 어긋나 정정했다.
+  - `.env.example` 과 `docker-compose.yml` 에 `ADMIN_PORT` 와 `CONNECTION_TIMEOUT` 을 넣고 `VITE_WS_URL` 에 `/ws` 를 붙였다.
+  - 검증: `channel-routing.test.ts` 7건 추가로 서버 테스트 38건. 실행 중인 MUD 서버를 대상으로 두 채널 도달을 실측했다. `/ws` 는 `channel: "game"` welcome, `/admin` 은 `channel: "admin"` welcome 과 `admin_login_result success: true` 를 받았고 정의되지 않은 경로는 거부됐다.
   - _Requirements: 4.4_
 
 - [ ] 4. 웹 어드민 제거

@@ -83,7 +83,7 @@ describe('Gateway Property Tests', () => {
       });
     });
 
-    gateway = new GatewayServer(WS_PORT, 'localhost', TELNET_PORT, 200);
+    gateway = new GatewayServer({ port: WS_PORT, telnetHost: 'localhost', telnetPort: TELNET_PORT, maxConnections: 200 });
     await gateway.start();
   });
 
@@ -106,7 +106,7 @@ describe('Gateway Property Tests', () => {
     await fc.assert(
       fc.asyncProperty(fc.constant(null), async () => {
         return new Promise<void>((resolve, reject) => {
-          const ws = new WebSocket(`ws://localhost:${WS_PORT}`);
+          const ws = new WebSocket(`ws://localhost:${WS_PORT}/ws`);
           let receivedWelcome = false;
           let receivedConnectMessage = false;
 
@@ -173,7 +173,7 @@ describe('Gateway Property Tests', () => {
     await fc.assert(
       fc.asyncProperty(fc.integer({ min: 1, max: 20 }), async (count: number) => {
         return new Promise<void>((resolve, reject) => {
-          const ws = new WebSocket(`ws://localhost:${WS_PORT}`);
+          const ws = new WebSocket(`ws://localhost:${WS_PORT}/ws`);
           const items: number[] = [];
 
           const timeout = setTimeout(() => {
@@ -242,7 +242,7 @@ describe('Gateway Property Tests', () => {
           const connectionPromises: Promise<void>[] = [];
 
           for (let i = 0; i < connectionCount; i++) {
-            const ws = new WebSocket(`ws://localhost:${WS_PORT}`);
+            const ws = new WebSocket(`ws://localhost:${WS_PORT}/ws`);
             connections.push(ws);
 
             const promise = new Promise<void>((resolve, reject) => {
@@ -303,7 +303,7 @@ describe('Gateway Property Tests', () => {
 
     try {
       for (let i = 0; i < testConnectionCount; i++) {
-        const ws = new WebSocket(`ws://localhost:${WS_PORT}`);
+        const ws = new WebSocket(`ws://localhost:${WS_PORT}/ws`);
         connections.push(ws);
 
         await new Promise<void>((resolve, reject) => {
@@ -350,14 +350,14 @@ describe('Gateway Property Tests', () => {
    * Validates: Requirements 4.4
    */
   it('Property 15: 우아한 연결 거부', async () => {
-    const smallGateway = new GatewayServer(3002, 'localhost', TELNET_PORT, 3);
+    const smallGateway = new GatewayServer({ port: 3002, telnetHost: 'localhost', telnetPort: TELNET_PORT, maxConnections: 3 });
     await smallGateway.start();
 
     const connections: WebSocket[] = [];
 
     try {
       for (let i = 0; i < 3; i++) {
-        const ws = new WebSocket(`ws://localhost:3002`);
+        const ws = new WebSocket(`ws://localhost:3002/ws`);
         connections.push(ws);
 
         await new Promise<void>((resolve, reject) => {
@@ -379,7 +379,7 @@ describe('Gateway Property Tests', () => {
 
       await new Promise((resolve) => setTimeout(resolve, 300));
 
-      const rejectedWs = new WebSocket(`ws://localhost:3002`);
+      const rejectedWs = new WebSocket(`ws://localhost:3002/ws`);
       let rejectionReason: string | undefined;
 
       const wasRejected = await new Promise<boolean>((resolve) => {
@@ -442,7 +442,7 @@ describe('Gateway Property Tests', () => {
           const connections: WebSocket[] = [];
 
           for (let i = 0; i < connectionCount; i++) {
-            const ws = new WebSocket(`ws://localhost:${WS_PORT}`);
+            const ws = new WebSocket(`ws://localhost:${WS_PORT}/ws`);
             connections.push(ws);
 
             await new Promise<void>((resolve, reject) => {
@@ -499,7 +499,7 @@ describe('Gateway Property Tests', () => {
     await fc.assert(
       fc.asyncProperty(fc.constant(null), async () => {
         return new Promise<void>((resolve, reject) => {
-          const ws = new WebSocket(`ws://localhost:${WS_PORT}`);
+          const ws = new WebSocket(`ws://localhost:${WS_PORT}/ws`);
           const receivedMessages: unknown[] = [];
 
           const timeout = setTimeout(() => {
@@ -573,7 +573,7 @@ describe('Gateway Property Tests', () => {
         const sentFrame = JSON.stringify({ type: 'chat', text });
 
         return new Promise<void>((resolve, reject) => {
-          const ws = new WebSocket(`ws://localhost:${WS_PORT}`);
+          const ws = new WebSocket(`ws://localhost:${WS_PORT}/ws`);
           let receivedEcho = false;
 
           const timeout = setTimeout(() => {
@@ -629,7 +629,7 @@ describe('Gateway Property Tests', () => {
    */
   it('개행이 포함된 프레임을 버리고 오류를 통지한다', async () => {
     await new Promise<void>((resolve, reject) => {
-      const ws = new WebSocket(`ws://localhost:${WS_PORT}`);
+      const ws = new WebSocket(`ws://localhost:${WS_PORT}/ws`);
       let echoed = false;
 
       const timeout = setTimeout(() => {

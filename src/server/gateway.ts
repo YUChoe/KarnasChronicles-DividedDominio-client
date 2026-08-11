@@ -2,34 +2,55 @@ import http from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import { randomUUID } from 'crypto';
 import { logger } from './logger';
-import { ConnectionPool, ClientConnection } from './connection-pool';
+import { ConnectionPool, ClientConnection, Channel } from './connection-pool';
 import { TelnetClient } from './telnet-client';
 import { GatewayMessage } from '../shared/types';
 import { LineFramer, LineTooLongError } from './line-framer';
-import { sanitize, containsDangerousPatterns } from './sanitizer';
 import { AdminRouter } from './webadmin/admin-router';
 
+/** 게임 채널 WebSocket 경로 */
+export const GAME_PATH = '/ws';
+
+/** 어드민 채널 WebSocket 경로 */
+export const ADMIN_PATH = '/admin';
+
+export interface GatewayOptions {
+  port?: number;
+  telnetHost?: string;
+  telnetPort?: number;
+  adminPort?: number;
+  maxConnections?: number;
+  /** 이 시간 동안 프레임이 오가지 않은 연결을 닫는다 (밀리초). */
+  connectionTimeout?: number;
+  adminRouter?: AdminRouter;
+}
+
+/** 유휴 연결을 확인하는 주기 (밀리초). */
+const IDLE_SWEEP_INTERVAL = 30_000;
+
 export class GatewayServer {
-  private wss: WebSocketServer | null = null;
+  /** 게임 채널 WebSocket 서버 */
+  private gameWss: WebSocketServer | null = null;
+  /** 어드민 채널 WebSocket 서버 */
+  private adminWss: WebSocketServer | null = null;
   private httpServer: http.Server | null = null;
   private connectionPool: ConnectionPool;
   private port: number;
   private telnetHost: string;
   private telnetPort: number;
+  private adminPort: number;
+  private connectionTimeout: number;
+  private idleSweeper: NodeJS.Timeout | null = null;
   private adminRouter?: AdminRouter;
 
-  constructor(
-    port: number = 3000,
-    telnetHost: string = 'localhost',
-    telnetPort: number = 4000,
-    maxConnections: number = 200,
-    adminRouter?: AdminRouter
-  ) {
-    this.port = port;
-    this.telnetHost = telnetHost;
-    this.telnetPort = telnetPort;
-    this.connectionPool = new ConnectionPool(maxConnections);
-    this.adminRouter = adminRouter;
+  constructor(options: GatewayOptions = {}) {
+    this.port = options.port ?? 3000;
+    this.telnetHost = options.telnetHost ?? 'localhost';
+    this.telnetPort = options.telnetPort ?? 4000;
+    this.adminPort = options.adminPort ?? 4001;
+    this.connectionTimeout = options.connectionTimeout ?? 300_000;
+    this.connectionPool = new ConnectionPool(options.maxConnections ?? 200);
+    this.adminRouter = options.adminRouter;
   }
 
   async start(): Promise<void> {
@@ -45,44 +66,78 @@ export class GatewayServer {
         }
       });
 
-      // WebSocket 서버를 noServer 모드로 생성
-      this.wss = new WebSocketServer({ noServer: true });
+      // 채널마다 별도 WebSocket 서버를 둔다. 경로로 라우팅한다
+      this.gameWss = new WebSocketServer({ noServer: true });
+      this.adminWss = new WebSocketServer({ noServer: true });
 
-      // HTTP upgrade 이벤트에서 WebSocket 핸들링
-      this.httpServer.on('upgrade', (req, socket, head) => {
-        this.wss!.handleUpgrade(req, socket, head, (ws) => {
-          this.wss!.emit('connection', ws, req);
+      this.gameWss.on('connection', (ws: WebSocket, req) => {
+        this.handleConnection(ws, req, 'game');
+      });
+
+      this.adminWss.on('connection', (ws: WebSocket, req) => {
+        this.handleConnection(ws, req, 'admin');
+      });
+
+      for (const wss of [this.gameWss, this.adminWss]) {
+        wss.on('error', (error) => {
+          logger.error('WebSocket server error', { error: error.message });
         });
-      });
+      }
 
-      this.wss.on('connection', (ws: WebSocket, req) => {
-        this.handleConnection(ws, req);
-      });
+      // 업그레이드 경로를 검증한다. 정의되지 않은 경로는 거부한다
+      this.httpServer.on('upgrade', (req, socket, head) => {
+        const path = _requestPath(req.url);
+        const target =
+          path === GAME_PATH
+            ? this.gameWss
+            : path === ADMIN_PATH
+              ? this.adminWss
+              : null;
 
-      this.wss.on('error', (error) => {
-        logger.error('WebSocket server error', { error: error.message });
+        if (target === null) {
+          logger.warn('Upgrade rejected - unknown path', { path });
+          socket.write('HTTP/1.1 404 Not Found\r\n\r\n');
+          socket.destroy();
+          return;
+        }
+
+        target.handleUpgrade(req, socket, head, (ws) => {
+          target.emit('connection', ws, req);
+        });
       });
 
       this.httpServer.on('error', (error) => {
         logger.error('HTTP server error', { error: error.message });
       });
 
+      // 유휴 연결 정리. 계약은 클라이언트가 60초마다 ping 을 보내도록 규정한다
+      this.idleSweeper = setInterval(() => {
+        this.connectionPool.removeIdle(this.connectionTimeout);
+      }, IDLE_SWEEP_INTERVAL);
+
       this.httpServer.listen(this.port, () => {
         logger.info('Gateway server started', {
           port: this.port,
           telnetHost: this.telnetHost,
-          telnetPort: this.telnetPort
+          gamePath: GAME_PATH,
+          gamePort: this.telnetPort,
+          adminPath: ADMIN_PATH,
+          adminPort: this.adminPort
         });
         resolve();
       });
     });
   }
 
-  private async handleConnection(ws: WebSocket, req: any): Promise<void> {
+  private async handleConnection(
+    ws: WebSocket,
+    req: any,
+    channel: Channel
+  ): Promise<void> {
     const clientId = randomUUID();
     const remoteAddress = req.socket.remoteAddress;
 
-    logger.info('New WebSocket connection', { clientId, remoteAddress });
+    logger.info('New WebSocket connection', { clientId, channel, remoteAddress });
 
     // 연결 제한 확인 (최대 연결 수)
     const currentSize = this.connectionPool.getSize();
@@ -108,18 +163,21 @@ export class GatewayServer {
       });
     }
 
-    // Telnet 클라이언트 생성 및 연결
-    const telnetClient = new TelnetClient(this.telnetHost, this.telnetPort);
+    // 채널에 맞는 서버 포트로 연결한다
+    const upstreamPort = channel === 'admin' ? this.adminPort : this.telnetPort;
+    const telnetClient = new TelnetClient(this.telnetHost, upstreamPort);
 
     try {
       await telnetClient.connect();
     } catch (error) {
-      logger.error('Failed to connect to telnet server', {
+      logger.error('Failed to connect to upstream server', {
         clientId,
+        channel,
+        port: upstreamPort,
         error: error instanceof Error ? error.message : String(error)
       });
       this.sendError(ws, 'Failed to connect to game server');
-      ws.close(1011, 'Telnet connection failed');
+      ws.close(1011, 'Upstream connection failed');
       return;
     }
 
@@ -129,7 +187,9 @@ export class GatewayServer {
       ws,
       telnet: telnetClient,
       framer: new LineFramer(),
-      createdAt: new Date()
+      channel,
+      createdAt: new Date(),
+      lastActivity: new Date()
     };
 
     // 연결 풀에 추가
@@ -228,6 +288,7 @@ export class GatewayServer {
       return;
     }
 
+    this.connectionPool.touch(clientId);
     connection.telnet.sendLine(frame);
     logger.debug('Frame forwarded to telnet', { clientId, length: frame.length });
   }
@@ -243,12 +304,14 @@ export class GatewayServer {
       return;
     }
 
-    // IAC 협상 바이트는 라인 구조를 갖지 않으므로 프레이머 앞에서 제거한다
-    const filtered = this.filterTelnetCommands(data);
+    // IAC 협상 바이트는 라인 구조를 갖지 않으므로 프레이머 앞에서 제거한다.
+    // 어드민 채널은 협상을 하지 않으므로 필터를 거치지 않는다
+    const framed =
+      connection.channel === 'admin' ? data : this.filterTelnetCommands(data);
 
     let lines: string[];
     try {
-      lines = connection.framer.push(filtered);
+      lines = connection.framer.push(framed);
     } catch (error) {
       if (error instanceof LineTooLongError) {
         logger.error('Line length limit exceeded', {
@@ -262,6 +325,10 @@ export class GatewayServer {
         return;
       }
       throw error;
+    }
+
+    if (lines.length > 0) {
+      this.connectionPool.touch(clientId);
     }
 
     // 서버 JSON 라인을 봉투로 감싸지 않고 그대로 텍스트 프레임으로 전달한다
@@ -352,12 +419,16 @@ export class GatewayServer {
     return new Promise((resolve) => {
       logger.info('Stopping Gateway server');
 
+      if (this.idleSweeper !== null) {
+        clearInterval(this.idleSweeper);
+        this.idleSweeper = null;
+      }
+
       this.connectionPool.cleanup();
 
       // WebSocket 서버 종료
-      if (this.wss) {
-        this.wss.close();
-      }
+      this.gameWss?.close();
+      this.adminWss?.close();
 
       // HTTP 서버 종료
       if (this.httpServer) {
@@ -376,14 +447,23 @@ export class GatewayServer {
   }
 }
 
+/**
+ * 업그레이드 요청의 경로만 뽑는다.
+ *
+ * 쿼리 문자열이 붙어 있어도 경로만 비교한다.
+ */
+export function _requestPath(url: string | undefined): string {
+  if (!url) {
+    return '/';
+  }
+
+  const queryStart = url.indexOf('?');
+  return queryStart === -1 ? url : url.slice(0, queryStart);
+}
+
 // 서버 시작 함수 (외부에서 호출 가능)
-export function startServer(
-  port: number = 3000,
-  telnetHost: string = 'localhost',
-  telnetPort: number = 4000,
-  adminRouter?: AdminRouter
-): GatewayServer {
-  const server = new GatewayServer(port, telnetHost, telnetPort, 200, adminRouter);
+export function startServer(options: GatewayOptions = {}): GatewayServer {
+  const server = new GatewayServer(options);
 
   server.start().catch((error) => {
     logger.error('Failed to start server', { error: error.message });

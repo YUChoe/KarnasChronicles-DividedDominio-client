@@ -12,8 +12,9 @@ const language = getLanguage();
 // WebSocket URL - 환경에 따라 다른 URL 사용
 const getWebSocketUrl = (): string => {
   // 개발 환경: Vite dev server (5173) -> Gateway (3000)
+  // 게이트웨이가 경로를 검증하므로 /ws 를 붙여야 한다
   if (window.location.port === '5173') {
-    return 'ws://localhost:3000';
+    return 'ws://localhost:3000/ws';
   }
 
   // 프로덕션 환경: 현재 호스트의 /ws 경로 사용 (프록시 통과)
