@@ -6,7 +6,6 @@ import { ConnectionPool, ClientConnection, Channel } from './connection-pool';
 import { TelnetClient } from './telnet-client';
 import { GatewayMessage } from '../shared/types';
 import { LineFramer, LineTooLongError } from './line-framer';
-import { AdminRouter } from './webadmin/admin-router';
 
 /** 게임 채널 WebSocket 경로 */
 export const GAME_PATH = '/ws';
@@ -22,7 +21,6 @@ export interface GatewayOptions {
   maxConnections?: number;
   /** 이 시간 동안 프레임이 오가지 않은 연결을 닫는다 (밀리초). */
   connectionTimeout?: number;
-  adminRouter?: AdminRouter;
 }
 
 /** 유휴 연결을 확인하는 주기 (밀리초). */
@@ -41,7 +39,6 @@ export class GatewayServer {
   private adminPort: number;
   private connectionTimeout: number;
   private idleSweeper: NodeJS.Timeout | null = null;
-  private adminRouter?: AdminRouter;
 
   constructor(options: GatewayOptions = {}) {
     this.port = options.port ?? 3000;
@@ -50,20 +47,15 @@ export class GatewayServer {
     this.adminPort = options.adminPort ?? 4001;
     this.connectionTimeout = options.connectionTimeout ?? 300_000;
     this.connectionPool = new ConnectionPool(options.maxConnections ?? 200);
-    this.adminRouter = options.adminRouter;
   }
 
   async start(): Promise<void> {
     return new Promise((resolve) => {
-      // HTTP 서버 생성 - HTTP 요청은 AdminRouter로 위임
-      this.httpServer = http.createServer((req, res) => {
-        if (this.adminRouter) {
-          this.adminRouter.handleRequest(req, res);
-        } else {
-          // AdminRouter가 없는 경우 기본 404 응답
-          res.writeHead(404, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Not found' }));
-        }
+      // HTTP 서버는 WebSocket 업그레이드만 받는다. 웹 어드민은 MUD 서버의
+      // 어드민 채널로 이전했고 랜딩 사이트는 Task 5 에서 다룬다
+      this.httpServer = http.createServer((_req, res) => {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Not found' }));
       });
 
       // 채널마다 별도 WebSocket 서버를 둔다. 경로로 라우팅한다

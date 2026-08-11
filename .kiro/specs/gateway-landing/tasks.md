@@ -73,17 +73,24 @@
   - 검증: `channel-routing.test.ts` 7건 추가로 서버 테스트 38건. 실행 중인 MUD 서버를 대상으로 두 채널 도달을 실측했다. `/ws` 는 `channel: "game"` welcome, `/admin` 은 `channel: "admin"` welcome 과 `admin_login_result success: true` 를 받았고 정의되지 않은 경로는 거부됐다.
   - _Requirements: 4.4_
 
-- [ ] 4. 웹 어드민 제거
+- [x] 4. 웹 어드민 제거
   - 선행 조건: 서버 `server-json-protocol` Task 7 전체 완료. 두 어드민 경로가 같은 데이터베이스를 조작하는 기간을 최소화해야 한다.
-- [ ] 4.1 서버측 어드민 코드 삭제
+- [x] 4.1 서버측 어드민 코드 삭제
   - `src/server/webadmin/` 디렉터리 전체를 제거한다. `admin-router.ts`(1,070행), `auth.ts`(110행), `db-client.ts`(1,960행), `public/` 3개 파일(3,846행)이 대상이다.
   - `start.ts`에서 `DBClient`, `AuthModule`, `AdminRouter` 생성과 주입을 제거한다.
   - `gateway.ts`에서 HTTP 요청을 `AdminRouter`로 위임하는 경로를 제거한다.
+  - `src/server/webadmin/` 6,986행을 삭제했다. `admin-router.ts` 1,070행, `db-client.ts` 1,960행, `auth.ts` 110행, `public/` 3,846행이다.
+  - `start.ts` 에서 `DBClient`·`AuthModule`·`AdminRouter` 생성과 주입을 없앴다. 게이트웨이는 이제 상태를 갖지 않고 데이터베이스에 접근하지 않는다.
+  - `gateway.ts` 의 HTTP 서버는 404 만 응답한다. WebSocket 업그레이드만 받는다. 랜딩 정적 서빙은 Task 5 에서 다룬다.
   - _Requirements: 2.1, 2.3, 2.4, 2.6_
-- [ ] 4.2 의존성과 빌드 단계 정리
+- [x] 4.2 의존성과 빌드 단계 정리
   - `better-sqlite3` 의존성을 제거한다. 게이트웨이가 MUD 데이터베이스에 직접 접근하지 않게 된다.
   - `build:server` 스크립트에서 `cp -r src/server/webadmin/public` 단계를 제거한다.
   - `docker-compose.yml`의 `data` 볼륨 마운트를 제거한다. 어드민이 SQLite를 열기 위한 것이었다.
+  - `better-sqlite3` 와 `@types/better-sqlite3` 를 제거했다. 게이트웨이가 MUD 데이터베이스를 직접 열지 않게 됐다. 두 어드민 경로가 같은 DB 를 조작하던 기간이 끝났다.
+  - `build:server` 의 `cp -r src/server/webadmin/public` 단계를 제거했다.
+  - `docker-compose.yml` 의 `./data:/app/data` 마운트와 `Dockerfile` 의 `data` 디렉터리 생성을 제거했다. `.env.example` 의 `WEBADMIN_USERNAME`·`WEBADMIN_PASSWORD`·`DATA_DIR` 도 없앴다.
+  - 검증: 타입 검사와 서버 테스트 38건 통과. 실행 중인 MUD 서버를 대상으로 두 채널이 그대로 도달하고 `GET /` 과 `GET /webadmin` 이 404 임을 실측했다.
   - _Requirements: 2.2, 2.5_
 
 - [ ] 5. 랜딩 사이트

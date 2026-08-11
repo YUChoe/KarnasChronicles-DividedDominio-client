@@ -36,8 +36,8 @@ RUN npm ci --only=production && npm cache clean --force
 # Copy built server
 COPY --from=builder /app/dist/server ./dist/server
 
-# Create logs and data directories
-RUN mkdir -p logs data
+# Create logs directory. 게이트웨이는 데이터베이스에 접근하지 않는다
+RUN mkdir -p logs
 
 # Expose WebSocket port
 EXPOSE 3000

@@ -1,7 +1,4 @@
 import { startServer } from './gateway.js';
-import { AdminRouter } from './webadmin/admin-router.js';
-import { AuthModule } from './webadmin/auth.js';
-import { DBClient } from './webadmin/db-client.js';
 
 /** 기본 최대 동시 연결 수. 이전에는 코드에 박혀 있었다. */
 const DEFAULT_MAX_CONNECTIONS = 200;
@@ -30,26 +27,13 @@ const connectionTimeout = intFromEnv(
   DEFAULT_CONNECTION_TIMEOUT
 );
 
-// Web Admin 모듈 인스턴스 생성
-const dbClient = new DBClient();
-const authModule = new AuthModule();
-const adminRouter = new AdminRouter(authModule, dbClient);
-
-const server = startServer({
+// 게이트웨이는 상태를 갖지 않는다. 데이터베이스에 접근하지 않으며 인증은 MUD
+// 서버가 담당한다. 웹 어드민은 어드민 채널(TCP 4001)로 이전했다.
+startServer({
   port,
   telnetHost,
   telnetPort,
   adminPort,
   maxConnections,
-  connectionTimeout,
-  adminRouter
+  connectionTimeout
 });
-
-// 서버 종료 시 DB 연결 정리
-const shutdownDb = () => {
-  dbClient.close();
-  void server;
-};
-
-process.on('SIGINT', shutdownDb);
-process.on('SIGTERM', shutdownDb);
