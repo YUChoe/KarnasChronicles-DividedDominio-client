@@ -10,22 +10,38 @@
 
 ## Tasks
 
-- [ ] 1. 터미널 웹 클라이언트 제거
-- [ ] 1.1 클라이언트 소스와 테스트 삭제
+- [x] 1. 터미널 웹 클라이언트 제거
+- [x] 1.1 클라이언트 소스와 테스트 삭제
   - `src/client/` 디렉터리 전체를 제거한다. `index.html`, `main.ts`, `terminal-manager.ts`, `i18n.ts`와 `__tests__/` 아래 4개 파일이 대상이다.
   - `src/shared/types.js`(커밋된 컴파일 산출물 잔재)를 제거한다.
+  - `src/client/` 전체(`index.html`, `main.ts`, `terminal-manager.ts`, `i18n.ts`, `__tests__/` 4파일)와 `src/shared/types.js` 를 삭제했다.
+  - `src/shared/types.ts` 는 남긴다. 게이트웨이의 `GatewayMessage` 정의가 여기 있다.
+  - `src/client/main.ts` 에 남아 있던 `HTMLElement.disabled` 타입 오류 2건이 함께 사라졌다.
   - _Requirements: 1.1, 1.6_
-- [ ] 1.2 테스트 인프라 재배선
+- [x] 1.2 테스트 인프라 재배선
   - `vite.config.ts`를 제거한다. `npm test`가 `vitest.config.server.ts`를 사용하도록 `package.json`을 갱신한다. 삭제 전에 재배선을 먼저 적용해 테스트가 끊기지 않게 한다.
   - `jsdom`, `happy-dom` 의존성의 필요 여부를 판정해 불필요하면 제거한다.
+  - 재배선을 먼저 적용하고 통과를 확인한 뒤 삭제했다. `npm test` 가 `vitest.config.server.ts` 를 쓴다.
+  - `vite.config.ts` 를 삭제했다. vitest 기본 설정(jsdom, `src/client/__tests__/setup.ts`)이 여기 얹혀 있었다.
+  - `jsdom`, `@types/jsdom`, `happy-dom`, `vite` 를 제거했다. 남은 테스트는 모두 `environment: node` 다.
   - _Requirements: 6.1, 6.2, 6.7_
-- [ ] 1.3 의존성과 스크립트 정리
+- [x] 1.3 의존성과 스크립트 정리
   - `@xterm/xterm`, `@xterm/addon-fit`, `@xterm/addon-webgl`, `@xterm/addon-attach`를 제거한다.
   - `package.json`에서 `dev:client`, `build:client`, `preview`를 제거하고 `build`를 서버 전용으로 갱신한다.
   - `.env.example`에서 `VITE_WS_URL`을 제거한다.
+  - `@xterm/*` 4종을 제거했다. 런타임 의존성은 `winston` 과 `ws` 둘만 남는다.
+  - `dev:client`, `build:client`, `preview` 를 제거하고 `build` 를 `build:server` 로 바꿨다. `.env.example` 의 `VITE_WS_URL` 도 없앴다.
+  - `package.json` 의 `description` 과 `keywords` 를 게이트웨이 기준으로 고쳤다. 브라우저 터미널을 설명하고 있었다.
+  - 루트 `tsconfig.json` 을 삭제하고 `type-check` 를 서버 설정으로 돌렸다. `include: ["src/**/*"]` 와 DOM 라이브러리가 클라이언트를 대상으로 한 것이었다. Task 6.1 의 일부를 앞당긴 셈이다.
   - _Requirements: 1.2, 1.3, 1.4, 1.5_
-- [ ] 1.4 잔여 테스트 확인
+- [x] 1.4 잔여 테스트 확인
   - `src/server/__tests__/gateway.property.test.ts`, `src/__tests__/e2e.test.ts`, `src/__tests__/load.test.ts`가 통과함을 확인한다. 이들은 `GatewayServer`와 `ws`만 사용하므로 영향받지 않아야 한다.
+  - 전제가 틀렸다. `e2e.test.ts` 와 `load.test.ts` 는 이미 실패하고 있었다. Task 2(봉투 제거)가 `{type:"data", payload}` 규약을 없앴는데 두 파일이 그 규약을 그대로 쓰고 있었다. `npm test` 가 `vite.config.ts`(클라이언트 테스트)를 쓰고 있어 드러나지 않았다.
+  - 두 파일을 현재 JSON 라인 프로토콜로 다시 썼다. `gateway.property.test.ts` 와 겹치는 부분(용량, 정리, 전달)을 덜어내고 전체 사슬·다중 사용자·부하 특성에 집중했다.
+  - `e2e.test.ts` 5건: welcome 도달, 라인 왕복, 다중 사용자 격리, 개행 프레임 거부, 연결 해제 후 풀 정리.
+  - `load.test.ts` 3건: 동시 연결 100개, 상한 초과 거부, 연결 50개 왕복. 실측 연결당 1.8ms.
+  - `README.md` 와 `DEPLOYMENT.md` 는 손대지 않았다. Task 6.4 의 범위이며 랜딩 사이트 내용이 있어야 다시 쓸 수 있다. 현재 xterm.js 를 주요 기능으로 설명하고 있다.
+  - 검증: `npm run type-check` 통과, `npm test` 38건, `npm run test:e2e` 5건, `npm run test:load` 3건.
   - _Requirements: 1.7, 6.3, 6.4_
 
 - [x] 2. 라인 프레이밍 구현

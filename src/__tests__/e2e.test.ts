@@ -1,322 +1,202 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { GatewayServer } from '../server/gateway';
 import { Server as TelnetServer, Socket } from 'net';
 import WebSocket from 'ws';
+import { GAME_PATH, GatewayServer } from '../server/gateway';
 
 /**
- * E2E 테스트: 브라우저 텔넷 터미널 전체 시나리오
- * 
- * 이 테스트는 다음을 검증합니다:
- * - WebSocket Gateway 시작 및 종료
- * - Mock Telnet 서버와의 연결
- * - 전체 데이터 흐름 (클라이언트 → Gateway → Telnet → Gateway → 클라이언트)
- * - 다중 사용자 시나리오
- * - 연결 해제 및 리소스 정리
+ * E2E: WebSocket → 게이트웨이 → MUD 서버 전체 흐름
+ *
+ * 게이트웨이는 개행 구분 JSON 라인을 그대로 통과시킨다. 봉투(`{type:'data'}`)는
+ * gateway-landing Task 2 에서 제거됐다.
+ *
+ * 여기서 검증하는 것은 `gateway.property.test.ts` 가 덮지 않는 전체 사슬과
+ * 다중 사용자 시나리오다.
  */
 
-describe('E2E: Browser Telnet Terminal', () => {
+const GATEWAY_PORT = 3401;
+const UPSTREAM_PORT = 4401;
+
+/** 개행으로 종결된 JSON 라인 */
+function line(payload: unknown): string {
+  return JSON.stringify(payload) + '\n';
+}
+
+describe('E2E: JSON 라인 전체 흐름', () => {
   let gateway: GatewayServer;
-  let mockTelnetServer: TelnetServer;
-  let telnetClients: Socket[] = [];
-  const GATEWAY_PORT = 3001;
-  const TELNET_PORT = 4001;
+  let upstream: TelnetServer;
+  let sockets: Socket[] = [];
 
-  // Mock Telnet 서버 시작
   beforeAll(async () => {
-    // Mock Telnet 서버 생성
-    mockTelnetServer = new TelnetServer((socket) => {
-      console.log('[Mock Telnet] Client connected');
-      telnetClients.push(socket);
+    // 받은 라인을 그대로 되돌려 보내는 최소 상위 서버
+    upstream = new TelnetServer((socket) => {
+      sockets.push(socket);
+      socket.write(line({ type: 'welcome', protocol_version: 1, channel: 'game' }));
 
-      // 초기 환영 메시지 전송
-      socket.write('Welcome to the MUD server!\r\n');
-      socket.write('Type "help" for commands.\r\n');
-      socket.write('> ');
-
+      let buffer = '';
       socket.on('data', (data) => {
-        const command = data.toString().trim();
-        console.log(`[Mock Telnet] Received command: ${command}`);
+        buffer += data.toString('utf-8');
 
-        // 명령어 에코
-        socket.write(`\r\nYou typed: ${command}\r\n`);
+        let index = buffer.indexOf('\n');
+        while (index !== -1) {
+          const received = buffer.slice(0, index);
+          buffer = buffer.slice(index + 1);
 
-        // 특수 명령어 처리
-        if (command === 'help') {
-          socket.write('Available commands:\r\n');
-          socket.write('  help - Show this help\r\n');
-          socket.write('  quit - Disconnect\r\n');
-          socket.write('  echo <text> - Echo text back\r\n');
-        } else if (command === 'quit') {
-          socket.write('Goodbye!\r\n');
-          socket.end();
-        } else if (command.startsWith('echo ')) {
-          const text = command.substring(5);
-          socket.write(`Echo: ${text}\r\n`);
+          try {
+            socket.write(line({ type: 'echo', received: JSON.parse(received) }));
+          } catch {
+            socket.write(line({ type: 'error', reason_code: 'MALFORMED_MESSAGE' }));
+          }
+
+          index = buffer.indexOf('\n');
         }
-
-        socket.write('> ');
       });
-
-      socket.on('close', () => {
-        console.log('[Mock Telnet] Client disconnected');
-        telnetClients = telnetClients.filter(c => c !== socket);
-      });
-
-      socket.on('error', (error) => {
-        console.error('[Mock Telnet] Socket error:', error);
-      });
+      socket.on('error', () => undefined);
     });
 
     await new Promise<void>((resolve) => {
-      mockTelnetServer.listen(TELNET_PORT, () => {
-        console.log(`[Mock Telnet] Server listening on port ${TELNET_PORT}`);
-        resolve();
-      });
+      upstream.listen(UPSTREAM_PORT, 'localhost', () => resolve());
     });
 
-    // Gateway 서버 시작
-    gateway = new GatewayServer(GATEWAY_PORT, 'localhost', TELNET_PORT, 200);
+    gateway = new GatewayServer({
+      port: GATEWAY_PORT,
+      telnetHost: 'localhost',
+      telnetPort: UPSTREAM_PORT
+    });
     await gateway.start();
-    console.log(`[Gateway] Server started on port ${GATEWAY_PORT}`);
   });
 
   afterAll(async () => {
-    // 모든 Telnet 클라이언트 연결 종료
-    telnetClients.forEach(client => {
-      if (!client.destroyed) {
-        client.destroy();
-      }
-    });
-
-    // Gateway 서버 종료
     await gateway.stop();
-    console.log('[Gateway] Server stopped');
-
-    // Mock Telnet 서버 종료
-    await new Promise<void>((resolve) => {
-      mockTelnetServer.close(() => {
-        console.log('[Mock Telnet] Server stopped');
-        resolve();
-      });
-    });
+    for (const socket of sockets) {
+      if (!socket.destroyed) {
+        socket.destroy();
+      }
+    }
+    sockets = [];
+    await new Promise<void>((resolve) => upstream.close(() => resolve()));
   });
 
-  it('should establish complete connection chain (WebSocket → Gateway → Telnet)', async () => {
-    const messages: any[] = [];
-    const ws = await createWebSocketConnection(GATEWAY_PORT, messages);
+  /** 접속해서 첫 서버 라인까지 받는다 */
+  function connect(): Promise<{ ws: WebSocket; frames: string[] }> {
+    return new Promise((resolve, reject) => {
+      const ws = new WebSocket(`ws://localhost:${GATEWAY_PORT}${GAME_PATH}`);
+      const frames: string[] = [];
 
-    // 메시지 수신 대기
-    await new Promise(resolve => setTimeout(resolve, 1000));
+      const timer = setTimeout(
+        () => reject(new Error('welcome 대기 시간 초과')),
+        5000
+      );
 
-    // 연결 메시지 확인
-    const connectMessage = messages.find(m => m.type === 'connect');
-    expect(connectMessage).toBeDefined();
-    expect(connectMessage.type).toBe('connect');
+      ws.on('message', (data) => {
+        const text = data.toString();
+        frames.push(text);
 
-    // 버전 메시지 확인
-    const versionMessage = messages.find(m => m.type === 'version');
-    expect(versionMessage).toBeDefined();
-    expect(versionMessage.type).toBe('version');
-    expect(versionMessage.payload).toBeDefined();
-
-    // 초기 환영 메시지 확인
-    const welcomeMessage = messages.find(m => m.type === 'data' && m.payload?.includes('Welcome'));
-    expect(welcomeMessage).toBeDefined();
-    expect(welcomeMessage.payload).toContain('Welcome to the MUD server');
-
-    ws.close();
-  }, 10000);
-
-  it('should forward commands from WebSocket to Telnet and receive responses', async () => {
-    const messages: any[] = [];
-    const ws = await createWebSocketConnection(GATEWAY_PORT, messages);
-
-    // 초기 메시지 대기
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // 명령어 전송
-    ws.send(JSON.stringify({
-      type: 'data',
-      payload: 'help\r\n',
-      timestamp: Date.now()
-    }));
-
-    // 응답 대기
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // 응답 확인
-    const helpResponse = messages.find(m => m.type === 'data' && m.payload?.includes('Available commands'));
-    expect(helpResponse).toBeDefined();
-    expect(helpResponse.payload).toContain('Available commands');
-
-    ws.close();
-  }, 10000);
-
-  it('should handle multiple concurrent users', async () => {
-    const messageArrays = [[], [], []] as any[][];
-    const connections = await Promise.all([
-      createWebSocketConnection(GATEWAY_PORT, messageArrays[0]),
-      createWebSocketConnection(GATEWAY_PORT, messageArrays[1]),
-      createWebSocketConnection(GATEWAY_PORT, messageArrays[2])
-    ]);
-
-    // 초기 메시지 대기
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // 각 연결이 독립적으로 작동하는지 확인
-    for (let i = 0; i < connections.length; i++) {
-      const ws = connections[i];
-      const messages = messageArrays[i];
-
-      // 각 클라이언트가 고유한 명령어 전송
-      ws.send(JSON.stringify({
-        type: 'data',
-        payload: `echo client-${i}\r\n`,
-        timestamp: Date.now()
-      }));
-    }
-
-    // 응답 대기
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // 각 클라이언트의 응답 확인
-    for (let i = 0; i < messageArrays.length; i++) {
-      const messages = messageArrays[i];
-      const echoResponse = messages.find(m => m.type === 'data' && m.payload?.includes(`client-${i}`));
-      expect(echoResponse).toBeDefined();
-      expect(echoResponse.payload).toContain(`client-${i}`);
-    }
-
-    // 모든 연결 종료
-    connections.forEach(ws => ws.close());
-
-    // 연결이 정리될 때까지 대기
-    await new Promise(resolve => setTimeout(resolve, 200));
-
-    // Gateway 연결 수 확인
-    expect(gateway.getConnectionCount()).toBe(0);
-  }, 15000);
-
-  it('should handle connection and disconnection lifecycle', async () => {
-    const initialCount = gateway.getConnectionCount();
-
-    // 연결 생성
-    const messages: any[] = [];
-    const ws = await createWebSocketConnection(GATEWAY_PORT, messages);
-    
-    // 초기 메시지 대기
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // 연결 수 증가 확인
-    expect(gateway.getConnectionCount()).toBe(initialCount + 1);
-
-    // 연결 종료
-    ws.close();
-
-    // 연결이 정리될 때까지 대기
-    await new Promise(resolve => setTimeout(resolve, 200));
-
-    // 연결 수 감소 확인
-    expect(gateway.getConnectionCount()).toBe(initialCount);
-  }, 10000);
-
-  it('should handle Telnet server disconnection gracefully', async () => {
-    const messages: any[] = [];
-    const ws = await createWebSocketConnection(GATEWAY_PORT, messages);
-
-    // 초기 메시지 대기
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // quit 명령어로 Telnet 연결 종료
-    ws.send(JSON.stringify({
-      type: 'data',
-      payload: 'quit\r\n',
-      timestamp: Date.now()
-    }));
-
-    // Goodbye 메시지 대기
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    // Goodbye 메시지 확인
-    const goodbyeMessage = messages.find(m => m.type === 'data' && m.payload?.includes('Goodbye'));
-    expect(goodbyeMessage).toBeDefined();
-    expect(goodbyeMessage.payload).toContain('Goodbye');
-
-    // WebSocket도 자동으로 닫힐 때까지 대기
-    await new Promise<void>((resolve) => {
-      ws.on('close', () => resolve());
-      setTimeout(resolve, 2000); // 타임아웃
-    });
-
-    expect(ws.readyState).toBe(WebSocket.CLOSED);
-  }, 10000);
-
-  it('should reject connections when capacity is reached', async () => {
-    // 작은 용량의 Gateway 생성
-    const smallGateway = new GatewayServer(3002, 'localhost', TELNET_PORT, 2);
-    await smallGateway.start();
-
-    try {
-      // 최대 용량만큼 연결
-      const messages1: any[] = [];
-      const messages2: any[] = [];
-      const conn1 = await createWebSocketConnection(3002, messages1);
-      const conn2 = await createWebSocketConnection(3002, messages2);
-
-      // 초기 메시지 대기
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // 추가 연결 시도 (거부되어야 함)
-      const messages3: any[] = [];
-      const conn3 = await createWebSocketConnection(3002, messages3);
-      
-      // 연결이 닫혔는지 확인 (용량 초과로 인해)
-      await new Promise(resolve => setTimeout(resolve, 500));
-      expect(conn3.readyState).toBe(WebSocket.CLOSED);
-
-      conn1.close();
-      conn2.close();
-    } finally {
-      await smallGateway.stop();
-    }
-  }, 15000);
-});
-
-// 헬퍼 함수: WebSocket 연결 생성
-function createWebSocketConnection(port: number, messages?: any[]): Promise<WebSocket> {
-  return new Promise((resolve, reject) => {
-    const ws = new WebSocket(`ws://localhost:${port}`);
-    
-    // 메시지 수집
-    if (messages) {
-      ws.on('message', (data: Buffer) => {
-        try {
-          const message = JSON.parse(data.toString());
-          messages.push(message);
-        } catch (error) {
-          // JSON 파싱 실패 - 무시
+        if (text.includes('"type":"welcome"')) {
+          clearTimeout(timer);
+          resolve({ ws, frames });
         }
       });
+
+      ws.on('error', (error) => {
+        clearTimeout(timer);
+        reject(error);
+      });
+    });
+  }
+
+  /** 다음 프레임 하나를 기다린다 */
+  function nextFrame(ws: WebSocket, timeoutMs = 5000): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error('프레임 대기 시간 초과')),
+        timeoutMs
+      );
+      ws.once('message', (data) => {
+        clearTimeout(timer);
+        resolve(data.toString());
+      });
+    });
+  }
+
+  it('전체 사슬을 통해 welcome 이 도달한다', async () => {
+    const { ws, frames } = await connect();
+
+    try {
+      const welcome = frames.find((f) => f.includes('"type":"welcome"'));
+
+      expect(welcome).toBeDefined();
+      expect(JSON.parse(welcome!).protocol_version).toBe(1);
+      // 게이트웨이 자체 통지도 함께 온다
+      expect(frames.some((f) => f.includes('gateway_connected'))).toBe(true);
+    } finally {
+      ws.close();
     }
-    
-    ws.on('open', () => {
-      console.log(`[Test] WebSocket connected to port ${port}`);
-      resolve(ws);
-    });
-
-    ws.on('error', (error) => {
-      console.error(`[Test] WebSocket connection error:`, error);
-      reject(new Error('WebSocket connection failed'));
-    });
-
-    // 타임아웃 설정
-    setTimeout(() => {
-      if (ws.readyState !== WebSocket.OPEN) {
-        ws.close();
-        reject(new Error('WebSocket connection timeout'));
-      }
-    }, 5000);
   });
-}
 
+  it('클라이언트 라인이 상위 서버까지 오간다', async () => {
+    const { ws } = await connect();
 
+    try {
+      const pending = nextFrame(ws);
+      ws.send(JSON.stringify({ type: 'action', verb: 'look', seq: 7 }));
+
+      const reply = JSON.parse(await pending);
+
+      expect(reply.type).toBe('echo');
+      expect(reply.received.verb).toBe('look');
+      expect(reply.received.seq).toBe(7);
+    } finally {
+      ws.close();
+    }
+  });
+
+  it('여러 사용자가 서로 섞이지 않는다', async () => {
+    const users = await Promise.all([connect(), connect(), connect()]);
+
+    try {
+      const replies = await Promise.all(
+        users.map(({ ws }, index) => {
+          const pending = nextFrame(ws);
+          ws.send(JSON.stringify({ type: 'action', verb: 'look', seq: index }));
+          return pending;
+        })
+      );
+
+      const seqs = replies.map((raw) => JSON.parse(raw).received.seq);
+
+      expect(seqs.sort()).toEqual([0, 1, 2]);
+      expect(gateway.getConnectionCount()).toBe(3);
+    } finally {
+      for (const { ws } of users) {
+        ws.close();
+      }
+    }
+  });
+
+  it('개행이 든 프레임을 거부한다', async () => {
+    const { ws } = await connect();
+
+    try {
+      const pending = nextFrame(ws);
+      // 프레임 안의 개행은 라인 경계를 깨뜨리므로 프로토콜 위반이다
+      ws.send('{"type":"action"}\n{"type":"action"}');
+
+      const reply = JSON.parse(await pending);
+
+      expect(reply.type).toBe('gateway_error');
+    } finally {
+      ws.close();
+    }
+  });
+
+  it('연결을 닫으면 풀에서 사라진다', async () => {
+    const { ws } = await connect();
+    const before = gateway.getConnectionCount();
+
+    ws.close();
+
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    expect(gateway.getConnectionCount()).toBe(before - 1);
+  });
+});
