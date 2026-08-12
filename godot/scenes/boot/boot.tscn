@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scenes/boot/boot.gd" id="1_boot"]
 [ext_resource type="Script" path="res://scripts/net/connection.gd" id="2_connection"]
 [ext_resource type="Script" path="res://scripts/net/action_sender.gd" id="3_sender"]
 [ext_resource type="PackedScene" path="res://scenes/common/connection_indicator.tscn" id="4_indicator"]
+[ext_resource type="PackedScene" path="res://scenes/common/locale_selector.tscn" id="5_locale"]
 
 [node name="Boot" type="Node"]
 script = ExtResource("1_boot")
@@ -29,7 +30,16 @@ theme_override_constants/margin_bottom = 24
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="ConnectionIndicator" parent="Margin/VBox" instance=ExtResource("4_indicator")]
+[node name="TopRow" type="HBoxContainer" parent="Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="ConnectionIndicator" parent="Margin/VBox/TopRow" instance=ExtResource("4_indicator")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="LocaleSelector" parent="Margin/VBox/TopRow" instance=ExtResource("5_locale")]
 unique_name_in_owner = true
 layout_mode = 2
 

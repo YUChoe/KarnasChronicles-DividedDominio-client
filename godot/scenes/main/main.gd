@@ -9,8 +9,6 @@ extends VBoxContainer
 signal logout_requested()
 signal admin_requested()
 
-const TEXT_PLACEHOLDER := "The room view, exits, entities and minimap arrive in Task 5."
-
 @onready var _summary: Label = %SummaryLabel
 @onready var _position: Label = %PositionLabel
 @onready var _logout: Button = %LogoutButton
@@ -18,19 +16,32 @@ const TEXT_PLACEHOLDER := "The room view, exits, entities and minimap arrive in 
 @onready var _placeholder: Label = %PlaceholderLabel
 
 var _state: GameStateStore = null
+var _translator: TranslatorService = null
 
 
 func _ready() -> void:
 	_logout.pressed.connect(func() -> void: logout_requested.emit())
 	_admin.pressed.connect(func() -> void: admin_requested.emit())
-	_placeholder.text = TEXT_PLACEHOLDER
 
 
-func bind(state: GameStateStore) -> void:
+func bind(state: GameStateStore, translator: TranslatorService) -> void:
 	_state = state
+	_translator = translator
+
 	_state.player_changed.connect(_refresh)
 	_state.room_changed.connect(_refresh)
+	_translator.locale_changed.connect(_on_locale_changed)
+
+	apply_texts()
 	_refresh()
+
+
+func apply_texts() -> void:
+	if _translator == null:
+		return
+	_logout.text = _translator.t("ui.main.sign_out")
+	_admin.text = _translator.t("ui.main.admin_panel")
+	_placeholder.text = _translator.t("ui.main.placeholder")
 
 
 func set_logout_busy(busy: bool) -> void:
@@ -38,7 +49,7 @@ func set_logout_busy(busy: bool) -> void:
 
 
 func _refresh() -> void:
-	if _state == null:
+	if _state == null or _translator == null:
 		return
 
 	var display_name := Protocol.as_string(_state.player.get("display_name"), "?")
@@ -48,13 +59,18 @@ func _refresh() -> void:
 	if _state.room.is_empty():
 		_position.text = ""
 	else:
-		_position.text = "%s (%d, %d) — %s" % [
-			Protocol.as_string(_state.room.get("room_type"), "?"),
-			Protocol.as_int(_state.room.get("x")),
-			Protocol.as_int(_state.room.get("y")),
-			_state.time_of_day,
-		]
+		_position.text = _translator.t("ui.main.position", {
+			"terrain": Protocol.as_string(_state.room.get("room_type"), "?"),
+			"x": Protocol.as_int(_state.room.get("x")),
+			"y": Protocol.as_int(_state.room.get("y")),
+			"time_of_day": _state.time_of_day,
+		})
 
 	# 권한만으로는 진입 가능 여부를 알 수 없다. 어드민 포트를 열지 않은 배포가
 	# 있으므로 서버가 알려준 `available` 이 참일 때만 노출한다.
 	_admin.visible = Protocol.as_bool(_state.admin_channel.get("available"))
+
+
+func _on_locale_changed(_locale: String) -> void:
+	apply_texts()
+	_refresh()

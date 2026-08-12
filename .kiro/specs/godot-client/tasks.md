@@ -118,24 +118,39 @@ Godot → 게이트웨이 → 대역 서버로 실제 사슬을 세워 확인했
 
 셋째, Godot 의 로그 파일 회전 규칙이다. `user://logs/godot.log` 가 현재 실행이고 타임스탬프가 붙은 파일은 회전된 이전 실행이다. 최신 타임스탬프 파일을 읽으면 한 번 전 실행을 보게 된다.
 
-- [ ] 2. 다국어 처리
+- [x] 2. 다국어 처리
 - [x] 2.1 번역 파일 이관
   - 서버의 `data/translations/` 9개 파일을 `godot/resources/translations/`로 옮긴다. Python `str.format` 포맷 스펙(`{value:>10}`, `{value!r}`)과 리터럴 중괄호(`{{`)가 있는 값을 전수 확인해 GDScript 호환 형태로 정리한다.
   - 선행 조건: 서버 `server-json-protocol` Task 6.5(번역 파일 이관 시점). 서버가 추가한 새 키 목록을 함께 받는다.
   - 커밋 `d1cbbc9`. 이관 9개 + 신규 2개(`account.json`, `social.json`) = 11개 파일. 포맷 스펙과 `{{` 리터럴은 전수 검사 결과 0건이므로 값 변환 없이 그대로 옮겼다. Godot 프로젝트가 아직 없어 리소스만 배치한 상태이며 `2.2 Translator` 에서 실제로 읽는다.
   - _Requirements: 3.1, 3.4_
-- [ ] 2.2 Translator 구현
+- [x] 2.2 Translator 구현
   - `scripts/i18n/translator.gd`에 `t(key, params)`를 구현한다. GDScript `String.format`이 딕셔너리 키를 `{name}` 자리표시자로 지원하므로 문법 변환 없이 사용한다. `params` 값이 언어별 dict면 현재 locale 값을 고르고 스칼라면 그대로 치환한다.
   - 키가 없으면 키 문자열을 반환하고 경고를 기록한다. 현재 locale 번역이 없으면 `en`으로 폴백한다.
+  - `class_name TranslatorService`. autoload 이름 `Translator` 와 같은 이름은 Godot 이 금지한다. `GameStateStore` 와 같은 이유이고 주입 방식도 같다.
+  - `load_translations()` 를 `_ready` 와 분리했다. 테스트가 씬 트리 없이 `TranslatorService.new()` 로 만들어 직접 부른다.
+  - `render(message)` 를 추가했다. `{"key": ..., "params": ...}` 형태가 `event`, `login_result.message`, 대화 대사에 공통이라 Task 5.9 와 9.1 이 그대로 쓴다.
+  - 클라이언트 UI 문구는 `resources/translations/ui.json` 에 새로 뒀다. 서버에서 이관한 11개 파일은 게임 콘텐츠이고 UI 문구는 클라이언트 소유다. 키가 겹치면 경고를 남긴다.
   - _Requirements: 3.2, 3.3, 3.5, 3.6_
-- [ ] 2.3 Locale 전환
+- [x] 2.3 Locale 전환
   - Locale 전환 UI를 제공하고 선택을 로컬에 저장한다. 전환 시 화면을 다시 그리며 재접속을 요구하지 않는다.
+  - `scenes/common/locale_selector.tscn` 을 만들고 `boot.tscn` 상단 줄에 연결 표시와 나란히 뒀다. 선택은 `user://client.cfg` 에 저장된다.
+  - 언어 이름 목록만은 번역하지 않는다. 현재 locale 이 무엇이든 자기 언어를 알아볼 수 있어야 한다.
+  - 화면은 문구를 문자열이 아니라 키와 params 로 들고 있다가 `locale_changed` 에 다시 그린다. 표시 문자열만 갖고 있으면 다시 그릴 수 없다. 연결 표시의 재연결 카운트다운, 로그인 화면의 안내, 조립 지점의 알림이 모두 이 방식이다.
+  - Task 1.8 과 3 이 하드코딩했던 문구를 모두 키로 옮겼다.
   - _Requirements: 3.8, 3.9_
-- [ ] 2.4 엔티티 이름 선택과 조사 처리
+- [x] 2.4 엔티티 이름 선택과 조사 처리
   - 서버가 보낸 언어별 dict에서 현재 locale 값을 선택하는 공통 함수를 제공한다. 한국어 조사는 번역 값의 완성형(`{item}을(를)`)을 그대로 표시한다. 채팅 본문은 번역하지 않는다.
+  - 공통 함수는 `Translator.pick(value)` 다. 엔티티 이름과 설명, 방 설명, `params` 안의 언어별 dict 가 모두 같은 형태이므로 하나로 처리한다. 스칼라와 `null` 도 받아 문자열로 돌려준다. 서버가 지원하는 언어가 클라이언트보다 적으면 `en` 으로 떨어진다.
+  - 조사는 종성 판별을 하지 않는다. 번역 값이 `{item}을(를)` 완성형을 담고 그대로 표시한다. 향후 개선 지점이며 테스트로 이 동작을 고정했다.
+  - 채팅 본문은 `chat` 메시지의 `message` 필드를 그대로 쓴다. 번역 경로를 타지 않는다. 실제 표시는 Task 5.7 이다.
   - _Requirements: 3.7, 3.10, 3.11_
-- [ ] 2.5 번역 단위 테스트
+- [x] 2.5 번역 단위 테스트
   - 키와 params 조합으로 기대 문자열을 검증한다. 언어별 dict params, 키 없음 폴백, locale 폴백을 포함한다.
+  - 테스트 프레임워크를 여기서 정했다. gdUnit4 와 GUT 는 저장소 밖에서 내려받아 `addons/` 에 넣어야 하는데 이 환경에서 받을 수 없었다. 그리고 지금 필요한 검증(번역 치환, 액션 규칙, 메시지 디스패치)은 씬 트리도 목(mock)도 필요 없는 순수 로직이다. `tests/test_case.gd`(단언)와 `tests/runner.gd`(탐색과 실행) 두 파일로 충분하다. 목이나 매개변수화 테스트가 필요해지면 다시 판단한다.
+  - `npm run test:godot` 으로 돌린다. 러너는 `--script` 경로라 종료 코드가 신뢰할 수 있다. 그래도 외부 타임아웃을 건다. 런타임 오류가 나면 `quit()` 에 닿지 못해 프로세스가 멈추기 때문이다.
+  - 18건. 리소스 적재, 키 치환, locale 전환, 지원하지 않는 locale 거부, params 치환, 언어별 dict params 를 양쪽 locale 에서, 키 없음 폴백, locale 폴백, `pick` 세 경우, `render` 두 경우, 조사 완성형, 서버 리소스 키 적재.
+  - 계약 문서의 오류를 하나 찾았다. `server-to-client.md` 의 `event` 예시가 쓰는 `combat.damage_dealt` 는 존재하지 않는 키다. 실제 서버가 보내는 것은 `combat.hit`, `combat.critical_hit`, `combat.attack_swing` 이다. 테스트는 실제 키로 썼다.
   - _Requirements: 13.5_
 
 - [x] 3. 로그인과 로그아웃

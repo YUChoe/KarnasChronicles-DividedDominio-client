@@ -1,0 +1,130 @@
+{
+    "ui.connection.disconnected": {
+        "en": "Disconnected",
+        "ko": "연결 끊김"
+    },
+    "ui.connection.connecting": {
+        "en": "Connecting…",
+        "ko": "연결 중…"
+    },
+    "ui.connection.waiting": {
+        "en": "Waiting for the server…",
+        "ko": "서버 응답 대기 중…"
+    },
+    "ui.connection.connected": {
+        "en": "Connected",
+        "ko": "연결됨"
+    },
+    "ui.connection.reconnecting": {
+        "en": "Reconnecting in {seconds}s (attempt {attempt})",
+        "ko": "{seconds}초 후 재연결 (시도 {attempt}회)"
+    },
+    "ui.connection.reconnect_cancelled": {
+        "en": "Reconnection cancelled",
+        "ko": "재연결을 취소했습니다"
+    },
+    "ui.connection.cancel": {
+        "en": "Cancel",
+        "ko": "취소"
+    },
+    "ui.connection.retry": {
+        "en": "Retry",
+        "ko": "다시 시도"
+    },
+    "ui.locale.label": {
+        "en": "Language",
+        "ko": "언어"
+    },
+    "ui.login.title": {
+        "en": "Sign in",
+        "ko": "로그인"
+    },
+    "ui.login.username": {
+        "en": "Username",
+        "ko": "사용자명"
+    },
+    "ui.login.password": {
+        "en": "Password",
+        "ko": "비밀번호"
+    },
+    "ui.login.remember": {
+        "en": "Sign in automatically next time",
+        "ko": "다음에 자동으로 로그인"
+    },
+    "ui.login.submit": {
+        "en": "Sign in",
+        "ko": "로그인"
+    },
+    "ui.login.landing": {
+        "en": "Need an account? Register on the website.",
+        "ko": "계정이 필요하십니까? 웹사이트에서 가입하십시오."
+    },
+    "ui.login.need_both": {
+        "en": "Enter both a username and a password.",
+        "ko": "사용자명과 비밀번호를 모두 입력하십시오."
+    },
+    "ui.login.signing_in": {
+        "en": "Signing in…",
+        "ko": "로그인 중…"
+    },
+    "ui.login.not_connected": {
+        "en": "Not connected to the server.",
+        "ko": "서버에 연결되어 있지 않습니다."
+    },
+    "ui.login.send_failed": {
+        "en": "Could not send the sign-in request.",
+        "ko": "로그인 요청을 보내지 못했습니다."
+    },
+    "ui.login.rejected.INVALID_CREDENTIALS": {
+        "en": "The username or password is incorrect.",
+        "ko": "사용자명 또는 비밀번호가 올바르지 않습니다."
+    },
+    "ui.login.rejected.ALREADY_LOGGED_IN": {
+        "en": "That account is already signed in elsewhere.",
+        "ko": "해당 계정이 다른 곳에서 이미 접속 중입니다."
+    },
+    "ui.login.rejected.ACCOUNT_LOCKED": {
+        "en": "That account is locked. Please contact an administrator.",
+        "ko": "해당 계정이 잠겨 있습니다. 관리자에게 문의하십시오."
+    },
+    "ui.login.rejected.unknown": {
+        "en": "Sign-in failed ({reason_code}).",
+        "ko": "로그인에 실패했습니다 ({reason_code})."
+    },
+    "ui.main.sign_out": {
+        "en": "Sign out",
+        "ko": "로그아웃"
+    },
+    "ui.main.admin_panel": {
+        "en": "Admin panel",
+        "ko": "어드민 패널"
+    },
+    "ui.main.placeholder": {
+        "en": "The room view, exits, entities and minimap arrive in Task 5.",
+        "ko": "방 표시, 출구, 엔티티, 미니맵은 Task 5 에서 추가됩니다."
+    },
+    "ui.main.position": {
+        "en": "{terrain} ({x}, {y}) — {time_of_day}",
+        "ko": "{terrain} ({x}, {y}) — {time_of_day}"
+    },
+    "ui.notice.protocol_unsupported": {
+        "en": "This client is out of date. Please update to continue.",
+        "ko": "클라이언트가 오래되었습니다. 계속하려면 업데이트하십시오."
+    },
+    "ui.notice.channel_mismatch": {
+        "en": "Wrong channel: expected {expected} but the server reported {actual}. Check the connection settings.",
+        "ko": "채널이 다릅니다. {expected} 을(를) 기대했으나 서버는 {actual} 이라고 알렸습니다. 접속 설정을 확인하십시오."
+    },
+    "ui.notice.gateway_error": {
+        "en": "The gateway refused the connection: {reason}",
+        "ko": "게이트웨이가 연결을 거부했습니다: {reason}"
+    },
+    "ui.notice.admin_pending": {
+        "en": "The admin panel arrives in Task 11.",
+        "ko": "어드민 패널은 Task 11 에서 추가됩니다."
+    },
+    "ui.notice.request_timeout": {
+        "en": "The server did not answer the {label} request.",
+        "ko": "서버가 {label} 요청에 응답하지 않았습니다."
+    }
+}

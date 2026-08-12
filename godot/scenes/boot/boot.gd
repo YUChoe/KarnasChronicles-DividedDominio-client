@@ -16,30 +16,33 @@ const REQUIRED_SNAPSHOTS: Array[String] = [
 	Protocol.ROOM_INFO, Protocol.PLAYER_STATE, Protocol.INVENTORY,
 ]
 
-const NOTICE_UNSUPPORTED := "This client is out of date. Please update to continue."
-const NOTICE_CHANNEL := "Wrong channel: expected %s but the server reported %s. Check the connection settings."
-const NOTICE_GATEWAY := "The gateway refused the connection: %s"
-const NOTICE_ADMIN := "The admin panel arrives in Task 11."
-const NOTICE_TIMEOUT := "The server did not answer the %s request."
 
 @onready var _connection: Connection = $Connection
 @onready var _action_sender: ActionSender = $ActionSender
 @onready var _indicator: ConnectionIndicator = %ConnectionIndicator
+@onready var _locale_selector: LocaleSelector = %LocaleSelector
 @onready var _screens: Control = %Screens
 @onready var _notice: Label = %Notice
 
 var _config: ClientConfig = null
 var _dispatcher: Dispatcher = null
 var _store: GameStateStore = null
+var _translator: TranslatorService = null
 var _login: LoginScreen = null
 var _main: MainScreen = null
 ## 로그인 후 도착한 스냅샷 종류
 var _snapshots: Dictionary = {}
+## 안내 문구를 키로 들고 있는다. locale 이 바뀌면 다시 그려야 한다
+var _notice_key := ""
+var _notice_params: Dictionary = {}
 
 
 func _ready() -> void:
 	_config = ClientConfig.load_or_create()
 	_store = get_node("/root/GameState") as GameStateStore
+	_translator = get_node("/root/Translator") as TranslatorService
+	_translator.set_locale(_config.locale)
+	_translator.locale_changed.connect(_on_locale_changed)
 
 	_dispatcher = Dispatcher.new()
 	_dispatcher.state = _store
@@ -64,11 +67,14 @@ func _ready() -> void:
 	_store.resync_required.connect(_on_resync_required)
 	_store.snapshot_received.connect(_on_snapshot_received)
 
-	_indicator.bind(_connection)
+	_indicator.bind(_connection, _translator)
 	_indicator.reconnect_requested.connect(_on_reconnect_requested)
 
+	_locale_selector.bind(_translator)
+	_locale_selector.locale_selected.connect(_on_locale_selected)
+
 	_build_screens()
-	_notice.text = ""
+	_clear_notice()
 	_connection.open(_config.game_url())
 
 
@@ -77,12 +83,13 @@ func _ready() -> void:
 func _build_screens() -> void:
 	_login = LOGIN_SCENE.instantiate()
 	_screens.add_child(_login)
+	_login.bind(_translator)
 	_login.set_landing_url(_config.landing_url)
 	_login.submitted.connect(_on_login_submitted)
 
 	_main = MAIN_SCENE.instantiate()
 	_screens.add_child(_main)
-	_main.bind(_store)
+	_main.bind(_store, _translator)
 	_main.logout_requested.connect(_on_logout_requested)
 	_main.admin_requested.connect(_on_admin_requested)
 
@@ -105,7 +112,7 @@ func _show_login() -> void:
 func _show_main() -> void:
 	_login.visible = false
 	_main.visible = true
-	_notice.text = ""
+	_clear_notice()
 	print("게임 화면 진입. 어드민 버튼 노출=%s" % str(
 		Protocol.as_bool(_store.admin_channel.get("available"))))
 
@@ -156,7 +163,7 @@ func _on_login_submitted(username: String, password: String, remember: bool) -> 
 		{"username": username, "password": password},
 		LABEL_LOGIN)
 	if seq == 0:
-		_login.show_notice("Could not send the sign-in request.")
+		_login.show_message("ui.login.send_failed")
 
 
 func _on_login_result(payload: Dictionary) -> void:
@@ -202,33 +209,63 @@ func _on_logout_requested() -> void:
 func _on_logout_result(_payload: Dictionary) -> void:
 	_main.set_logout_busy(false)
 	_show_login()
-	_login.show_notice("")
+	_login.clear_message()
 	_login.focus_first_empty()
 
 
 func _on_admin_requested() -> void:
-	_notice.text = NOTICE_ADMIN
+	_set_notice("ui.notice.admin_pending")
 
 
 func _on_request_timed_out(_seq: int, label: String) -> void:
 	if label == LABEL_LOGIN:
-		_login.show_notice(NOTICE_TIMEOUT % label)
+		_login.show_message("ui.notice.request_timeout", {"label": label})
 	elif label == LABEL_LOGOUT:
 		_main.set_logout_busy(false)
-		_notice.text = NOTICE_TIMEOUT % label
+		_set_notice("ui.notice.request_timeout", {"label": label})
 
 
 func _on_protocol_unsupported(version: int) -> void:
-	_notice.text = NOTICE_UNSUPPORTED
+	_set_notice("ui.notice.protocol_unsupported")
 	push_warning("지원하지 않는 프로토콜 버전: %d" % version)
 
 
 func _on_channel_mismatch(actual: String, expected: String) -> void:
-	_notice.text = NOTICE_CHANNEL % [expected, actual]
+	_set_notice("ui.notice.channel_mismatch",
+		{"expected": expected, "actual": actual})
 
 
 func _on_gateway_error(reason: String) -> void:
-	_notice.text = NOTICE_GATEWAY % reason
+	_set_notice("ui.notice.gateway_error", {"reason": reason})
+
+
+## locale 선택을 설정에 저장한다. 재접속을 요구하지 않는다.
+func _on_locale_selected(locale: String) -> void:
+	if not _translator.set_locale(locale):
+		return
+	_config.locale = locale
+	_config.save()
+
+
+func _on_locale_changed(_locale: String) -> void:
+	_render_notice()
+
+
+func _set_notice(key: String, params: Dictionary = {}) -> void:
+	_notice_key = key
+	_notice_params = params
+	_render_notice()
+
+
+func _clear_notice() -> void:
+	_notice_key = ""
+	_notice_params = {}
+	_notice.text = ""
+
+
+func _render_notice() -> void:
+	_notice.text = ("" if _notice_key.is_empty()
+		else _translator.t(_notice_key, _notice_params))
 
 
 func _on_closed(code: int, reason: String) -> void:
