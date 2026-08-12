@@ -10,13 +10,20 @@ const CONFIG_PATH := "user://client.cfg"
 const SECTION_NETWORK := "network"
 const SECTION_UI := "ui"
 
+const SECTION_AUTH := "auth"
+
 const DEFAULT_HOST := "localhost"
 const DEFAULT_PORT := 3000
 const DEFAULT_LOCALE := "en"
+## 회원가입 경로. 게임 클라이언트는 계정을 만들지 않고 이곳으로 안내만 한다.
+## 랜딩 사이트는 `gateway-landing` Task 5 에서 만든다.
+const DEFAULT_LANDING_URL := "http://localhost:3000/"
 
 var host := DEFAULT_HOST
 var port := DEFAULT_PORT
 var locale := DEFAULT_LOCALE
+var landing_url := DEFAULT_LANDING_URL
+var auto_login := false
 
 
 static func load_or_create() -> ClientConfig:
@@ -33,6 +40,11 @@ static func load_or_create() -> ClientConfig:
 		file.get_value(SECTION_NETWORK, "port", DEFAULT_PORT), DEFAULT_PORT)
 	config.locale = Protocol.as_string(
 		file.get_value(SECTION_UI, "locale", DEFAULT_LOCALE), DEFAULT_LOCALE)
+	config.landing_url = Protocol.as_string(
+		file.get_value(SECTION_UI, "landing_url", DEFAULT_LANDING_URL),
+		DEFAULT_LANDING_URL)
+	config.auto_login = Protocol.as_bool(
+		file.get_value(SECTION_AUTH, "auto_login", false))
 	return config
 
 
@@ -41,6 +53,8 @@ func save() -> void:
 	file.set_value(SECTION_NETWORK, "host", host)
 	file.set_value(SECTION_NETWORK, "port", port)
 	file.set_value(SECTION_UI, "locale", locale)
+	file.set_value(SECTION_UI, "landing_url", landing_url)
+	file.set_value(SECTION_AUTH, "auto_login", auto_login)
 
 	var status := file.save(CONFIG_PATH)
 	if status != OK:

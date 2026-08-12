@@ -138,9 +138,40 @@ Godot → 게이트웨이 → 대역 서버로 실제 사슬을 세워 확인했
   - 키와 params 조합으로 기대 문자열을 검증한다. 언어별 dict params, 키 없음 폴백, locale 폴백을 포함한다.
   - _Requirements: 13.5_
 
-- [ ] 3. 로그인과 로그아웃
+- [x] 3. 로그인과 로그아웃
   - `scenes/login/login.tscn`을 만든다. 사용자명과 비밀번호 입력, `login` 메시지 송신, `reason_code`별 안내 표시를 구현한다. 회원가입 기능을 제공하지 않고 랜딩 사이트 링크만 표시한다. 자동 로그인 옵션을 제공하며 자격 정보를 평문으로 보관하지 않는다. 로그아웃은 `logout` 송신 후 로그인 화면으로 전환하고 연결을 유지한다. `is_admin`이 참일 때만 어드민 진입 버튼을 노출한다. `room_info`, `player_state`, `inventory`를 모두 받은 뒤 게임 화면을 표시한다.
+  - 만든 것은 `scenes/login/`(폼), `scenes/main/`(게임 화면 자리), `scripts/auth/credential_store.gd` 다. `scenes/boot/boot.tscn` 이 두 화면을 담는 그릇이 됐다.
+  - `scenes/main/` 을 지금 만든 이유는 로그아웃 버튼과 어드민 진입 버튼이 갈 곳이 필요해서다. 버릴 임시 씬을 따로 만드는 대신 Task 5.1 이 채울 파일을 미리 열었다. 지금은 플레이어 요약과 좌표, 버튼 둘만 있다.
+  - 요구사항 4.7 과 계약이 어긋난다. 요구사항은 `is_admin` 이 참일 때 어드민 버튼을 노출하라고 하지만, 계약(`docs/protocol/server-to-client.md`)은 `admin_channel.available` 이 참일 때만 노출하라고 한다. 권한이 있어도 어드민 포트를 열지 않은 배포가 있기 때문이다. 계약을 따랐다. 요구사항 문서가 서버 Task 7.1 이전에 쓰였다.
+  - 자격 정보는 `FileAccess.open_encrypted_with_pass` 로 암호화해 `user://credentials.dat` 에 둔다. 열쇠는 설치마다 무작위로 만들어 `user://install.key` 에 둔다. 이것이 막는 것과 못 막는 것을 분명히 해 둔다. 파일을 눈으로 열어 보는 수준과 백업·동기화 폴더로 자격 정보가 흘러가는 것은 막는다. 같은 사용자 권한으로 로컬 파일에 접근하는 공격자는 열쇠 파일도 읽으므로 막지 못한다. 그 수준은 OS 키체인이 필요하고 Godot 이 접근 수단을 주지 않는다.
+  - 로그인 실패 시 저장된 자격을 지우고 자동 로그인을 끈다. 틀린 자격으로 재접속마다 실패를 반복하는 고리를 만들지 않는다.
+  - 거절 사유 문구는 화면이 자체 보유한다. 서버가 `message.key` 를 함께 보내지만 실패 사유가 셋뿐이고 화면 맥락에 맞는 안내가 필요하다. Task 11.1 의 어드민 패널도 같은 방식이다. Task 2.3 에서 Translator 를 거치게 한다.
+  - 스냅샷 셋을 세는 것은 `GameStateStore.snapshot_received` 신호다. `player_changed` 는 `login_result` 에서도 발신되어 `player_state` 도착과 구별되지 않는다.
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8_
+
+### Task 3 통합 검증 (2026-08-11)
+
+실제 MUD 서버(`Echoes-of-the-Fallen-Age`)와 게이트웨이를 띄우고 확인했다. 헤드리스에서는 버튼을 누를 수 없어 임시 프로브 씬으로 눌렀고 검증 후 삭제했다. 계정은 검증용으로 만든 `godottest` 다.
+
+| 확인 항목 | 결과 |
+|---|---|
+| 자동 로그인 | 암호화 저장 → 재기동 후 복원 → `READY` 직후 자동 송신 |
+| 로그인 성공 | `login_result` 성공 후 `room_info`·`player_state`·`inventory` 셋을 받고 게임 화면 진입 |
+| 로그인 실패 | 틀린 비밀번호로 `INVALID_CREDENTIALS`, 로그인 화면 유지, 자동 로그인 해제 |
+| 로그아웃 | `logout_result` 후 로그인 화면 전환, 연결은 `READY` 유지 |
+| 재로그인 | 같은 연결에서 다시 로그인해 게임 화면 재진입 |
+| 어드민 버튼 | `admin_channel.available` 이 참이면 노출, 거짓이면 숨김 |
+
+이 검증이 서버 결함 넷을 드러냈다. 넷 모두 계약 위반이라 서버 저장소에서 고쳤다.
+
+| 결함 | 계약 | 고친 곳 |
+|---|---|---|
+| 로그인 후 `room_info` 만 보내고 `player_state`·`inventory` 를 보내지 않음 | README 연결 수명주기 4항 | `telnet_server._send_login_snapshots` |
+| `logout` 이 연결을 닫음 | client-to-server.md logout | `telnet_server._handle_logout`, `TelnetSession.deauthenticate` |
+| 인증 루프에 `login` 분기가 없어 재로그인 불가 | 로그아웃 후 다른 계정 접속 | `telnet_server._handle_authenticated_message` |
+| 같은 연결의 재로그인을 중복 로그인으로 판정해 자기 자신을 끊음 | — | `handle_login` 의 자기 세션 제외 |
+
+`client_info` 로그가 없는 필드(`client`)를 읽어 항상 `None` 을 찍던 것도 함께 고쳤다. 계약의 필드는 `client_version`, `platform`, `locale` 이다.
 
 - [ ] 4. 액션 규칙 테이블
 - [ ] 4.1 규칙 구현

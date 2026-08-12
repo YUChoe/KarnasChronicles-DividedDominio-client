@@ -28,6 +28,9 @@ signal who_result_received(players: Array)
 signal chat_received(entry: Dictionary)
 signal event_received(entry: Dictionary)
 signal connection_changed()
+## 스냅샷 메시지가 도착했다. 값은 `room_info`, `player_state`, `inventory`,
+## `combat_state` 중 하나다. 로그인 직후 셋을 모두 받았는지 세는 데 쓴다.
+signal snapshot_received(kind: String)
 
 ## 보유한 엔티티 사본에 없는 대상의 갱신을 받았을 때 발신한다.
 ## 연결 계층이 `look` verb 로 방 전체를 재요청한다.
@@ -107,6 +110,7 @@ func apply_logout_result(_payload: Dictionary) -> void:
 func apply_player_state(payload: Dictionary) -> void:
 	player = Protocol.as_dict(payload.get("player"))
 	player_changed.emit()
+	snapshot_received.emit(Protocol.PLAYER_STATE)
 
 
 func apply_room_info(payload: Dictionary) -> void:
@@ -123,6 +127,7 @@ func apply_room_info(payload: Dictionary) -> void:
 
 	room_changed.emit()
 	entities_changed.emit()
+	snapshot_received.emit(Protocol.ROOM_INFO)
 
 
 func apply_entity_enter(payload: Dictionary) -> void:
@@ -166,6 +171,7 @@ func apply_inventory(payload: Dictionary) -> void:
 	}
 	equipped = Protocol.as_dict(payload.get("equipped"))
 	inventory_changed.emit()
+	snapshot_received.emit(Protocol.INVENTORY)
 
 
 func apply_container_contents(payload: Dictionary) -> void:
@@ -178,6 +184,7 @@ func apply_container_contents(payload: Dictionary) -> void:
 func apply_combat_state(payload: Dictionary) -> void:
 	combat = payload.duplicate(true)
 	combat_changed.emit()
+	snapshot_received.emit(Protocol.COMBAT_STATE)
 
 
 func apply_dialogue(payload: Dictionary) -> void:
