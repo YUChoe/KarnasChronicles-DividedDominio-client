@@ -1,0 +1,5 @@
+# Godot 4 편집기가 생성하는 임포트 캐시
+.godot/
+
+# 내보내기 설정에는 서명 자격 정보가 들어갈 수 있다
+export_presets.cfg

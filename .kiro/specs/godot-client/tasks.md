@@ -11,8 +11,33 @@ Godot 4.x + GDScript로 게임 클라이언트를 구현한다. 프로토콜 계
 ## Tasks
 
 - [ ] 1. 프로젝트 기반과 연결 계층
-- [ ] 1.1 Godot 프로젝트 초기화
+- [x] 1.1 Godot 프로젝트 초기화
   - `godot/` 아래 Godot 4.x 프로젝트를 만든다. 디렉터리 구조는 design.md의 배치를 따른다. autoload로 `game_state.gd`와 `translator.gd`를 등록한다.
+  - `project.godot` 을 `config_version=5` 로 만들었다. `config/features` 하한은 `4.2` 이고 개발 편집기가 `4.2.2-stable` 이므로 정확히 일치한다. 버전 업그레이드 안내가 뜨지 않는다. 필요한 기능(`WebSocketPeer`, `JSON.parse_string`, `String.format`)은 모두 4.0 에 있어 하한을 더 올릴 이유가 없다.
+  - `config/version="0.1.0"` 을 넣었다. Task 1.9 의 `client_info` 가 `ProjectSettings` 에서 이 값을 읽는다.
+  - 렌더러를 `gl_compatibility` 로 뒀다. UI 위주 클라이언트이고 웹 내보내기가 WebGL2 를 요구하므로 선택지를 좁히지 않는다.
+  - `run/main_scene` 을 비워 뒀다. 첫 씬은 Task 3 의 `scenes/login/login.tscn` 이다. 그때까지 편집기에서 실행하면 씬 선택을 묻는다.
+  - 디렉터리는 실제 파일이 들어가는 것만 만들었다. `scripts/net/`, `scripts/rules/`, `scripts/admin/`, `scenes/**` 는 각 담당 작업이 만든다. git 이 빈 디렉터리를 추적하지 않으므로 `.gitkeep` 12개를 넣는 대신 배치는 design.md 에 남긴다.
+  - autoload 두 스크립트는 문서 주석만 있는 골격이다. 필드와 신호는 Task 1.7, 번역 로딩과 `t()` 는 Task 2.2 가 채운다. 여기서 등록해 두면 이후 작업이 `project.godot` 을 건드리지 않는다.
+  - `godot/.gitignore` 로 `.godot/`(임포트 캐시)와 `export_presets.cfg`(서명 자격 정보)를 제외했다.
+  - 검증: `Godot_v4.2.2-stable_win64 --headless --path godot --editor --quit` 로 임포트가 오류 없이 끝났고 편집기가 `project.godot` 을 다시 쓰지 않았다. 설정 키가 모두 유효하다는 뜻이다.
+  - 검증: `--headless --script` 로 런타임 확인. autoload 두 개가 root 에 붙고, `ProjectSettings` 에서 `config/version` 이 읽히고, 번역 11개 파일 405개 키가 `JSON.parse_string` 으로 파싱되고, `String.format({"old_name":...})` 이 `{old_name}` 을 치환한다. design.md 가 전제한 문법 호환이 실측으로 확인됐다. 검증 스크립트는 일회용이라 남기지 않았다.
+  - 검증: 정적 검사로 LF·UTF-8, 번역 키의 locale dict 구조와 `en` 폴백, Python 포맷 스펙 0건, `{{` 리터럴 0건을 확인했다. Node 쪽 `type-check` 통과, `npm test` 38건 통과(godot/ 는 `tsconfig.server.json` 과 vitest include 밖이다).
+  - `.json` 은 Godot 4 에서 임포트 대상이 아니다. `.import` 파일이 생기지 않으므로 `FileAccess` 로 직접 읽는다. Task 2.2 의 로딩 방식이 이것이다.
+  - 정적 검사 게이트를 함께 넣었다. Requirement 13 의 품질 기준에 해당하고, 코드가 두 파일뿐인 지금 켜는 비용이 0 이다. 나중에 켜면 누적된 위반을 한꺼번에 고쳐야 한다.
+    - `project.godot` `[debug]` 에 경고를 오류로 올렸다. `untyped_declaration`, `unsafe_method_access`, `unsafe_property_access`, `unsafe_cast` 를 2(오류)로, `unsafe_call_argument` 와 `return_value_discarded` 를 1(경고)로 뒀다. 뒤의 둘은 `JSON.parse_string` 결과가 전부 Variant 인 디스패처 경계에서 과도하게 걸릴 항목이라 Task 1.4 구현 후 재검토한다. 4.2.2 에는 `treat_warnings_as_errors` 같은 전역 스위치가 없고 `debug/gdscript/warnings/*` 47개 항목별로 0·1·2 를 지정한다.
+    - `scripts/godot-check.sh` 와 npm `check:godot` 을 추가했다.
+    - 편집기로 프로젝트를 한 번 열면 `project.godot` 이 다시 쓰이면서 주석이 모두 사라지고 키 순서가 바뀐다. 값은 그대로 남는다. 따라서 설정의 근거를 파일 주석으로 남길 수 없고 이 문서가 유일한 기록이다.
+  - GDScript 오류 검출의 실측 결과를 남긴다. 헤드리스 실행의 종료 코드를 게이트로 쓸 수 없다.
+    - `_initialize()` 에서 직접 런타임 오류가 나면 그 함수가 중단되어 `quit()` 에 도달하지 못하고 프로세스가 무한 대기한다. 외부 타임아웃이 필요하다.
+    - 하위 함수에서 런타임 오류가 나면 그 함수만 중단되고 호출자는 계속 진행한다. `SCRIPT ERROR` 는 출력되지만 종료 코드는 0 이다.
+    - `--editor --quit` 은 오류가 0건인 정상 프로젝트에서도 1 을 돌려준다. 종료 코드를 쓸 수 없으므로 출력에서 `SCRIPT ERROR`·`ERROR:` 를 찾는다. 정상 실행의 출력에는 이 두 패턴이 없고 무관한 `WARNING` 두 줄(headless 커서, Blender 경로)만 있다.
+    - `--check-only --script` 는 정상 0, 파스·타입 오류 1 로 종료 코드가 신뢰할 수 있는 유일한 경로다. 다만 지정한 파일과 그 의존만 검사하므로 전수 순회가 필요하다.
+    - `--editor --quit` 은 아무도 참조하지 않는 `.gd` 까지 전수 파스한다. 검사 스크립트가 두 방식을 모두 쓰는 이유다.
+    - 정적 타입을 붙이면 런타임 오류가 파스 오류로 바뀐다. `var n: int = "문자열"` 은 `--check-only` 에서 `Cannot assign a value of type "String" as "int"` 로 잡힌다. 타입을 붙이지 않으면 실행할 때까지 알 수 없다.
+    - 부정 검증: 타입 없는 파라미터와 변수, Variant 메서드 호출이 있는 파일을 넣으면 두 층 모두 실패하고 스크립트가 1 로 종료한다.
+  - 정적 검사가 덮지 못하는 영역을 기록한다. 씬 배선(`get_node` 오타, `.tscn` 의 끊긴 참조)은 씬을 인스턴스화할 때만 드러난다. 대책은 `%UniqueName` 접근과 타입 붙인 `@onready`, 그리고 씬별 헤드리스 인스턴스화 스모크 테스트다. 동작 검증은 테스트 프레임워크가 필요하며 Task 2.5, 4.3, 12.3 이 이를 요구한다. 프레임워크(gdUnit4 또는 GUT)는 아직 결정하지 않았다.
+  - Task 2.1 이 이관한 번역 파일 중 7개(`admin`, `auth`, `combat`, `command`, `item`, `moving`, `npc`)가 CRLF 다. 서버 저장소의 줄바꿈을 그대로 가져온 결과다. JSON 파싱에는 영향이 없어 이 작업에서 손대지 않았다.
   - _Requirements: 1.1, 13.1_
 - [ ] 1.2 WebSocket 연결 관리
   - `scripts/net/connection.gd`에 `WebSocketPeer` 래퍼를 만든다. 접속, 프레임 송수신, 상태 전이(`DISCONNECTED`, `CONNECTING`, `WAITING_WELCOME`, `READY`)를 구현한다. `welcome` 수신 전에는 송신하지 않는다.
