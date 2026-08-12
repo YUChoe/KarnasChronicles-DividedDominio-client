@@ -10,7 +10,7 @@ Godot 4.x + GDScript로 게임 클라이언트를 구현한다. 프로토콜 계
 
 ## Tasks
 
-- [ ] 1. 프로젝트 기반과 연결 계층
+- [x] 1. 프로젝트 기반과 연결 계층
 - [x] 1.1 Godot 프로젝트 초기화
   - `godot/` 아래 Godot 4.x 프로젝트를 만든다. 디렉터리 구조는 design.md의 배치를 따른다. autoload로 `game_state.gd`와 `translator.gd`를 등록한다.
   - `project.godot` 을 `config_version=5` 로 만들었다. `config/features` 하한은 `4.2` 이고 개발 편집기가 `4.2.2-stable` 이므로 정확히 일치한다. 버전 업그레이드 안내가 뜨지 않는다. 필요한 기능(`WebSocketPeer`, `JSON.parse_string`, `String.format`)은 모두 4.0 에 있어 하한을 더 올릴 이유가 없다.
@@ -39,32 +39,84 @@ Godot 4.x + GDScript로 게임 클라이언트를 구현한다. 프로토콜 계
   - 정적 검사가 덮지 못하는 영역을 기록한다. 씬 배선(`get_node` 오타, `.tscn` 의 끊긴 참조)은 씬을 인스턴스화할 때만 드러난다. 대책은 `%UniqueName` 접근과 타입 붙인 `@onready`, 그리고 씬별 헤드리스 인스턴스화 스모크 테스트다. 동작 검증은 테스트 프레임워크가 필요하며 Task 2.5, 4.3, 12.3 이 이를 요구한다. 프레임워크(gdUnit4 또는 GUT)는 아직 결정하지 않았다.
   - Task 2.1 이 이관한 번역 파일 중 7개(`admin`, `auth`, `combat`, `command`, `item`, `moving`, `npc`)가 CRLF 다. 서버 저장소의 줄바꿈을 그대로 가져온 결과다. JSON 파싱에는 영향이 없어 이 작업에서 손대지 않았다.
   - _Requirements: 1.1, 13.1_
-- [ ] 1.2 WebSocket 연결 관리
+- [x] 1.2 WebSocket 연결 관리
   - `scripts/net/connection.gd`에 `WebSocketPeer` 래퍼를 만든다. 접속, 프레임 송수신, 상태 전이(`DISCONNECTED`, `CONNECTING`, `WAITING_WELCOME`, `READY`)를 구현한다. `welcome` 수신 전에는 송신하지 않는다.
   - 접속 대상 호스트와 포트를 설정으로 변경할 수 있게 한다.
+  - 상태 전이는 `_process` 의 `WebSocketPeer.poll()` 결과로 판정한다. `STATE_OPEN` 이면서 `CONNECTING` 이면 `WAITING_WELCOME` 으로, `welcome` 검증을 통과하면 `READY` 로 간다.
+  - `send()` 는 `READY` 가 아니면 거부하고 경고를 남긴다. 계약의 "welcome 전에는 어떤 메시지도 보내지 않는다" 를 한 곳에서 강제한다.
+  - 재연결마다 `WebSocketPeer` 를 새로 만든다. 닫힌 peer 를 재사용하지 않는다.
+  - 접속 설정은 `scripts/net/client_config.gd` 가 `user://client.cfg` 로 읽고 쓴다. 편집기 없이 접속 대상을 바꿀 수 있어야 하므로 `ProjectSettings` 가 아니라 쓰기 가능한 위치를 쓴다. 파일이 없으면 기본값(`localhost:3000`)으로 만든다.
   - _Requirements: 1.2, 1.9, 1.11_
-- [ ] 1.3 재연결과 유휴 유지
+- [x] 1.3 재연결과 유휴 유지
   - 연결이 끊기면 지수 백오프(1초 시작, 2배씩, 30초 상한)로 재시도한다. 사용자가 취소할 수 있게 한다. 60초 이상 송신이 없으면 `ping`을 보낸다.
+  - 의도적 종료(사용자 취소, 프로토콜 위반)와 사고 종료를 `_intentional` 로 구분한다. 앞의 경우 재연결하지 않는다.
+  - 유휴 타이머는 송신할 때마다 0 으로 되돌린다. `ping` 자신도 송신이므로 다음 60초를 다시 센다.
   - _Requirements: 1.7, 1.8_
-- [ ] 1.4 메시지 디스패처
+- [x] 1.4 메시지 디스패처
   - `scripts/net/dispatcher.gd`가 수신 프레임을 JSON 파싱하고 `type`별로 분기한다. 계약에 없는 `type`은 무시하고 경고를 기록한다. 파싱 실패도 같이 처리한다.
   - `scripts/net/protocol.gd`에 타입 상수와 거절 코드 상수를 정의한다.
+  - 거부 지점이 넷이다. 파싱 실패, 최상위가 오브젝트가 아님, `type` 없음, 계약에 없는 `type`. 넷 모두 경고만 남기고 연결을 유지한다.
+  - `protocol.gd` 에 `as_dict`·`as_array`·`as_string`·`as_int`·`as_bool` 을 뒀다. `JSON.parse_string` 결과가 Variant 이므로 상태 저장소로 넘기기 전에 이곳에서 형을 확정한다. 서버가 계약을 어겨도 클라이언트가 죽지 않는다. 엄격 타입 설정에서 Variant 멤버 접근이 오류이므로 이 경계 함수가 없으면 코드가 컴파일되지 않는다.
+  - `seq` 를 가진 모든 응답에 `response_received` 를 발신한다. 액션 송신 측이 이것으로 대기 항목을 해소한다.
+  - `INSUFFICIENT_QUANTITY` 는 계약에만 있고 서버가 보내지 않는 코드다(서버 `docs/protocol/consistency.md`). 상수에는 포함했다.
   - _Requirements: 1.3, 1.4_
-- [ ] 1.5 액션 송신과 seq 관리
+- [x] 1.5 액션 송신과 seq 관리
   - `scripts/net/action_sender.gd`가 `seq`를 1부터 증가시켜 부여하고 발신 시각과 verb를 기록한다. 응답 대응과 10초 타임아웃 판정을 구현한다. 응답 수신까지 해당 버튼을 비활성화한다.
+  - `seq` 채번은 `Connection` 이 소유한다. 연결마다 1 로 초기화되어야 하고 `client_info` 처럼 액션이 아닌 요청도 같은 수열을 쓰기 때문이다.
+  - 버튼 비활성화는 `request_sent`·`request_settled`·`request_timed_out` 세 신호로 화면에 위임한다. 송신 계층이 노드를 직접 만지지 않는다.
+  - `send_request(type, fields, label)` 을 두고 `send_action` 을 그 위에 얹었다. Task 3 의 `login` 도 같은 seq 대응이 필요하다.
+  - 연결이 끊기면 `clear_pending()` 이 대기 항목을 전부 타임아웃으로 처리한다. 응답이 올 수 없는데 버튼이 잠긴 채 남는 것을 막는다.
   - _Requirements: 1.5, 6.8_
-- [ ] 1.6 프로토콜 버전 확인
+- [x] 1.6 프로토콜 버전 확인
   - `welcome`의 `protocol_version`이 지원 범위를 벗어나면 클라이언트 업데이트를 안내하고 연결을 종료한다.
+  - 같은 자리에서 `welcome.channel` 도 확인한다. 계약이 "기대한 채널이 아니면 연결을 끊고 접속 설정 오류를 알린다" 를 요구한다. 두 채널은 프레이밍이 같고 포트만 달라 확인이 없으면 조용히 실패한다.
+  - 둘 다 의도적 종료로 처리해 재연결하지 않는다. 재시도해도 같은 결과이기 때문이다.
   - _Requirements: 1.10_
-- [ ] 1.7 상태 저장소
+- [x] 1.7 상태 저장소
   - `scripts/state/game_state.gd`에 player, room, entities, nearby_rooms, inventory, equipped, combat, dialogue, shop, chat_log, event_log, connection_status를 둔다. 변경을 신호로 전파한다. `entities`는 uuid 키 딕셔너리로 관리한다. 로그는 최근 500건으로 제한한다.
+  - `class_name GameStateStore` 를 붙였다. autoload 이름 `GameState` 와 같은 이름은 Godot 이 금지한다. 다른 스크립트는 autoload 식별자를 직접 쓰지 않고 이 타입으로 주입받는다. autoload 식별자가 `--check-only` 단일 파일 검사에서 해석되지 않기 때문이며, 주입은 서버 없이 상태 반영을 검증하는 Task 12.3 의 전제이기도 하다. autoload 를 직접 참조하는 곳은 조립 지점인 `scenes/boot/boot.gd` 뿐이다.
+  - `entity_update` 대상이 사본에 없으면 `resync_required` 를 발신한다. 상태 저장소가 직접 `look` 을 보내지 않는다. 송신 수단을 아는 조립 지점이 처리한다.
+  - `login_result.admin_channel` 을 별도 필드로 보관한다. `is_admin` 만으로는 어드민 진입 가능 여부를 알 수 없고 `available` 이 참일 때만 버튼을 노출한다는 계약 때문이다.
+  - `dialogue` 는 `is_active` 가 거짓이면 비운다. 화면이 매번 판정하지 않게 한다.
   - _Requirements: 13.1, 13.2_
-- [ ] 1.8 연결 상태 표시
+- [x] 1.8 연결 상태 표시
   - 연결 중, 연결됨, 끊김, 재연결 시도를 화면에 표시한다.
+  - `scenes/common/connection_indicator.tscn` 은 재사용 부품이다. 재연결 대기 중에는 남은 초와 시도 횟수를 세고 취소 버튼을 띄운다. 취소하면 버튼이 재시도로 바뀐다.
+  - `scenes/boot/boot.tscn` 을 조립 지점이자 임시 첫 씬으로 만들었다. 연결·디스패처·액션 송신·상태 저장소를 엮는 유일한 곳이다. Task 3 이 로그인 화면을 얹으면 이 씬이 화면 전환의 뿌리가 된다.
+  - 상태 4종은 계약이 정의한 연결 전이이고 재연결 대기는 그중 하나가 아니다. 그래서 상태를 5개로 늘리지 않고 `reconnect_scheduled`·`reconnect_cancelled` 신호로 분리했다.
+  - 표시 문구는 아직 영어 하드코딩이다. Translator 가 없어서이며 Task 2.3 에서 번역을 거치게 한다.
   - _Requirements: 1.6_
-- [ ] 1.9 클라이언트 정보 통지
+- [x] 1.9 클라이언트 정보 통지
   - 접속 후 `client_info`로 클라이언트 버전, 플랫폼, Locale을 통지한다. 응답을 기다리지 않는 단방향 통지다.
+  - `Connection` 이 `READY` 로 전이하는 자리에서 자동으로 보낸다. 화면이 잊을 수 없게 하려는 것이다. 응답이 없으므로 대기 목록에 넣지 않는다.
+  - `client_version` 은 `ProjectSettings` 의 `application/config/version`, `platform` 은 `OS.get_name().to_lower()`, `locale` 은 접속 설정 값이다.
   - _Requirements: 1.12_
+
+### Task 1 통합 검증 (2026-08-11)
+
+Godot → 게이트웨이 → 대역 서버로 실제 사슬을 세워 확인했다. 대역 서버는 계약대로 `welcome` 을 보내고 `ping` 에 `pong` 으로 답하는 최소 TCP 라인 서버다. 게이트웨이는 저장소의 실제 구현을 그대로 띄웠다.
+
+| 확인 항목 | 결과 |
+|---|---|
+| 상태 전이 | CONNECTING → WAITING_WELCOME → READY |
+| `client_info` | `{"client_version":"0.1.0","locale":"ko","platform":"windows","seq":1}` |
+| `ping` 주기 | `client_info` 후 정확히 60초에 `seq:2` 로 발신, `pong` 수신 |
+| 재연결 백오프 | 상위 서버를 죽이자 1, 2, 4, 8초 간격으로 재시도 |
+| `protocol_version: 99` | 1000 `unsupported protocol version` 으로 종료, 재연결 없음 |
+| `channel: admin` | 1000 `channel mismatch` 로 종료, 재연결 없음 |
+| 용량 초과 | 1008 `Server at capacity` 수신 후 백오프 재시도 |
+| 파싱 실패 `this is not json` | 경고 후 무시, 연결 유지 |
+| 최상위 배열 `[1,2,3]` | 경고 후 무시, 연결 유지 |
+| `type` 없음 `{"seq":9}` | 경고 후 무시, 연결 유지 |
+| 계약에 없는 `future_message` | 경고 후 무시, 연결 유지 |
+
+검증 중 드러난 사실 셋을 남긴다.
+
+첫째, 게이트웨이가 계약에 없는 프레임 두 종을 보낸다. 접속 직후의 `{"type":"gateway_connected","timestamp":...}` 와 거부 시의 `{"type":"gateway_error","reason":...,"timestamp":...}` 다. `docs/protocol/` 어디에도 정의가 없다. 처음에는 클라이언트가 접속할 때마다 "계약에 없는 type" 경고를 냈다. `protocol.gd` 에 `GATEWAY_TYPES` 를 두어 별도로 다루도록 고쳤다. `gateway_error` 는 무시하면 사용자가 거부 원인을 알 수 없으므로 화면에 표시한다. 계약 문서에 이 두 프레임을 추가할지는 게이트웨이 쪽 결정 사항이다.
+
+둘째, 용량 초과에서는 `gateway_error` 프레임이 클라이언트에 도달하지 않는다. 게이트웨이가 프레임을 보낸 직후 1008 로 닫아 경합에서 종료가 이긴다. 실제로 클라이언트가 원인을 아는 경로는 종료 코드 1008 과 사유 문자열이다. `gateway_error` 처리는 연결이 유지되는 경우(프레임 규약 위반)를 위해 남긴다.
+
+셋째, Godot 의 로그 파일 회전 규칙이다. `user://logs/godot.log` 가 현재 실행이고 타임스탬프가 붙은 파일은 회전된 이전 실행이다. 최신 타임스탬프 파일을 읽으면 한 번 전 실행을 보게 된다.
 
 - [ ] 2. 다국어 처리
 - [x] 2.1 번역 파일 이관

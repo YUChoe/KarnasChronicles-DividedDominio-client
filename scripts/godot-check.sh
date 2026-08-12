@@ -6,9 +6,13 @@
 # 신뢰할 수 없다. `--editor --quit` 은 정상 프로젝트에서도 1을 돌려주고, 런타임
 # 오류가 난 실행은 0을 돌려주거나 아예 멈춘다. 그래서 두 층으로 검사한다.
 #
-#   1. 스크립트별 `--check-only`. 종료 코드가 신뢰할 수 있는 유일한 경로다.
-#   2. 프로젝트 전체 임포트. 미참조 스크립트와 씬·리소스 참조를 훑는다.
+#   1. 프로젝트 전체 임포트. 미참조 스크립트와 씬·리소스 참조를 훑는다.
 #      종료 코드를 무시하고 출력에서 오류를 찾는다.
+#   2. 스크립트별 `--check-only`. 종료 코드가 신뢰할 수 있는 유일한 경로다.
+#
+# 순서가 중요하다. `class_name` 등록은 임포트가 만드는
+# `.godot/global_script_class_cache.cfg` 에 들어간다. 임포트를 먼저 돌리지
+# 않으면 `--check-only` 가 새 전역 클래스를 미선언 식별자로 본다.
 #
 # 두 층 모두 외부 타임아웃을 걸어 멈춘 프로세스를 회수한다.
 #
@@ -35,7 +39,30 @@ echo
 
 failed=0
 
-# 1층. 스크립트별 파스와 타입 검사
+# 1층. 프로젝트 전체 임포트. 종료 코드를 쓰지 않고 출력으로 판정한다.
+# class_name 전역 캐시를 여기서 갱신하므로 스크립트 검사보다 먼저 돌린다.
+echo "== 프로젝트 임포트 =="
+import_output=$(timeout "$IMPORT_TIMEOUT" "$GODOT_BIN" --headless --path "$PROJECT_DIR" \
+  --editor --quit 2>&1)
+import_status=$?
+
+if [ "$import_status" -eq 124 ]; then
+  echo "TIMEOUT 임포트가 ${IMPORT_TIMEOUT}초 안에 끝나지 않았습니다"
+  failed=$((failed + 1))
+else
+  errors=$(echo "$import_output" | grep -E "SCRIPT ERROR|ERROR:")
+  if [ -n "$errors" ]; then
+    echo "FAIL"
+    echo "$errors" | sed 's/^/        /'
+    failed=$((failed + 1))
+  else
+    echo "OK      오류 없음"
+  fi
+fi
+
+echo
+
+# 2층. 스크립트별 파스와 타입 검사
 echo "== 스크립트 검사 =="
 script_count=0
 while IFS= read -r path; do
@@ -59,28 +86,6 @@ while IFS= read -r path; do
 done < <(find "$PROJECT_DIR" -name '*.gd' -not -path '*/.godot/*' | sort)
 
 echo "스크립트 $script_count개"
-echo
-
-# 2층. 프로젝트 전체 임포트. 종료 코드를 쓰지 않고 출력으로 판정한다
-echo "== 프로젝트 임포트 =="
-import_output=$(timeout "$IMPORT_TIMEOUT" "$GODOT_BIN" --headless --path "$PROJECT_DIR" \
-  --editor --quit 2>&1)
-import_status=$?
-
-if [ "$import_status" -eq 124 ]; then
-  echo "TIMEOUT 임포트가 ${IMPORT_TIMEOUT}초 안에 끝나지 않았습니다"
-  failed=$((failed + 1))
-else
-  errors=$(echo "$import_output" | grep -E "SCRIPT ERROR|ERROR:")
-  if [ -n "$errors" ]; then
-    echo "FAIL"
-    echo "$errors" | sed 's/^/        /'
-    failed=$((failed + 1))
-  else
-    echo "OK      오류 없음"
-  fi
-fi
-
 echo
 if [ "$failed" -eq 0 ]; then
   echo "전체 통과"

@@ -1,0 +1,39 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scenes/boot/boot.gd" id="1_boot"]
+[ext_resource type="Script" path="res://scripts/net/connection.gd" id="2_connection"]
+[ext_resource type="Script" path="res://scripts/net/action_sender.gd" id="3_sender"]
+[ext_resource type="PackedScene" path="res://scenes/common/connection_indicator.tscn" id="4_indicator"]
+
+[node name="Boot" type="Node"]
+script = ExtResource("1_boot")
+
+[node name="Connection" type="Node" parent="."]
+script = ExtResource("2_connection")
+
+[node name="ActionSender" type="Node" parent="."]
+script = ExtResource("3_sender")
+
+[node name="Margin" type="MarginContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="ConnectionIndicator" parent="Margin/VBox" instance=ExtResource("4_indicator")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Notice" type="Label" parent="Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3

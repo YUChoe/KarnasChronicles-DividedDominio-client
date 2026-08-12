@@ -13,6 +13,7 @@ config_version=5
 config/name="Echoes of the Fallen Age"
 config/description="버튼 기반 MUD 클라이언트. 서버가 보내는 구조화 JSON 을 화면으로 옮긴다."
 config/version="0.1.0"
+run/main_scene="res://scenes/boot/boot.tscn"
 config/features=PackedStringArray("4.2", "GL Compatibility")
 
 [autoload]
