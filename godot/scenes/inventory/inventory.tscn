@@ -1,0 +1,130 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scenes/inventory/inventory.gd" id="1_inventory"]
+[ext_resource type="PackedScene" path="res://scenes/inventory/equipment_panel.tscn" id="2_equip"]
+[ext_resource type="PackedScene" path="res://scenes/inventory/container_panel.tscn" id="3_container"]
+
+[node name="Inventory" type="VBoxContainer"]
+offset_right = 900.0
+offset_bottom = 520.0
+theme_override_constants/separation = 8
+script = ExtResource("1_inventory")
+
+[node name="Header" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="InventoryTitle" type="Label" parent="Header"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="WeightLabel" type="Label" parent="Header"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="GoldLabel" type="Label" parent="Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="UnequipAllButton" type="Button" parent="Header"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "Unequip all"
+
+[node name="InventoryClose" type="Button" parent="Header"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Back"
+
+[node name="FilterButtons" type="HFlowContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 4
+theme_override_constants/v_separation = 4
+
+[node name="Body" type="HBoxContainer" parent="."]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="Left" type="VBoxContainer" parent="Body"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 4
+
+[node name="ItemsEmpty" type="Label" parent="Body/Left"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="ItemsScroll" type="ScrollContainer" parent="Body/Left"]
+custom_minimum_size = Vector2(0, 200)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ItemRows" type="VBoxContainer" parent="Body/Left/ItemsScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="Right" type="VBoxContainer" parent="Body"]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="EquipmentPanel" parent="Body/Right" instance=ExtResource("2_equip")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="ContainerPanel" parent="Body/Right" instance=ExtResource("3_container")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+
+[node name="Detail" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="DetailName" type="Label" parent="Detail"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="QuantityRow" type="HBoxContainer" parent="Detail"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="QuantityLabel" type="Label" parent="Detail/QuantityRow"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="QuantitySpin" type="SpinBox" parent="Detail/QuantityRow"]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = 1.0
+value = 1.0
+
+[node name="GiveRow" type="HBoxContainer" parent="Detail"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="GiveLabel" type="Label" parent="Detail/GiveRow"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="GiveTarget" type="OptionButton" parent="Detail/GiveRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
+
+[node name="DetailVerbs" type="HFlowContainer" parent="Detail"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 4

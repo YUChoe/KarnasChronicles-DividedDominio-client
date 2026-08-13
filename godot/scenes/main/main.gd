@@ -11,6 +11,7 @@ extends VBoxContainer
 
 signal logout_requested()
 signal admin_requested()
+signal inventory_requested()
 ## 조립 지점의 알림 영역에 문구를 띄운다
 signal notice_requested(key: String, params: Dictionary)
 
@@ -26,6 +27,7 @@ const LABEL_CHAT := "chat"
 @onready var _description: Label = %DescriptionLabel
 @onready var _logout: Button = %LogoutButton
 @onready var _admin: Button = %AdminButton
+@onready var _inventory: Button = %InventoryButton
 @onready var _minimap: Minimap = %Minimap
 @onready var _exits_title: Label = %ExitsTitle
 @onready var _enter: Button = %EnterButton
@@ -54,6 +56,7 @@ var _selected_id := ""
 func _ready() -> void:
 	_logout.pressed.connect(func() -> void: logout_requested.emit())
 	_admin.pressed.connect(func() -> void: admin_requested.emit())
+	_inventory.pressed.connect(func() -> void: inventory_requested.emit())
 	_enter.pressed.connect(_on_enter_pressed)
 
 	for direction: String in DIRECTIONS:
@@ -113,6 +116,7 @@ func apply_texts() -> void:
 		return
 	_logout.text = _translator.t("ui.main.sign_out")
 	_admin.text = _translator.t("ui.main.admin_panel")
+	_inventory.text = _translator.t("ui.inventory.open")
 	_exits_title.text = _translator.t("ui.room.exits")
 	_enter.text = _translator.t("ui.room.enter")
 

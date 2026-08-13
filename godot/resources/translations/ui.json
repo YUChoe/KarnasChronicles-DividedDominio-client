@@ -466,5 +466,221 @@
     "ui.action.not_applicable": {
         "en": "{verb} does not apply to {name}.",
         "ko": "{name}에게 {verb}을(를) 적용할 수 없습니다."
+    },
+    "ui.inventory.title": {
+        "en": "Inventory",
+        "ko": "인벤토리"
+    },
+    "ui.inventory.open": {
+        "en": "Inventory",
+        "ko": "인벤토리"
+    },
+    "ui.inventory.close": {
+        "en": "Back",
+        "ko": "돌아가기"
+    },
+    "ui.inventory.weight": {
+        "en": "Weight {current} / {max}",
+        "ko": "무게 {current} / {max}"
+    },
+    "ui.inventory.gold": {
+        "en": "Gold {gold}",
+        "ko": "골드 {gold}"
+    },
+    "ui.inventory.empty": {
+        "en": "Nothing here.",
+        "ko": "가진 것이 없습니다."
+    },
+    "ui.inventory.row": {
+        "en": "{name}  ({weight})",
+        "ko": "{name}  ({weight})"
+    },
+    "ui.inventory.row_stacked": {
+        "en": "{name} ×{count}  ({weight})",
+        "ko": "{name} ×{count}  ({weight})"
+    },
+    "ui.filter.all": {
+        "en": "All",
+        "ko": "전체"
+    },
+    "ui.filter.weapon": {
+        "en": "Weapons",
+        "ko": "무기"
+    },
+    "ui.filter.armor": {
+        "en": "Armour",
+        "ko": "방어구"
+    },
+    "ui.filter.consumable": {
+        "en": "Consumables",
+        "ko": "소비"
+    },
+    "ui.filter.misc": {
+        "en": "Other",
+        "ko": "기타"
+    },
+    "ui.equipment.title": {
+        "en": "Equipped",
+        "ko": "장착"
+    },
+    "ui.equipment.empty_slot": {
+        "en": "—",
+        "ko": "—"
+    },
+    "ui.slot.head": {
+        "en": "Head",
+        "ko": "머리"
+    },
+    "ui.slot.shoulder": {
+        "en": "Shoulders",
+        "ko": "어깨"
+    },
+    "ui.slot.chest": {
+        "en": "Chest",
+        "ko": "몸통"
+    },
+    "ui.slot.right_arm": {
+        "en": "Right arm",
+        "ko": "오른팔"
+    },
+    "ui.slot.left_arm": {
+        "en": "Left arm",
+        "ko": "왼팔"
+    },
+    "ui.slot.right_hand": {
+        "en": "Right hand",
+        "ko": "오른손"
+    },
+    "ui.slot.left_hand": {
+        "en": "Left hand",
+        "ko": "왼손"
+    },
+    "ui.slot.waist": {
+        "en": "Waist",
+        "ko": "허리"
+    },
+    "ui.slot.legs": {
+        "en": "Legs",
+        "ko": "다리"
+    },
+    "ui.slot.feet": {
+        "en": "Feet",
+        "ko": "발"
+    },
+    "ui.slot.back": {
+        "en": "Back",
+        "ko": "등"
+    },
+    "ui.slot.ring": {
+        "en": "Ring",
+        "ko": "반지"
+    },
+    "ui.container.title": {
+        "en": "Container",
+        "ko": "컨테이너"
+    },
+    "ui.container.empty": {
+        "en": "It is empty.",
+        "ko": "비어 있습니다."
+    },
+    "ui.container.close": {
+        "en": "Close",
+        "ko": "닫기"
+    },
+    "ui.verb.put": {
+        "en": "Put in",
+        "ko": "넣기"
+    },
+    "ui.verb.take_from": {
+        "en": "Take out",
+        "ko": "꺼내기"
+    },
+    "ui.verb.unequip_all": {
+        "en": "Unequip all",
+        "ko": "전체 해제"
+    },
+    "ui.quantity.label": {
+        "en": "Quantity",
+        "ko": "수량"
+    },
+    "ui.give.target": {
+        "en": "Give to",
+        "ko": "받을 사람"
+    },
+    "ui.give.no_target": {
+        "en": "No one is here to receive it.",
+        "ko": "받을 사람이 이 방에 없습니다."
+    },
+    "ui.combat.title": {
+        "en": "⚔ In combat",
+        "ko": "⚔ 전투 중"
+    },
+    "ui.combat.round": {
+        "en": "Round {round}",
+        "ko": "라운드 {round}"
+    },
+    "ui.combat.your_turn": {
+        "en": "▶ Your turn",
+        "ko": "▶ 당신의 턴입니다"
+    },
+    "ui.combat.waiting": {
+        "en": "Waiting for {name}",
+        "ko": "{name}의 턴입니다"
+    },
+    "ui.combat.enemies": {
+        "en": "Enemies",
+        "ko": "적"
+    },
+    "ui.combat.allies": {
+        "en": "Allies",
+        "ko": "우리 편"
+    },
+    "ui.combat.turn_order": {
+        "en": "Turn order",
+        "ko": "턴 순서"
+    },
+    "ui.combat.hp": {
+        "en": "{hp}/{max_hp}",
+        "ko": "{hp}/{max_hp}"
+    },
+    "ui.combat.stats": {
+        "en": "ATK {attack}  DEF {defense}",
+        "ko": "공격 {attack}  방어 {defense}"
+    },
+    "ui.combat.defending": {
+        "en": "defending",
+        "ko": "방어 중"
+    },
+    "ui.combat.fallen": {
+        "en": "down",
+        "ko": "쓰러짐"
+    },
+    "ui.combat.attack": {
+        "en": "⚔ Attack ({key})",
+        "ko": "⚔ 공격 ({key})"
+    },
+    "ui.combat.use_item": {
+        "en": "🎒 Item ({key})",
+        "ko": "🎒 아이템 ({key})"
+    },
+    "ui.combat.flee": {
+        "en": "🏃 Flee ({key})",
+        "ko": "🏃 도주 ({key})"
+    },
+    "ui.combat.end_turn": {
+        "en": "⏭ End turn ({key})",
+        "ko": "⏭ 턴 종료 ({key})"
+    },
+    "ui.combat.no_target": {
+        "en": "Choose an enemy first.",
+        "ko": "먼저 적을 선택하십시오."
+    },
+    "ui.combat.no_item": {
+        "en": "No usable item.",
+        "ko": "사용할 수 있는 아이템이 없습니다."
+    },
+    "ui.combat.log": {
+        "en": "Combat log",
+        "ko": "전투 기록"
     }
 }

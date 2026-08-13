@@ -33,6 +33,13 @@ var _filter := CHANNEL_ALL
 var _buttons: Dictionary = {}
 
 
+## 채널을 하나로 고정하고 탭을 숨긴다. 전투 화면이 전투 기록만 보일 때 쓴다.
+func set_fixed_filter(channel: String) -> void:
+	_filter = channel
+	_tabs.visible = false
+	_render()
+
+
 func bind(translator: TranslatorService) -> void:
 	_translator = translator
 	_translator.locale_changed.connect(_on_locale_changed)
@@ -116,6 +123,8 @@ func _line_of(entry: Dictionary) -> String:
 
 
 func _on_filter_pressed(channel: String) -> void:
+	if not _tabs.visible:
+		return
 	_filter = channel
 	for name: String in FILTERS:
 		var button: Button = _buttons[name]

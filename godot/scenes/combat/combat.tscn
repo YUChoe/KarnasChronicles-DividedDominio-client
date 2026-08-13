@@ -1,0 +1,79 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scenes/combat/combat.gd" id="1_combat"]
+[ext_resource type="PackedScene" path="res://scenes/main/event_log.tscn" id="2_log"]
+
+[node name="Combat" type="VBoxContainer"]
+offset_right = 900.0
+offset_bottom = 520.0
+theme_override_constants/separation = 8
+script = ExtResource("1_combat")
+
+[node name="Header" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="CombatTitle" type="Label" parent="Header"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="RoundLabel" type="Label" parent="Header"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="TurnLabel" type="Label" parent="Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="EnemiesTitle" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="EnemyRows" type="VBoxContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="AlliesTitle" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="AllyRows" type="VBoxContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="OrderRow" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TurnOrderTitle" type="Label" parent="OrderRow"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="TurnOrderLabel" type="Label" parent="OrderRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ActionRow" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="CombatActions" type="HFlowContainer" parent="ActionRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 4
+
+[node name="CombatItems" type="OptionButton" parent="ActionRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
+
+[node name="CombatLog" parent="." instance=ExtResource("2_log")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3

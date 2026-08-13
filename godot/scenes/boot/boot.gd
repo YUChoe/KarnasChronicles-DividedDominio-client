@@ -7,6 +7,8 @@ extends Node
 
 const LOGIN_SCENE := preload("res://scenes/login/login.tscn")
 const MAIN_SCENE := preload("res://scenes/main/main.tscn")
+const INVENTORY_SCENE := preload("res://scenes/inventory/inventory.tscn")
+const COMBAT_SCENE := preload("res://scenes/combat/combat.tscn")
 
 const LABEL_LOGIN := "login"
 const LABEL_LOGOUT := "logout"
@@ -30,6 +32,8 @@ var _store: GameStateStore = null
 var _translator: TranslatorService = null
 var _login: LoginScreen = null
 var _main: MainScreen = null
+var _inventory: InventoryScreen = null
+var _combat: CombatScreen = null
 ## 로그인 후 도착한 스냅샷 종류
 var _snapshots: Dictionary = {}
 ## 안내 문구를 키로 들고 있는다. locale 이 바뀌면 다시 그려야 한다
@@ -94,6 +98,23 @@ func _build_screens() -> void:
 	_main.logout_requested.connect(_on_logout_requested)
 	_main.admin_requested.connect(_on_admin_requested)
 	_main.notice_requested.connect(_set_notice)
+	_main.inventory_requested.connect(_show_inventory)
+
+	_inventory = INVENTORY_SCENE.instantiate()
+	_screens.add_child(_inventory)
+	_inventory.bind(_store, _translator)
+	_inventory.closed.connect(_show_main)
+	_inventory.action_requested.connect(_on_screen_action)
+	_inventory.notice_requested.connect(_set_notice)
+
+	_combat = COMBAT_SCENE.instantiate()
+	_screens.add_child(_combat)
+	_combat.bind(_store, _translator)
+	_combat.action_requested.connect(_on_screen_action)
+	_combat.notice_requested.connect(_set_notice)
+
+	_store.container_contents_received.connect(_on_container_contents)
+	_store.combat_changed.connect(_on_combat_changed)
 
 	var saved := CredentialStore.load_credentials()
 	if not saved.is_empty():
@@ -106,17 +127,54 @@ func _build_screens() -> void:
 
 
 func _show_login() -> void:
-	_login.visible = true
-	_main.visible = false
+	_show_only(_login)
 	_snapshots = {}
 
 
 func _show_main() -> void:
-	_login.visible = false
-	_main.visible = true
+	_show_only(_main)
 	_clear_notice()
 	print("게임 화면 진입. 어드민 버튼 노출=%s" % str(
 		Protocol.as_bool(_store.admin_channel.get("available"))))
+
+
+func _show_inventory() -> void:
+	_show_only(_inventory)
+	_clear_notice()
+	_inventory.on_opened()
+
+
+func _show_combat() -> void:
+	_show_only(_combat)
+	_clear_notice()
+
+
+func _show_only(screen: Control) -> void:
+	for candidate: Control in [_login, _main, _inventory, _combat]:
+		candidate.visible = candidate == screen
+
+
+## 전투가 시작되면 전투 화면으로, 끝나면 탐험 화면으로 돌아간다.
+func _on_combat_changed() -> void:
+	if _store.combat.is_empty():
+		return
+	if Protocol.as_bool(_store.combat.get("is_over")):
+		if _combat.visible:
+			_show_main()
+		return
+	if not _combat.visible:
+		_show_combat()
+
+
+## 화면이 요청한 액션을 보낸다. 화면이 네트워크 계층을 알지 않게 한다.
+func _on_screen_action(verb: String, target_id: String, params: Dictionary) -> void:
+	_action_sender.send_action(verb, target_id, params)
+
+
+## 컨테이너를 열면 내용이 인벤토리 화면에 있으므로 그리로 넘긴다.
+func _on_container_contents(_container_id: String, _items: Array) -> void:
+	if not _inventory.visible:
+		_show_inventory()
 
 
 func _on_state_changed(state: Connection.State) -> void:
