@@ -126,5 +126,53 @@
     "ui.notice.request_timeout": {
         "en": "The server did not answer the {label} request.",
         "ko": "서버가 {label} 요청에 응답하지 않았습니다."
+    },
+    "ui.rejection.PERMISSION_DENIED": {
+        "en": "You do not have permission to do that.",
+        "ko": "그 동작을 수행할 권한이 없습니다."
+    },
+    "ui.rejection.WRONG_STATE": {
+        "en": "That is not possible right now.",
+        "ko": "지금은 할 수 없는 동작입니다."
+    },
+    "ui.rejection.NOT_YOUR_TURN": {
+        "en": "Wait for your turn.",
+        "ko": "자신의 턴을 기다리십시오."
+    },
+    "ui.rejection.OUT_OF_RANGE": {
+        "en": "The target is too far away.",
+        "ko": "대상이 너무 멀리 있습니다."
+    },
+    "ui.rejection.INSUFFICIENT_FUNDS": {
+        "en": "You do not have enough gold.",
+        "ko": "골드가 부족합니다."
+    },
+    "ui.rejection.INSUFFICIENT_QUANTITY": {
+        "en": "You do not have that many.",
+        "ko": "수량이 부족합니다."
+    },
+    "ui.rejection.INVENTORY_FULL": {
+        "en": "You are carrying too much.",
+        "ko": "무게가 초과되었습니다."
+    },
+    "ui.rejection.SLOT_OCCUPIED": {
+        "en": "That equipment slot is already in use. Replace what is equipped?",
+        "ko": "해당 장비 슬롯이 사용 중입니다. 장착된 것을 교체하시겠습니까?"
+    },
+    "ui.rejection.COOLDOWN": {
+        "en": "Not yet. Try again later.",
+        "ko": "아직 사용할 수 없습니다. 잠시 후 다시 시도하십시오."
+    },
+    "ui.rejection.INTERNAL_ERROR": {
+        "en": "The server ran into a problem. Please try again.",
+        "ko": "서버에 문제가 발생했습니다. 다시 시도하십시오."
+    },
+    "ui.rejection.unknown": {
+        "en": "The action was refused ({reason_code}).",
+        "ko": "액션이 거절되었습니다 ({reason_code})."
+    },
+    "ui.login.session_expired": {
+        "en": "Your session has ended. Please sign in again.",
+        "ko": "세션이 종료되었습니다. 다시 로그인하십시오."
     }
 }

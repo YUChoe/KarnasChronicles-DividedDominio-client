@@ -188,16 +188,39 @@ Godot → 게이트웨이 → 대역 서버로 실제 사슬을 세워 확인했
 
 `client_info` 로그가 없는 필드(`client`)를 읽어 항상 `None` 을 찍던 것도 함께 고쳤다. 계약의 필드는 `client_version`, `platform`, `locale` 이다.
 
-- [ ] 4. 액션 규칙 테이블
-- [ ] 4.1 규칙 구현
+- [x] 4. 액션 규칙 테이블
+- [x] 4.1 규칙 구현
   - `scripts/rules/action_rules.gd`에 design.md의 규칙 표를 구현한다. 몬스터(방), 오브젝트(방), 오브젝트(인벤토리), 플레이어(방), 전투 중 각각의 조건별 동사 목록을 반환한다. 서버가 보낸 속성만 판단 근거로 사용한다.
+  - 전부 정적 함수다. 상태가 없고 입력이 곧 출력이라 인스턴스를 만들 이유가 없다. 이 성질이 테스트를 단순하게 만든다.
+  - 엔티티 밖의 조건은 `context` 딕셔너리로 받는다. `has_inventory_items`(플레이어에게 `give`), `has_other_players`(아이템을 `give`), `shop_open` 과 `shop_sell_prices`(`shop_sell`)다. 매도가가 아이템 엔티티에 없는 것은 가격이 `item_prices` 테이블의 템플릿 단위 값이고 실물 아이템의 속성이 아니기 때문이다.
+  - 귓속말은 동사 목록에 넣지 않았다. design.md 의 플레이어 표에 있지만 `chat` 메시지의 채널이지 `action` 의 verb 가 아니다. 대상 선택은 채팅 UI 가 맡는다(Task 5.7).
+  - `talk` 은 `can_talk` 과 무관하게 항상 표시한다. 서버가 스크립트 없는 대상에게도 침묵 응답을 준다.
+  - 전투 표의 둘째 줄(`flee`, `use_item`, `end_turn`)은 대상이 없으므로 `combat_bar(is_my_turn)` 으로 분리했다. `for_combatant` 은 대상이 있는 `attack` 만 다룬다.
   - _Requirements: 6.1, 6.2, 6.3_
-- [ ] 4.2 거절 응답 처리
+- [x] 4.2 거절 응답 처리
   - Rejection_Code별 처리를 구현한다. `NOT_APPLICABLE`은 버튼 제거만 하고 오류로 표시하지 않는다. `NOT_FOUND`는 `look`으로 재동기화, `NOT_AUTHENTICATED`는 로그인 화면 전환이다. 나머지는 design.md의 표를 따른다.
+  - `scripts/rules/rejection_policy.gd` 가 무엇을 할지만 정하고 실행은 조립 지점이 한다. 규칙과 실행을 나눠야 서버 없이 표를 검증할 수 있다.
+  - 모르는 코드는 안내를 표시한다. 조용히 삼키면 원인을 알 수 없다. 서버가 새 코드를 쓰기 시작해도 사용자가 무언가 거절됐다는 것은 안다.
+  - 버튼 제거는 대상을 아는 화면의 몫이라 지금은 아무것도 하지 않는다. Task 5·6 이 엔티티 버튼을 만들면 채운다.
+  - `NOT_AUTHENTICATED` 안내로 처음에 `ui.login.not_connected` 를 썼는데 연결은 살아 있고 서버 세션만 사라진 상황이라 문구가 틀렸다. `ui.login.session_expired` 를 새로 뒀다.
   - _Requirements: 6.4, 6.5, 6.6, 6.7_
-- [ ] 4.3 규칙 단위 테스트
+- [x] 4.3 규칙 단위 테스트
   - 엔티티 속성 조합을 넣어 기대 버튼 목록을 검증한다.
+  - `test_action_rules.gd` 25건, `test_rejection_policy.gd` 11건. 번역 18건과 합쳐 54건이다.
+  - 거절 표는 두 가지를 함께 고정했다. 계약의 코드 15종이 모두 표에 있는지, 그리고 사용자에게 보이는 코드마다 번역 키가 실제로 있는지다. 뒤의 것은 `Translator` 를 함께 써서 확인한다. 코드가 늘 때 문구를 빠뜨리면 테스트가 잡는다.
   - _Requirements: 13.5_
+
+### Task 4 통합 검증 (2026-08-11)
+
+거절 처리는 대역 서버가 `action_rejected` 를 자발적으로 보내게 해 확인했다. 실제 서버로는 특정 코드를 원하는 대로 만들 수 없다.
+
+| 코드 | 기대 | 결과 |
+|---|---|---|
+| `NOT_FOUND` | `look` 재요청 | 서버가 `{"seq":3,"type":"action","verb":"look"}` 을 받았다 |
+| `NOT_APPLICABLE` | 조용히 무시 | 송신 없음, 경고 없음, 안내 없음 |
+| `PERMISSION_DENIED` | 안내 표시 | 게임 화면 유지, "그 동작을 수행할 권한이 없습니다." |
+| `NOT_AUTHENTICATED` | 로그인 전환 | 로그인 화면 전환, 연결은 "연결됨" 유지 |
+| `INVALID_PARAMS` | 로그만 | "클라이언트 버그: attack 가 INVALID_PARAMS 로 거절됐습니다" |
 
 - [ ] 5. 방 정보와 이동
 - [ ] 5.1 방 표시

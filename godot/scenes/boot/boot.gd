@@ -59,6 +59,7 @@ func _ready() -> void:
 	_connection.closed.connect(_on_closed)
 
 	_dispatcher.gateway_error.connect(_on_gateway_error)
+	_dispatcher.action_rejected.connect(_on_action_rejected)
 	_dispatcher.login_result_received.connect(_on_login_result)
 	_dispatcher.logout_result_received.connect(_on_logout_result)
 
@@ -211,6 +212,33 @@ func _on_logout_result(_payload: Dictionary) -> void:
 	_show_login()
 	_login.clear_message()
 	_login.focus_first_empty()
+
+
+## 거절 처리는 `RejectionPolicy` 가 정하고 실행만 여기서 한다.
+##
+## 낙관적 버튼 구성이므로 `NOT_APPLICABLE` 은 정상 동작이다. 오류로 표시하지
+## 않는다. 버튼 제거는 대상을 아는 화면의 몫이라 Task 5·6 에서 채운다.
+func _on_action_rejected(payload: Dictionary) -> void:
+	var code := Protocol.as_string(payload.get("reason_code"), "UNKNOWN")
+	var verb := Protocol.as_string(payload.get("verb"))
+	var effect := RejectionPolicy.effect_for(code)
+
+	match effect:
+		RejectionPolicy.Effect.RESYNC_ROOM:
+			_action_sender.send_action("look")
+		RejectionPolicy.Effect.RETURN_TO_LOGIN:
+			# 연결은 살아 있고 서버 세션만 사라졌다
+			_store.reset_session()
+			_show_login()
+			_login.show_message("ui.login.session_expired")
+		RejectionPolicy.Effect.LOG_CLIENT_BUG:
+			push_warning("클라이언트 버그: %s 가 %s 로 거절됐습니다" % [verb, code])
+		RejectionPolicy.Effect.REMOVE_BUTTON:
+			pass
+		_:
+			var key := RejectionPolicy.notice_key(code)
+			if not key.is_empty():
+				_set_notice(key, {"reason_code": code})
 
 
 func _on_admin_requested() -> void:
