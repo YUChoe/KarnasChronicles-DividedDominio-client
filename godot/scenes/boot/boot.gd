@@ -11,6 +11,7 @@ const INVENTORY_SCENE := preload("res://scenes/inventory/inventory.tscn")
 const COMBAT_SCENE := preload("res://scenes/combat/combat.tscn")
 const DIALOGUE_SCENE := preload("res://scenes/dialogue/dialogue.tscn")
 const SHOP_SCENE := preload("res://scenes/shop/shop.tscn")
+const STATUS_SCENE := preload("res://scenes/status/status.tscn")
 
 const LABEL_LOGIN := "login"
 const LABEL_LOGOUT := "logout"
@@ -38,8 +39,12 @@ var _inventory: InventoryScreen = null
 var _combat: CombatScreen = null
 var _dialogue: DialogueScreen = null
 var _shop: ShopScreen = null
+var _status: StatusScreen = null
 ## 로그인 후 도착한 스냅샷 종류
 var _snapshots: Dictionary = {}
+## 게임 화면에 한 번 들어왔는가. 화면 표시 상태로 판정하면 인벤토리나 상태
+## 화면을 보는 중에 스냅샷이 오면 탐험 화면으로 밀려난다
+var _in_game := false
 ## 안내 문구를 키로 들고 있는다. locale 이 바뀌면 다시 그려야 한다
 var _notice_key := ""
 var _notice_params: Dictionary = {}
@@ -103,6 +108,7 @@ func _build_screens() -> void:
 	_main.admin_requested.connect(_on_admin_requested)
 	_main.notice_requested.connect(_set_notice)
 	_main.inventory_requested.connect(_show_inventory)
+	_main.status_requested.connect(_show_status)
 
 	_inventory = INVENTORY_SCENE.instantiate()
 	_screens.add_child(_inventory)
@@ -128,6 +134,12 @@ func _build_screens() -> void:
 	_shop.action_requested.connect(_on_screen_action)
 	_shop.closed.connect(_show_main)
 
+	_status = STATUS_SCENE.instantiate()
+	_screens.add_child(_status)
+	_status.bind(_store, _translator)
+	_status.closed.connect(_show_main)
+	_status.action_requested.connect(_on_screen_action)
+
 	_store.container_contents_received.connect(_on_container_contents)
 	_store.combat_changed.connect(_on_combat_changed)
 	_store.dialogue_changed.connect(_on_dialogue_changed)
@@ -146,6 +158,7 @@ func _build_screens() -> void:
 func _show_login() -> void:
 	_show_only(_login)
 	_snapshots = {}
+	_in_game = false
 
 
 func _show_main() -> void:
@@ -161,6 +174,12 @@ func _show_inventory() -> void:
 	_inventory.on_opened()
 
 
+func _show_status() -> void:
+	_show_only(_status)
+	_clear_notice()
+	_status.on_opened()
+
+
 func _show_combat() -> void:
 	_show_only(_combat)
 	_clear_notice()
@@ -168,7 +187,7 @@ func _show_combat() -> void:
 
 func _show_only(screen: Control) -> void:
 	for candidate: Control in [
-			_login, _main, _inventory, _combat, _dialogue, _shop]:
+			_login, _main, _inventory, _combat, _dialogue, _shop, _status]:
 		candidate.visible = candidate == screen
 
 
@@ -279,12 +298,13 @@ func _on_login_result(payload: Dictionary) -> void:
 	# 계약이 room_info, player_state, inventory 를 이어서 보낸다. 셋을 모두 받은
 	# 뒤에 게임 화면을 연다.
 	_snapshots = {}
+	_in_game = false
 	_login.set_busy(true)
 	print("로그인 성공: %s" % Protocol.as_string(_store.player.get("username"), "?"))
 
 
 func _on_snapshot_received(kind: String) -> void:
-	if not _store.authenticated or _main.visible:
+	if not _store.authenticated or _in_game:
 		return
 	if not REQUIRED_SNAPSHOTS.has(kind):
 		return
@@ -294,6 +314,7 @@ func _on_snapshot_received(kind: String) -> void:
 	for required: String in REQUIRED_SNAPSHOTS:
 		if not _snapshots.has(required):
 			return
+	_in_game = true
 	_show_main()
 
 
@@ -320,6 +341,11 @@ func _on_action_rejected(payload: Dictionary) -> void:
 	var code := Protocol.as_string(payload.get("reason_code"), "UNKNOWN")
 	var verb := Protocol.as_string(payload.get("verb"))
 	var effect := RejectionPolicy.effect_for(code)
+
+	# 이름 변경 거절은 그 화면이 안내한다. 잔여 시간이 담겨 오기 때문이다
+	if verb == "changename" and _status.visible:
+		_status.show_rejection(payload)
+		return
 
 	match effect:
 		RejectionPolicy.Effect.RESYNC_ROOM:

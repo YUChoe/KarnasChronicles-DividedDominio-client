@@ -742,5 +742,85 @@
     "ui.shop.shortfall": {
         "en": "Not enough gold. You need {short} more.",
         "ko": "골드가 부족합니다. {short} 더 필요합니다."
+    },
+    "ui.status.title": {
+        "en": "Character",
+        "ko": "상태"
+    },
+    "ui.status.open": {
+        "en": "Character",
+        "ko": "상태"
+    },
+    "ui.status.close": {
+        "en": "Back",
+        "ko": "돌아가기"
+    },
+    "ui.status.identity": {
+        "en": "{display_name} ({username})",
+        "ko": "{display_name} ({username})"
+    },
+    "ui.status.faction": {
+        "en": "Faction {faction}",
+        "ko": "종족 {faction}"
+    },
+    "ui.status.no_faction": {
+        "en": "No faction",
+        "ko": "종족 없음"
+    },
+    "ui.status.hp": {
+        "en": "HP {hp} / {max_hp}",
+        "ko": "HP {hp} / {max_hp}"
+    },
+    "ui.status.stamina": {
+        "en": "Stamina {stamina} / {max_stamina}",
+        "ko": "스태미나 {stamina} / {max_stamina}"
+    },
+    "ui.status.stats": {
+        "en": "Abilities",
+        "ko": "능력치"
+    },
+    "ui.status.bonuses": {
+        "en": "Equipment bonuses",
+        "ko": "장비 보너스"
+    },
+    "ui.status.effects": {
+        "en": "Temporary effects",
+        "ko": "임시 효과"
+    },
+    "ui.status.none": {
+        "en": "None",
+        "ko": "없음"
+    },
+    "ui.status.rename": {
+        "en": "Change display name",
+        "ko": "표시 이름 변경"
+    },
+    "ui.status.rename_placeholder": {
+        "en": "New name",
+        "ko": "새 이름"
+    },
+    "ui.stat.strength": {
+        "en": "Strength",
+        "ko": "힘"
+    },
+    "ui.stat.dexterity": {
+        "en": "Dexterity",
+        "ko": "민첩"
+    },
+    "ui.stat.constitution": {
+        "en": "Constitution",
+        "ko": "체력"
+    },
+    "ui.stat.intelligence": {
+        "en": "Intelligence",
+        "ko": "지능"
+    },
+    "ui.stat.wisdom": {
+        "en": "Wisdom",
+        "ko": "지혜"
+    },
+    "ui.stat.charisma": {
+        "en": "Charisma",
+        "ko": "매력"
     }
 }

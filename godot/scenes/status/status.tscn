@@ -1,0 +1,96 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/status/status.gd" id="1_status"]
+
+[node name="Status" type="VBoxContainer"]
+offset_right = 720.0
+offset_bottom = 480.0
+theme_override_constants/separation = 8
+script = ExtResource("1_status")
+
+[node name="Header" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="StatusTitle" type="Label" parent="Header"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="IdentityLabel" type="Label" parent="Header"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="FactionLabel" type="Label" parent="Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="StatusClose" type="Button" parent="Header"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Back"
+
+[node name="VitalsRow" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="HpLabel" type="Label" parent="VitalsRow"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="StaminaLabel" type="Label" parent="VitalsRow"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="StatsTitle" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="StatRows" type="GridContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 4
+columns = 4
+
+[node name="BonusesTitle" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="BonusesLabel" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="EffectsTitle" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="EffectsLabel" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="RenameRow" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="RenameLabel" type="Label" parent="RenameRow"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="RenameEdit" type="LineEdit" parent="RenameRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="RenameButton" type="Button" parent="RenameRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Change display name"
+
+[node name="StatusNotice" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3

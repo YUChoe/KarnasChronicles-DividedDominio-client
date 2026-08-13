@@ -2,5 +2,9 @@
     "account.name_changed": {
         "en": "Your display name changed from {old_name} to {new_name}.",
         "ko": "표시 이름이 '{old_name}'에서 '{new_name}'(으)로 변경되었습니다."
+    },
+    "account.name_change_cooldown": {
+        "en": "You can change your display name again in {hours_left} hours.",
+        "ko": "표시 이름은 {hours_left}시간 뒤에 다시 바꿀 수 있습니다."
     }
 }

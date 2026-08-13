@@ -52,7 +52,8 @@ func apply_texts() -> void:
 	_channel.set_item_text(1, _translator.t("ui.chat.channel_whisper"))
 	_send.text = _translator.t("ui.chat.send")
 	_input.placeholder_text = _translator.t("ui.chat.placeholder")
-	if _target_ids.is_empty():
+	# 항목이 없는데 set_item_text 를 부르면 범위를 벗어난다
+	if _target_ids.is_empty() and _target.item_count > 0:
 		_target.set_item_text(0, _translator.t("ui.chat.no_target"))
 
 
