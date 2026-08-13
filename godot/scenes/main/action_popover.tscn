@@ -1,0 +1,52 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/main/action_popover.gd" id="1_popover"]
+
+[node name="ActionPopover" type="PanelContainer"]
+offset_right = 520.0
+offset_bottom = 160.0
+script = ExtResource("1_popover")
+
+[node name="Margin" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="Box" type="VBoxContainer" parent="Margin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="TopRow" type="HBoxContainer" parent="Margin/Box"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="TargetName" type="Label" parent="Margin/Box/TopRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TargetMeta" type="Label" parent="Margin/Box/TopRow"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="PopoverClose" type="Button" parent="Margin/Box/TopRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Close"
+
+[node name="TargetHp" type="Label" parent="Margin/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="TargetDescription" type="Label" parent="Margin/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="VerbButtons" type="HFlowContainer" parent="Margin/Box"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 4

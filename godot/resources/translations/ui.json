@@ -235,10 +235,6 @@
         "en": "Chat, the event log and the inventory arrive in later tasks.",
         "ko": "채팅, 이벤트 로그, 인벤토리는 이후 작업에서 추가됩니다."
     },
-    "ui.main.selected": {
-        "en": "Selected {name} — available: {verbs}",
-        "ko": "{name} 선택 — 가능한 동작: {verbs}"
-    },
     "ui.log.all": {
         "en": "All",
         "ko": "전체"
@@ -382,5 +378,93 @@
     "ui.emote.salute": {
         "en": "Salute",
         "ko": "경례하기"
+    },
+    "ui.verb.examine": {
+        "en": "Examine",
+        "ko": "조사"
+    },
+    "ui.verb.attack": {
+        "en": "Attack",
+        "ko": "공격"
+    },
+    "ui.verb.talk": {
+        "en": "Talk",
+        "ko": "대화"
+    },
+    "ui.verb.shop_open": {
+        "en": "Trade",
+        "ko": "거래"
+    },
+    "ui.verb.get": {
+        "en": "Pick up",
+        "ko": "줍기"
+    },
+    "ui.verb.open": {
+        "en": "Open",
+        "ko": "열기"
+    },
+    "ui.verb.read": {
+        "en": "Read",
+        "ko": "읽기"
+    },
+    "ui.verb.follow": {
+        "en": "Follow",
+        "ko": "따라가기"
+    },
+    "ui.verb.give": {
+        "en": "Give",
+        "ko": "건네기"
+    },
+    "ui.verb.drop": {
+        "en": "Drop",
+        "ko": "버리기"
+    },
+    "ui.verb.use": {
+        "en": "Use",
+        "ko": "사용"
+    },
+    "ui.verb.equip": {
+        "en": "Equip",
+        "ko": "장착"
+    },
+    "ui.verb.unequip": {
+        "en": "Unequip",
+        "ko": "해제"
+    },
+    "ui.verb.shop_sell": {
+        "en": "Sell",
+        "ko": "판매"
+    },
+    "ui.disposition.friendly": {
+        "en": "friendly",
+        "ko": "우호"
+    },
+    "ui.disposition.neutral": {
+        "en": "neutral",
+        "ko": "중립"
+    },
+    "ui.disposition.hostile": {
+        "en": "hostile",
+        "ko": "적대"
+    },
+    "ui.target.hp": {
+        "en": "HP {hp}/{max_hp}",
+        "ko": "HP {hp}/{max_hp}"
+    },
+    "ui.target.no_description": {
+        "en": "Nothing more to note.",
+        "ko": "더 볼 것이 없습니다."
+    },
+    "ui.target.stack": {
+        "en": "Quantity {count}",
+        "ko": "수량 {count}"
+    },
+    "ui.action.needs_item": {
+        "en": "Choose an item from the inventory first.",
+        "ko": "먼저 인벤토리에서 아이템을 선택하십시오."
+    },
+    "ui.action.not_applicable": {
+        "en": "{verb} does not apply to {name}.",
+        "ko": "{name}에게 {verb}을(를) 적용할 수 없습니다."
     }
 }

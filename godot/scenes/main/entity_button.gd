@@ -33,7 +33,15 @@ var _translator: TranslatorService = null
 
 
 func _ready() -> void:
+	# 눌린 모습으로 선택을 보인다. 누름 상태는 화면이 정하고 버튼이 스스로
+	# 바꾸지 않는다. 같은 버튼을 다시 눌러도 선택이 풀려서는 안 된다.
+	toggle_mode = true
 	pressed.connect(func() -> void: selected.emit(entity_id))
+
+
+## 선택 여부를 겉모습에 반영한다.
+func set_selected(value: bool) -> void:
+	button_pressed = value
 
 
 ## 엔티티를 담는다. 트리에 넣은 뒤 부른다.

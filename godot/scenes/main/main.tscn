@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scenes/main/main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/main/entity_zone.tscn" id="2_zone"]
@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://scenes/main/player_list.tscn" id="5_players"]
 [ext_resource type="PackedScene" path="res://scenes/main/event_log.tscn" id="6_log"]
 [ext_resource type="PackedScene" path="res://scenes/main/chat_bar.tscn" id="7_chat"]
+[ext_resource type="PackedScene" path="res://scenes/main/action_popover.tscn" id="8_popover"]
 
 [node name="Main" type="VBoxContainer"]
 offset_right = 900.0
@@ -85,6 +86,11 @@ unique_name_in_owner = true
 visible = false
 layout_mode = 2
 size_flags_vertical = 3
+
+[node name="ActionPopover" parent="Body/Left" instance=ExtResource("8_popover")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
 
 [node name="Right" type="VBoxContainer" parent="Body"]
 custom_minimum_size = Vector2(220, 0)

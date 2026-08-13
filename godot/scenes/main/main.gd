@@ -11,8 +11,6 @@ extends VBoxContainer
 
 signal logout_requested()
 signal admin_requested()
-## 대상 선택. 적용 가능한 동사를 함께 넘긴다. 팝오버는 Task 6 이 만든다.
-signal entity_selected(entity_id: String, verbs: Array[String])
 ## 조립 지점의 알림 영역에 문구를 띄운다
 signal notice_requested(key: String, params: Dictionary)
 
@@ -35,6 +33,7 @@ const LABEL_CHAT := "chat"
 @onready var _animals: EntityZone = %AnimalsZone
 @onready var _enemies: EntityZone = %EnemiesZone
 @onready var _objects: EntityZone = %ObjectsZone
+@onready var _popover: ActionPopover = %ActionPopover
 @onready var _social: SocialBar = %SocialBar
 @onready var _players: PlayerList = %PlayerList
 @onready var _log: EventLog = %EventLog
@@ -48,6 +47,8 @@ var _direction_buttons: Dictionary = {}
 var _nav_busy := false
 ## `who_result` 로 알게 된 플레이어. uuid → 표시 이름
 var _known_players: Dictionary = {}
+## 선택한 대상. 비어 있으면 선택 없음
+var _selected_id := ""
 
 
 func _ready() -> void:
@@ -83,6 +84,7 @@ func bind(
 	_animals.bind("ui.zone.animals", _translator)
 	_enemies.bind("ui.zone.enemies", _translator)
 	_objects.bind("ui.zone.objects", _translator)
+	_popover.bind(_translator)
 	_social.bind(_translator)
 	_players.bind(_translator)
 	_log.bind(_translator)
@@ -91,6 +93,9 @@ func bind(
 	for zone: EntityZone in [_people, _animals, _enemies, _objects]:
 		zone.entity_selected.connect(_on_entity_selected)
 
+	_popover.action_requested.connect(_on_popover_action)
+	_popover.item_required.connect(_on_popover_item_required)
+	_popover.closed.connect(_clear_selection)
 	_social.verb_requested.connect(_on_social_verb)
 	_social.emote_requested.connect(_on_emote_requested)
 	_players.whisper_requested.connect(_on_whisper_requested)
@@ -226,6 +231,12 @@ func _on_entities_changed() -> void:
 	_objects.set_entities(objects)
 	_refresh_chat_targets()
 
+	# 대상이 방에서 사라지면 선택을 푼다
+	if not _selected_id.is_empty() and not _state.entities.has(_selected_id):
+		_clear_selection()
+	else:
+		_apply_selection()
+
 
 ## 구역 분류는 서버가 계산한 `disposition` 을 따른다. 클라이언트가 판정하지 않는다.
 func _zone_of(entity: Dictionary) -> String:
@@ -284,6 +295,7 @@ func _on_who_result(players: Array) -> void:
 func _on_room_changed() -> void:
 	# 새 방 정보가 곧 이동 완료 신호다. 성공한 액션에는 seq 가 실려 오지 않는다.
 	_nav_busy = false
+	_clear_selection()
 	_refresh_room()
 
 
@@ -291,11 +303,42 @@ func _on_entity_selected(entity_id: String) -> void:
 	var entity: Dictionary = Protocol.as_dict(_state.entities.get(entity_id))
 	if entity.is_empty():
 		return
+
+	_selected_id = entity_id
+	_apply_selection()
+
 	var context: Dictionary = {
 		"has_inventory_items": not Protocol.as_array(
 			_state.inventory.get("items")).is_empty(),
 	}
-	entity_selected.emit(entity_id, ActionRules.for_room_entity(entity, context))
+	_popover.show_target(entity, ActionRules.for_room_entity(entity, context))
+
+
+func _apply_selection() -> void:
+	for zone: EntityZone in [_people, _animals, _enemies, _objects]:
+		zone.set_selected(_selected_id)
+
+
+func _clear_selection() -> void:
+	_selected_id = ""
+	_popover.clear()
+	_apply_selection()
+
+
+func _on_popover_action(verb: String, target_id: String) -> void:
+	if _sender != null:
+		_sender.send_action(verb, target_id)
+
+
+func _on_popover_item_required(_verb: String) -> void:
+	notice_requested.emit("ui.action.needs_item", {})
+
+
+## 서버가 적용 불가라고 답한 동사를 팝오버에서 지운다. 오류로 표시하지 않는다.
+func on_not_applicable(verb: String, target_id: String) -> void:
+	if target_id.is_empty() or target_id != _popover.target_id():
+		return
+	_popover.remove_verb(verb)
 
 
 func _on_direction_pressed(direction: String) -> void:

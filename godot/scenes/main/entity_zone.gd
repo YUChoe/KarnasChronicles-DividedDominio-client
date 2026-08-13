@@ -46,5 +46,13 @@ func set_entities(entities: Array) -> void:
 	visible = not entities.is_empty()
 
 
+## 선택된 하나만 눌린 모습으로 둔다.
+func set_selected(entity_id: String) -> void:
+	for child: Node in _buttons.get_children():
+		if child is EntityButton:
+			var button := child as EntityButton
+			button.set_selected(button.entity_id == entity_id)
+
+
 func _on_button_selected(entity_id: String) -> void:
 	entity_selected.emit(entity_id)
