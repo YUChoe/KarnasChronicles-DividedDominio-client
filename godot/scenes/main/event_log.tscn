@@ -1,0 +1,22 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/main/event_log.gd" id="1_log"]
+
+[node name="EventLog" type="VBoxContainer"]
+offset_right = 880.0
+offset_bottom = 160.0
+theme_override_constants/separation = 4
+script = ExtResource("1_log")
+
+[node name="LogTabs" type="HFlowContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 4
+theme_override_constants/v_separation = 4
+
+[node name="LogView" type="RichTextLabel" parent="."]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 110)
+layout_mode = 2
+size_flags_vertical = 3
+scroll_following = true

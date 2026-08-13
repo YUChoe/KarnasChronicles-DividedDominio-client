@@ -1,39 +1,106 @@
 class_name MainScreen
 extends VBoxContainer
 
-## 게임 화면.
+## 탐험 화면.
 ##
-## 지금은 로그인 이후 상태를 확인하고 로그아웃과 어드민 진입을 제공하는 최소
-## 구성이다. 방 표시, 출구 버튼, 엔티티 버튼, 미니맵은 Task 5 가 채운다.
+## 방 설명, 시간대, 좌표, 출구, 엔티티, 미니맵, 로그, 채팅을 표시한다. 방 이름은
+## 표시하지 않는다. `rooms` 테이블에 이름 컬럼이 없다.
+##
+## 하위 패널은 각자 자기 표시만 담당하고 송신은 이 화면이 모아서 한다. 패널이
+## 네트워크 계층을 알지 않게 한다.
 
 signal logout_requested()
 signal admin_requested()
+## 대상 선택. 적용 가능한 동사를 함께 넘긴다. 팝오버는 Task 6 이 만든다.
+signal entity_selected(entity_id: String, verbs: Array[String])
+## 조립 지점의 알림 영역에 문구를 띄운다
+signal notice_requested(key: String, params: Dictionary)
+
+const DIRECTIONS: Array[String] = ["north", "south", "east", "west"]
+const VERB_MOVE := "move"
+const VERB_ENTER := "enter"
+const VERB_EMOTE := "emote"
+const LABEL_CHAT := "chat"
 
 @onready var _summary: Label = %SummaryLabel
+@onready var _time: Label = %TimeLabel
 @onready var _position: Label = %PositionLabel
+@onready var _description: Label = %DescriptionLabel
 @onready var _logout: Button = %LogoutButton
 @onready var _admin: Button = %AdminButton
-@onready var _placeholder: Label = %PlaceholderLabel
+@onready var _minimap: Minimap = %Minimap
+@onready var _exits_title: Label = %ExitsTitle
+@onready var _enter: Button = %EnterButton
+@onready var _people: EntityZone = %PeopleZone
+@onready var _animals: EntityZone = %AnimalsZone
+@onready var _enemies: EntityZone = %EnemiesZone
+@onready var _objects: EntityZone = %ObjectsZone
+@onready var _social: SocialBar = %SocialBar
+@onready var _players: PlayerList = %PlayerList
+@onready var _log: EventLog = %EventLog
+@onready var _chat: ChatBar = %ChatBar
 
 var _state: GameStateStore = null
 var _translator: TranslatorService = null
+var _sender: ActionSender = null
+## 방향 → 버튼
+var _direction_buttons: Dictionary = {}
+var _nav_busy := false
+## `who_result` 로 알게 된 플레이어. uuid → 표시 이름
+var _known_players: Dictionary = {}
 
 
 func _ready() -> void:
 	_logout.pressed.connect(func() -> void: logout_requested.emit())
 	_admin.pressed.connect(func() -> void: admin_requested.emit())
+	_enter.pressed.connect(_on_enter_pressed)
+
+	for direction: String in DIRECTIONS:
+		var button: Button = get_node("%%%sButton" % direction.capitalize())
+		_direction_buttons[direction] = button
+		button.pressed.connect(_on_direction_pressed.bind(direction))
 
 
-func bind(state: GameStateStore, translator: TranslatorService) -> void:
+func bind(
+	state: GameStateStore, translator: TranslatorService, sender: ActionSender
+) -> void:
 	_state = state
 	_translator = translator
+	_sender = sender
 
-	_state.player_changed.connect(_refresh)
-	_state.room_changed.connect(_refresh)
+	_state.player_changed.connect(_on_player_changed)
+	_state.room_changed.connect(_on_room_changed)
+	_state.entities_changed.connect(_on_entities_changed)
+	_state.chat_received.connect(_log.add_chat)
+	_state.event_received.connect(_log.add_event)
+	_state.who_result_received.connect(_on_who_result)
 	_translator.locale_changed.connect(_on_locale_changed)
+	_sender.request_settled.connect(_on_request_settled)
+	_sender.request_timed_out.connect(_on_request_timed_out)
+
+	_minimap.bind(_translator)
+	_people.bind("ui.zone.people", _translator)
+	_animals.bind("ui.zone.animals", _translator)
+	_enemies.bind("ui.zone.enemies", _translator)
+	_objects.bind("ui.zone.objects", _translator)
+	_social.bind(_translator)
+	_players.bind(_translator)
+	_log.bind(_translator)
+	_chat.bind(_translator)
+
+	for zone: EntityZone in [_people, _animals, _enemies, _objects]:
+		zone.entity_selected.connect(_on_entity_selected)
+
+	_social.verb_requested.connect(_on_social_verb)
+	_social.emote_requested.connect(_on_emote_requested)
+	_players.whisper_requested.connect(_on_whisper_requested)
+	_chat.message_submitted.connect(_on_chat_submitted)
+	_chat.target_missing.connect(_on_chat_target_missing)
 
 	apply_texts()
-	_refresh()
+	_on_player_changed()
+	_refresh_room()
+	_on_entities_changed()
 
 
 func apply_texts() -> void:
@@ -41,36 +108,258 @@ func apply_texts() -> void:
 		return
 	_logout.text = _translator.t("ui.main.sign_out")
 	_admin.text = _translator.t("ui.main.admin_panel")
-	_placeholder.text = _translator.t("ui.main.placeholder")
+	_exits_title.text = _translator.t("ui.room.exits")
+	_enter.text = _translator.t("ui.room.enter")
+
+	for direction: String in DIRECTIONS:
+		var button: Button = _direction_buttons[direction]
+		button.text = _translator.t("ui.direction.%s" % direction)
+
+	_minimap.apply_texts()
+	_people.apply_texts()
+	_animals.apply_texts()
+	_enemies.apply_texts()
+	_objects.apply_texts()
 
 
 func set_logout_busy(busy: bool) -> void:
 	_logout.disabled = busy
 
 
-func _refresh() -> void:
-	if _state == null or _translator == null:
+func _on_player_changed() -> void:
+	if _state == null:
 		return
 
 	var display_name := Protocol.as_string(_state.player.get("display_name"), "?")
 	var username := Protocol.as_string(_state.player.get("username"), "?")
-	_summary.text = "%s (%s)" % [display_name, username]
-
-	if _state.room.is_empty():
-		_position.text = ""
-	else:
-		_position.text = _translator.t("ui.main.position", {
-			"terrain": Protocol.as_string(_state.room.get("room_type"), "?"),
-			"x": Protocol.as_int(_state.room.get("x")),
-			"y": Protocol.as_int(_state.room.get("y")),
-			"time_of_day": _state.time_of_day,
-		})
+	var faction := Protocol.as_string(_state.player.get("faction_id"))
+	_summary.text = ("%s (%s)" % [display_name, username]
+		if faction.is_empty() else "%s (%s)  %s" % [display_name, username, faction])
 
 	# 권한만으로는 진입 가능 여부를 알 수 없다. 어드민 포트를 열지 않은 배포가
 	# 있으므로 서버가 알려준 `available` 이 참일 때만 노출한다.
 	_admin.visible = Protocol.as_bool(_state.admin_channel.get("available"))
+	_social.set_following(
+		not Protocol.as_string(_state.player.get("following")).is_empty())
+
+
+func _refresh_room() -> void:
+	if _state == null or _translator == null:
+		return
+
+	if _state.room.is_empty():
+		_description.text = ""
+		_position.text = ""
+		_time.text = ""
+		_enter.visible = false
+		for direction: String in DIRECTIONS:
+			var hidden: Button = _direction_buttons[direction]
+			hidden.visible = false
+		return
+
+	var description := _translator.pick(_state.room.get("description"))
+	_description.text = (description if not description.is_empty()
+		else _translator.t("ui.room.no_description"))
+
+	var room_type := Protocol.as_string(
+		_state.room.get("room_type"), Terrain.UNKNOWN)
+	_position.text = _translator.t("ui.room.position", {
+		"icon": Terrain.icon_of(room_type),
+		"terrain": room_type,
+		"x": Protocol.as_int(_state.room.get("x")),
+		"y": Protocol.as_int(_state.room.get("y")),
+	})
+	_time.text = _translator.t("ui.room.time.%s" % (
+		_state.time_of_day if not _state.time_of_day.is_empty() else "day"))
+
+	_refresh_exits()
+	_minimap.render(_state.nearby_rooms,
+		Protocol.as_int(_state.room.get("x")),
+		Protocol.as_int(_state.room.get("y")))
+
+
+## 이동 가능한 출구는 활성, 막힌 출구는 비활성, 그 밖의 방향은 숨긴다.
+func _refresh_exits() -> void:
+	var exits := Protocol.as_array(_state.room.get("exits"))
+	var blocked := Protocol.as_array(_state.room.get("blocked_exits"))
+
+	for direction: String in DIRECTIONS:
+		var button: Button = _direction_buttons[direction]
+		if exits.has(direction):
+			button.visible = true
+			button.disabled = _nav_busy
+		elif blocked.has(direction):
+			button.visible = true
+			button.disabled = true
+		else:
+			button.visible = false
+
+	# `enter` 는 `room_connections` 기반이라 대상 엔티티가 없다
+	_enter.visible = Protocol.as_bool(_state.room.get("has_passage"))
+	_enter.disabled = _nav_busy
+
+
+func _on_entities_changed() -> void:
+	if _state == null:
+		return
+
+	var people: Array = []
+	var animals: Array = []
+	var enemies: Array = []
+	var objects: Array = []
+
+	for entity_id: Variant in _state.entities:
+		var entity: Dictionary = Protocol.as_dict(_state.entities[entity_id])
+		match _zone_of(entity):
+			"objects":
+				objects.append(entity)
+			"enemies":
+				enemies.append(entity)
+			"animals":
+				animals.append(entity)
+			_:
+				people.append(entity)
+
+	_people.set_entities(people)
+	_animals.set_entities(animals)
+	_enemies.set_entities(enemies)
+	_objects.set_entities(objects)
+	_refresh_chat_targets()
+
+
+## 구역 분류는 서버가 계산한 `disposition` 을 따른다. 클라이언트가 판정하지 않는다.
+func _zone_of(entity: Dictionary) -> String:
+	match Protocol.as_string(entity.get("kind")):
+		ActionRules.KIND_OBJECT:
+			return "objects"
+		ActionRules.KIND_PLAYER:
+			return "people"
+		ActionRules.KIND_MONSTER:
+			match Protocol.as_string(entity.get("disposition")):
+				"hostile":
+					return "enemies"
+				"neutral":
+					return "animals"
+	return "people"
+
+
+## 귓속말 대상은 같은 방의 플레이어와 `who_result` 로 알게 된 플레이어다.
+## 자신은 제외한다.
+func _refresh_chat_targets() -> void:
+	var my_id := Protocol.as_string(_state.player.get("id"))
+	var targets: Dictionary = {}
+
+	for entity_id: Variant in _state.entities:
+		var entity: Dictionary = Protocol.as_dict(_state.entities[entity_id])
+		if Protocol.as_string(entity.get("kind")) != ActionRules.KIND_PLAYER:
+			continue
+		var id := Protocol.as_string(entity.get("id"))
+		if id.is_empty() or id == my_id:
+			continue
+		targets[id] = _translator.pick(entity.get("name"))
+
+	for id: Variant in _known_players:
+		var known := Protocol.as_string(id)
+		if known == my_id:
+			continue
+		targets[known] = Protocol.as_string(_known_players[id], known)
+
+	_chat.set_targets(targets)
+
+
+func _on_who_result(players: Array) -> void:
+	for value: Variant in players:
+		var player: Dictionary = Protocol.as_dict(value)
+		var id := Protocol.as_string(player.get("id"))
+		if id.is_empty():
+			continue
+		var display_name := Protocol.as_string(player.get("display_name"))
+		_known_players[id] = (Protocol.as_string(player.get("username"), id)
+			if display_name.is_empty() else display_name)
+
+	_refresh_chat_targets()
+	_players.show_players(players)
+
+
+func _on_room_changed() -> void:
+	# 새 방 정보가 곧 이동 완료 신호다. 성공한 액션에는 seq 가 실려 오지 않는다.
+	_nav_busy = false
+	_refresh_room()
+
+
+func _on_entity_selected(entity_id: String) -> void:
+	var entity: Dictionary = Protocol.as_dict(_state.entities.get(entity_id))
+	if entity.is_empty():
+		return
+	var context: Dictionary = {
+		"has_inventory_items": not Protocol.as_array(
+			_state.inventory.get("items")).is_empty(),
+	}
+	entity_selected.emit(entity_id, ActionRules.for_room_entity(entity, context))
+
+
+func _on_direction_pressed(direction: String) -> void:
+	if _sender == null:
+		return
+	_nav_busy = true
+	_refresh_exits()
+	_sender.send_action(VERB_MOVE, "", {"direction": direction})
+
+
+func _on_enter_pressed() -> void:
+	if _sender == null:
+		return
+	_nav_busy = true
+	_refresh_exits()
+	_sender.send_action(VERB_ENTER)
+
+
+func _on_social_verb(verb: String) -> void:
+	if _sender != null:
+		_sender.send_action(verb)
+
+
+func _on_emote_requested(emote_id: String) -> void:
+	if _sender != null:
+		_sender.send_action(VERB_EMOTE, "", {"emote_id": emote_id})
+
+
+func _on_whisper_requested(player_id: String) -> void:
+	_chat.focus_whisper(player_id)
+
+
+func _on_chat_submitted(channel: String, message: String, to: String) -> void:
+	if _sender == null:
+		return
+	var fields: Dictionary = {"channel": channel, "message": message}
+	if channel == Protocol.CHAT_WHISPER:
+		fields["to"] = to
+	_sender.send_request(Protocol.CHAT, fields, LABEL_CHAT)
+
+
+func _on_chat_target_missing() -> void:
+	notice_requested.emit("ui.chat.pick_target", {})
+
+
+func _on_request_settled(_seq: int, label: String, _message_type: String) -> void:
+	_release_nav(label)
+
+
+func _on_request_timed_out(_seq: int, label: String) -> void:
+	_release_nav(label)
+
+
+## 거절이나 무응답으로 끝난 이동은 버튼을 되살린다.
+func _release_nav(label: String) -> void:
+	if label != VERB_MOVE and label != VERB_ENTER:
+		return
+	_nav_busy = false
+	if _state != null and not _state.room.is_empty():
+		_refresh_exits()
 
 
 func _on_locale_changed(_locale: String) -> void:
 	apply_texts()
-	_refresh()
+	_on_player_changed()
+	_refresh_room()
+	_on_entities_changed()

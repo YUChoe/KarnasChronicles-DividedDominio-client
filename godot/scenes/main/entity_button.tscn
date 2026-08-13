@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/main/entity_button.gd" id="1_entity"]
+
+[node name="EntityButton" type="Button"]
+offset_right = 180.0
+offset_bottom = 32.0
+script = ExtResource("1_entity")

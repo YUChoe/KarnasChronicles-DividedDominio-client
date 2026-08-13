@@ -1,0 +1,45 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/main/social_bar.gd" id="1_social"]
+
+[node name="SocialBar" type="VBoxContainer"]
+offset_right = 220.0
+offset_bottom = 100.0
+theme_override_constants/separation = 4
+script = ExtResource("1_social")
+
+[node name="Row1" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="WhoButton" type="Button" parent="Row1"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Who"
+
+[node name="PlayersHereButton" type="Button" parent="Row1"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Players here"
+
+[node name="UnfollowButton" type="Button" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "Stop following"
+
+[node name="Row2" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="EmoteOptions" type="OptionButton" parent="Row2"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="EmoteButton" type="Button" parent="Row2"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Emote"

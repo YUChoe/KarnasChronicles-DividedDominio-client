@@ -1,37 +1,162 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scenes/main/main.gd" id="1_main"]
+[ext_resource type="PackedScene" path="res://scenes/main/entity_zone.tscn" id="2_zone"]
+[ext_resource type="PackedScene" path="res://scenes/main/minimap.tscn" id="3_minimap"]
+[ext_resource type="PackedScene" path="res://scenes/main/social_bar.tscn" id="4_social"]
+[ext_resource type="PackedScene" path="res://scenes/main/player_list.tscn" id="5_players"]
+[ext_resource type="PackedScene" path="res://scenes/main/event_log.tscn" id="6_log"]
+[ext_resource type="PackedScene" path="res://scenes/main/chat_bar.tscn" id="7_chat"]
 
 [node name="Main" type="VBoxContainer"]
-offset_right = 640.0
-offset_bottom = 320.0
-theme_override_constants/separation = 10
+offset_right = 900.0
+offset_bottom = 560.0
+theme_override_constants/separation = 8
 script = ExtResource("1_main")
 
-[node name="SummaryLabel" type="Label" parent="."]
+[node name="Header" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="SummaryLabel" type="Label" parent="Header"]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
 
-[node name="PositionLabel" type="Label" parent="."]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="PlaceholderLabel" type="Label" parent="."]
-unique_name_in_owner = true
-layout_mode = 2
-autowrap_mode = 3
-
-[node name="Buttons" type="HBoxContainer" parent="."]
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="LogoutButton" type="Button" parent="Buttons"]
+[node name="LogoutButton" type="Button" parent="Header"]
 unique_name_in_owner = true
 layout_mode = 2
 text = "Sign out"
 
-[node name="AdminButton" type="Button" parent="Buttons"]
+[node name="AdminButton" type="Button" parent="Header"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
 text = "Admin panel"
+
+[node name="StatusRow" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="TimeLabel" type="Label" parent="StatusRow"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="PositionLabel" type="Label" parent="StatusRow"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Body" type="HBoxContainer" parent="."]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 16
+
+[node name="Left" type="VBoxContainer" parent="Body"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="DescriptionLabel" type="Label" parent="Body/Left"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="PeopleZone" parent="Body/Left" instance=ExtResource("2_zone")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="AnimalsZone" parent="Body/Left" instance=ExtResource("2_zone")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="EnemiesZone" parent="Body/Left" instance=ExtResource("2_zone")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ObjectsZone" parent="Body/Left" instance=ExtResource("2_zone")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Right" type="VBoxContainer" parent="Body"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Minimap" parent="Body/Right" instance=ExtResource("3_minimap")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="ExitsTitle" type="Label" parent="Body/Right"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Exits"
+
+[node name="ExitsGrid" type="GridContainer" parent="Body/Right"]
+layout_mode = 2
+theme_override_constants/h_separation = 4
+theme_override_constants/v_separation = 4
+columns = 3
+
+[node name="PadTopLeft" type="Control" parent="Body/Right/ExitsGrid"]
+layout_mode = 2
+
+[node name="NorthButton" type="Button" parent="Body/Right/ExitsGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "North"
+
+[node name="PadTopRight" type="Control" parent="Body/Right/ExitsGrid"]
+layout_mode = 2
+
+[node name="WestButton" type="Button" parent="Body/Right/ExitsGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "West"
+
+[node name="EnterButton" type="Button" parent="Body/Right/ExitsGrid"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "Enter"
+
+[node name="EastButton" type="Button" parent="Body/Right/ExitsGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "East"
+
+[node name="PadBottomLeft" type="Control" parent="Body/Right/ExitsGrid"]
+layout_mode = 2
+
+[node name="SouthButton" type="Button" parent="Body/Right/ExitsGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "South"
+
+[node name="PadBottomRight" type="Control" parent="Body/Right/ExitsGrid"]
+layout_mode = 2
+
+[node name="SocialBar" parent="Body/Right" instance=ExtResource("4_social")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="PlayerList" parent="Body/Right" instance=ExtResource("5_players")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+
+[node name="EventLog" parent="." instance=ExtResource("6_log")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="ChatBar" parent="." instance=ExtResource("7_chat")]
+unique_name_in_owner = true
+layout_mode = 2

@@ -90,9 +90,11 @@ func _build_screens() -> void:
 
 	_main = MAIN_SCENE.instantiate()
 	_screens.add_child(_main)
-	_main.bind(_store, _translator)
+	_main.bind(_store, _translator, _action_sender)
 	_main.logout_requested.connect(_on_logout_requested)
 	_main.admin_requested.connect(_on_admin_requested)
+	_main.entity_selected.connect(_on_entity_selected)
+	_main.notice_requested.connect(_set_notice)
 
 	var saved := CredentialStore.load_credentials()
 	if not saved.is_empty():
@@ -239,6 +241,16 @@ func _on_action_rejected(payload: Dictionary) -> void:
 			var key := RejectionPolicy.notice_key(code)
 			if not key.is_empty():
 				_set_notice(key, {"reason_code": code})
+
+
+## 대상 선택. 지금은 적용 가능한 동사를 알림에 적어 규칙 표가 붙었음을 보인다.
+## 팝오버는 Task 6 이 만들고 그때 이 처리를 대체한다.
+func _on_entity_selected(entity_id: String, verbs: Array[String]) -> void:
+	var entity: Dictionary = Protocol.as_dict(_store.entities.get(entity_id))
+	_set_notice("ui.main.selected", {
+		"name": _translator.pick(entity.get("name")),
+		"verbs": ", ".join(verbs),
+	})
 
 
 func _on_admin_requested() -> void:
