@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Chronicles of Karnas: Divided Dominion</title>
+<meta name="description" data-i18n-content="meta.description"
+      content="A text-based multiplayer world of fallen kingdoms and divided rule.">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header class="bar">
+  <span class="brand" data-i18n="brand">The Chronicles of Karnas</span>
+  <nav class="langs" aria-label="Language">
+    <button type="button" data-locale="en" lang="en">English</button>
+    <button type="button" data-locale="ko" lang="ko">한국어</button>
+  </nav>
+</header>
+
+<main>
+
+<section class="hero">
+  <h1 data-i18n="hero.title">The Chronicles of Karnas: Divided Dominion</h1>
+  <p class="tagline" data-i18n="hero.tagline">
+    The old realm has fallen. What remains is divided, and it is contested.
+  </p>
+  <p class="lede" data-i18n="hero.lede">
+    A text-based multiplayer world. Explore ruined settlements, speak with those
+    who stayed, trade for what you need, and choose whom to stand beside.
+  </p>
+  <p class="actions">
+    <a class="button primary" href="#register" data-i18n="hero.register">Create an account</a>
+    <a class="button" href="#download" data-i18n="hero.download">Download the client</a>
+  </p>
+</section>
+
+<section id="about">
+  <h2 data-i18n="about.title">The world</h2>
+  <div class="cards">
+    <article>
+      <h3 data-i18n="about.explore.title">Explore</h3>
+      <p data-i18n="about.explore.body">
+        A coordinate world of towns, roads, wilderness and ruins. Each room
+        describes what is there and where you may go next.
+      </p>
+    </article>
+    <article>
+      <h3 data-i18n="about.talk.title">Talk and trade</h3>
+      <p data-i18n="about.talk.body">
+        Those who remain have their own accounts of what happened. Some will
+        sell you what they can spare; some will ask something in return.
+      </p>
+    </article>
+    <article>
+      <h3 data-i18n="about.fight.title">Stand your ground</h3>
+      <p data-i18n="about.fight.body">
+        Combat is turn-based and honest about its numbers. Factions remember
+        whom you sided with.
+      </p>
+    </article>
+  </div>
+  <p class="note" data-i18n="about.language">
+    The game is playable in English and Korean. Your choice of language changes
+    every description, name and line of dialogue.
+  </p>
+</section>
+
+<section id="screenshots">
+  <h2 data-i18n="shots.title">Screenshots</h2>
+  <div class="shots">
+    <figure data-shot>
+      <img src="/screenshots/town-square.png" alt="" data-i18n-alt="shots.town.alt">
+      <figcaption data-i18n="shots.town">The town square, with the people who kept it.</figcaption>
+    </figure>
+    <figure data-shot>
+      <img src="/screenshots/dialogue.png" alt="" data-i18n-alt="shots.dialogue.alt">
+      <figcaption data-i18n="shots.dialogue">A conversation, and what it costs.</figcaption>
+    </figure>
+    <figure data-shot>
+      <img src="/screenshots/combat.png" alt="" data-i18n-alt="shots.combat.alt">
+      <figcaption data-i18n="shots.combat">A fight you may not win.</figcaption>
+    </figure>
+  </div>
+  <p class="note" data-shots-empty hidden data-i18n="shots.pending">
+    Screenshots are being prepared.
+  </p>
+</section>
+
+<section id="download">
+  <h2 data-i18n="download.title">Download</h2>
+  <p data-i18n="download.body">
+    The client is a standalone application. No installation is required beyond
+    unpacking the archive.
+  </p>
+  <p class="actions" data-downloads></p>
+  <p class="note" data-downloads-empty hidden data-i18n="download.pending">
+    Builds are being prepared. Create your account now and it will be waiting.
+  </p>
+</section>
+
+<section id="register">
+  <h2 data-i18n="register.title">Create an account</h2>
+  <p data-i18n="register.body">
+    One account is all you need. You may change your display name in the game.
+  </p>
+
+  <form novalidate>
+    <p class="field">
+      <label for="username" data-i18n="register.username">Username</label>
+      <input id="username" name="username" type="text" autocomplete="username"
+             minlength="3" maxlength="20" required>
+      <span class="hint" data-i18n="register.username.hint">
+        3 to 20 characters. Letters, digits and underscores only.
+      </span>
+    </p>
+
+    <p class="field">
+      <label for="password" data-i18n="register.password">Password</label>
+      <input id="password" name="password" type="password"
+             autocomplete="new-password" minlength="8" required>
+      <span class="hint" data-i18n="register.password.hint">
+        At least 8 characters.
+      </span>
+    </p>
+
+    <p class="field">
+      <label for="passwordConfirm" data-i18n="register.confirm">Confirm password</label>
+      <input id="passwordConfirm" name="passwordConfirm" type="password"
+             autocomplete="new-password" minlength="8" required>
+    </p>
+
+    <p class="field">
+      <label for="email" data-i18n="register.email">Email (optional)</label>
+      <input id="email" name="email" type="email" autocomplete="email"
+             maxlength="254">
+      <span class="hint" data-i18n="register.email.hint">
+        Used only to recover your account. Leave it empty if you prefer.
+      </span>
+    </p>
+
+    <p class="field">
+      <label for="preferredLocale" data-i18n="register.locale">Preferred language</label>
+      <select id="preferredLocale" name="preferredLocale">
+        <option value="en" lang="en">English</option>
+        <option value="ko" lang="ko">한국어</option>
+      </select>
+    </p>
+
+    <p class="actions">
+      <button class="button primary" type="submit" data-i18n="register.submit">
+        Create account
+      </button>
+    </p>
+
+    <p class="result" data-result role="status" aria-live="polite"></p>
+  </form>
+</section>
+
+</main>
+
+<footer class="bar">
+  <span data-i18n="footer.note">A text-based world, played in your own words.</span>
+</footer>
+
+<script src="/text.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>

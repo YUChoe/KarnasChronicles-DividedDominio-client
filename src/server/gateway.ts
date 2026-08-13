@@ -21,6 +21,20 @@ export interface GatewayOptions {
   maxConnections?: number;
   /** 이 시간 동안 프레임이 오가지 않은 연결을 닫는다 (밀리초). */
   connectionTimeout?: number;
+  /**
+   * 랜딩 라우터. 없으면 HTTP 요청은 모두 404 다.
+   *
+   * 게이트웨이는 요청을 넘기기만 하고 랜딩의 사정을 알지 않는다.
+   */
+  landing?: HttpHandler;
+}
+
+/** HTTP 요청을 처리했으면 참을 돌려준다. */
+export interface HttpHandler {
+  handle(
+    req: http.IncomingMessage,
+    res: http.ServerResponse
+  ): Promise<boolean>;
 }
 
 /** 유휴 연결을 확인하는 주기 (밀리초). */
@@ -39,6 +53,7 @@ export class GatewayServer {
   private adminPort: number;
   private connectionTimeout: number;
   private idleSweeper: NodeJS.Timeout | null = null;
+  private landing: HttpHandler | null;
 
   constructor(options: GatewayOptions = {}) {
     this.port = options.port ?? 3000;
@@ -47,15 +62,15 @@ export class GatewayServer {
     this.adminPort = options.adminPort ?? 4001;
     this.connectionTimeout = options.connectionTimeout ?? 300_000;
     this.connectionPool = new ConnectionPool(options.maxConnections ?? 200);
+    this.landing = options.landing ?? null;
   }
 
   async start(): Promise<void> {
     return new Promise((resolve) => {
-      // HTTP 서버는 WebSocket 업그레이드만 받는다. 웹 어드민은 MUD 서버의
-      // 어드민 채널로 이전했고 랜딩 사이트는 Task 5 에서 다룬다
-      this.httpServer = http.createServer((_req, res) => {
-        res.writeHead(404, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: 'Not found' }));
+      // HTTP 요청은 랜딩 라우터가 처리한다. 라우터가 없거나 처리하지 않은
+      // 경로는 404 다. 웹 어드민은 MUD 서버의 어드민 채널로 이전했다
+      this.httpServer = http.createServer((req, res) => {
+        void this.handleHttp(req, res);
       });
 
       // 채널마다 별도 WebSocket 서버를 둔다. 경로로 라우팅한다
@@ -119,6 +134,30 @@ export class GatewayServer {
         resolve();
       });
     });
+  }
+
+  private async handleHttp(
+    req: http.IncomingMessage,
+    res: http.ServerResponse
+  ): Promise<void> {
+    try {
+      if (this.landing !== null && (await this.landing.handle(req, res))) {
+        return;
+      }
+    } catch (error) {
+      logger.error('HTTP handling error', {
+        url: req.url,
+        error: error instanceof Error ? error.message : String(error)
+      });
+      if (!res.headersSent) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ok: false, error: 'internal' }));
+      }
+      return;
+    }
+
+    res.writeHead(404, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Not found' }));
   }
 
   private async handleConnection(
