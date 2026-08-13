@@ -1,280 +1,182 @@
-# Karnas Chronicles: Divided Dominion - Browser Telnet Terminal
+# Karnas Chronicles: Divided Dominion — 게이트웨이와 랜딩
 
-브라우저 기반 텔넷 터미널 클라이언트 - MUD 서버 연결용
+MUD 서버(`Echoes-of-the-Fallen-Age`)와 Godot 클라이언트 사이의 WebSocket
+게이트웨이, 그리고 회원가입을 받는 랜딩 사이트입니다. Godot 클라이언트도 같은
+저장소의 [godot/](./godot/) 에 있습니다.
 
-웹 브라우저를 통해 텔넷 기반 MUD(Multi-User Dungeon) 게임 서버에 접속할 수 있는 현대적인 터미널 클라이언트입니다. 별도의 텔넷 클라이언트 설치 없이 브라우저만으로 Karnas Chronicles: Divided Dominion 게임을 즐길 수 있습니다.
+## 구성 요소
 
-## 주요 기능
+| 구성 요소 | 위치 | 역할 |
+|---|---|---|
+| 게이트웨이 | [src/server/](./src/server/) | WebSocket ↔ TCP 중계. 두 채널을 경로로 가른다 |
+| 랜딩 | [src/server/public/](./src/server/public/), [src/server/landing/](./src/server/landing/) | 게임 소개와 회원가입 |
+| Godot 클라이언트 | [godot/](./godot/) | 게임 화면. 별도 스펙이 다룬다 |
 
-- 🖥️ **xterm.js 기반 터미널**: 120x60 크기의 고품질 터미널 에뮬레이터
-- 🎨 **ANSI 색상 지원**: 풀 컬러 ANSI 이스케이프 코드 렌더링
-- 🔄 **자동 재연결**: 네트워크 중단 시 지수 백오프를 사용한 자동 재연결
-- ⚡ **고성능**: WebGL 가속 렌더링 지원
-- 🔒 **보안**: XSS 방지 및 입력 검증
-- 📊 **확장성**: 최대 200개의 동시 연결 지원
-- 🎯 **특수 키 지원**: Backspace, 화살표 키, Ctrl+C 등 완벽 지원
+게이트웨이는 상태를 갖지 않습니다. 데이터베이스에 접근하지 않고 메시지 내용을
+해석하지 않습니다. 인증은 MUD 서버가 합니다.
 
-## 시스템 요구사항
+### 채널
+
+| 경로 | 상위 포트 | 용도 |
+|---|---|---|
+| `/ws` | TCP 4000 | 게임 채널 |
+| `/admin` | TCP 4001 | 어드민 채널. 인증은 서버가 판정한다 |
+| `/api/register` | TCP 4001 | 회원가입. 서비스 토큰은 게이트웨이만 갖는다 |
+
+그 밖의 경로로 오는 업그레이드 요청은 404 로 거부합니다. 잘못된 포트에 붙었을
+때 조용히 실패하지 않게 하려는 것입니다.
+
+### 프로토콜
+
+개행으로 구분되는 JSON 라인입니다. 게이트웨이는 봉투를 씌우지 않고 서버가 보낸
+라인을 그대로 WebSocket 프레임으로 전달합니다. 자신의 제어 메시지에만
+`gateway_` 접두어를 씁니다.
+
+라인 길이 상한은 256KB 입니다. TCP 청크 경계는 라인 경계와 무관하므로 개행을
+찾은 뒤에만 UTF-8 로 디코딩합니다. 멀티바이트 문자가 청크 경계에서 갈라져도
+손상되지 않습니다.
+
+계약 문서는 서버 저장소의 `docs/protocol/` 입니다. 세 저장소가 그 문서를
+기준으로 삼습니다.
+
+## 요구 사항
 
 - Node.js 20.x LTS 이상
-- npm 또는 pnpm
-- 텔넷 서버 (localhost:4000에서 실행 중이어야 함)
+- MUD 서버가 TCP 4000(게임), 4001(어드민)에서 실행 중
+- Godot 4.2.2 (클라이언트를 열거나 검사할 때만)
 
-## 설치
+## 설치와 실행
 
 ```bash
-# 저장소 클론
-git clone <repository-url>
-cd karnas-chronicles-terminal
-
-# 의존성 설치
 npm install
-```
 
-## 실행 방법
-
-### 개발 모드
-
-개발 모드에서는 클라이언트와 서버를 별도의 터미널에서 실행해야 합니다.
-
-**터미널 1 - 클라이언트 개발 서버:**
-```bash
-npm run dev:client
-```
-브라우저에서 http://localhost:5173 접속
-
-**터미널 2 - WebSocket Gateway 서버:**
-```bash
+# 게이트웨이 (감시 모드)
 npm run dev:server
 ```
-WebSocket Gateway가 포트 3000에서 실행됩니다.
 
-**터미널 3 - 텔넷 서버 (별도 준비 필요):**
-```bash
-# 예시: 텔넷 서버가 포트 4000에서 실행되어야 함
-# 실제 MUD 서버 실행 명령어 사용
-```
-
-### 프로덕션 빌드
+랜딩을 브라우저에서 보려면 정적 서빙을 켭니다. 프로덕션에서는 nginx 가 맡으므로
+개발에서만 켭니다.
 
 ```bash
-# 클라이언트와 서버 빌드
-npm run build
-
-# 빌드된 서버 실행
-node dist/server/start.js
-
-# 빌드된 클라이언트는 dist/client 디렉토리에 생성됨
-# 정적 파일 서버로 제공 (예: nginx, Apache, CDN)
+LANDING_SERVE_STATIC=1 LANDING_SERVICE_TOKEN=dev-token npm run dev:server
+# http://localhost:3000
 ```
 
-### Docker 배포
+`LANDING_SERVICE_TOKEN` 은 MUD 서버의 같은 이름 환경변수와 같아야 합니다.
+비워 두면 회원가입 경로를 만들지 않고 `/api/register` 가 503 을 돌려줍니다.
+서버도 토큰이 없는 배포에서는 그 경로를 등록하지 않습니다.
 
-Gateway 서버를 Docker로 배포할 수 있습니다:
+## 환경 변수
+
+| 변수 | 기본값 | 용도 |
+|---|---|---|
+| `WS_PORT` | `3000` | 게이트웨이 포트 |
+| `TELNET_HOST` | `localhost` | MUD 서버 주소 |
+| `TELNET_PORT` | `4000` | 게임 채널 포트 |
+| `ADMIN_PORT` | `4001` | 어드민 채널 포트 |
+| `MAX_CONNECTIONS` | `200` | 최대 동시 연결 |
+| `CONNECTION_TIMEOUT` | `300000` | 프레임이 오가지 않은 연결을 닫는 기준 (밀리초) |
+| `LANDING_SERVICE_TOKEN` | 없음 | 회원가입용 서비스 토큰. 브라우저로 나가지 않는다 |
+| `LANDING_SERVE_STATIC` | `0` | `1` 이면 게이트웨이가 정적 자산을 서빙한다 (개발용) |
+| `LANDING_STATIC_ROOT` | `src/server/public` | 정적 자산 경로 |
+| `REGISTER_LIMIT` | `5` | IP 당 회원가입 허용 횟수 |
+| `REGISTER_WINDOW_MS` | `3600000` | 그 횟수를 세는 구간 (밀리초) |
+| `LOG_LEVEL` | `info` | `error`, `warn`, `info`, `debug` |
+
+`.env.example` 을 `.env` 로 복사해 씁니다.
+
+## 빌드와 배포
 
 ```bash
-# Docker 이미지 빌드
-./scripts/build-docker.sh
-
-# Docker 컨테이너 실행
-docker run -d \
-  --name telnet-gateway \
-  -p 3000:3000 \
-  -v $(pwd)/logs:/app/logs \
-  --env-file .env \
-  karnas-chronicles-terminal:latest
-
-# 또는 docker-compose 사용
-docker-compose up -d
+npm run build:server     # dist/server 에 CommonJS 산출
+node dist/server/server/start.js
 ```
 
-**참고**: 클라이언트 정적 파일(`dist/client`)은 별도의 웹 서버(nginx, Apache, CDN 등)에서 서빙하세요. 자세한 내용은 [DEPLOYMENT.md](./DEPLOYMENT.md)를 참조하세요.
-
-## 설정 옵션
-
-### 환경 변수
-
-서버 설정을 위한 환경 변수를 `.env` 파일에 정의할 수 있습니다:
-
-```bash
-# WebSocket Gateway 포트
-WS_PORT=3000
-
-# 텔넷 서버 주소
-TELNET_HOST=localhost
-TELNET_PORT=4000
-
-# 최대 동시 연결 수
-MAX_CONNECTIONS=200
-
-# 로그 레벨 (error, warn, info, debug)
-LOG_LEVEL=info
-
-# Node 환경
-NODE_ENV=production
-```
-
-### 클라이언트 설정
-
-클라이언트 설정은 `src/client/main.ts`에서 수정할 수 있습니다:
-
-```typescript
-const config = {
-  wsUrl: 'ws://localhost:3000',  // WebSocket Gateway URL
-  terminalWidth: 120,             // 터미널 너비
-  terminalHeight: 60,             // 터미널 높이
-  reconnectDelay: 1000,           // 초기 재연결 지연 (ms)
-  maxReconnectAttempts: 10        // 최대 재연결 시도 횟수
-};
-```
-
-## 프로젝트 구조
-
-```
-karnas-chronicles-terminal/
-├── src/
-│   ├── client/                    # 브라우저 클라이언트
-│   │   ├── index.html            # HTML 엔트리 포인트
-│   │   ├── main.ts               # 클라이언트 메인 로직
-│   │   ├── terminal-manager.ts   # 터미널 관리자
-│   │   └── __tests__/            # 클라이언트 테스트
-│   ├── server/                    # WebSocket Gateway
-│   │   ├── start.ts              # 서버 엔트리 포인트
-│   │   ├── gateway.ts            # Gateway 메인 로직
-│   │   ├── telnet-client.ts      # 텔넷 클라이언트
-│   │   ├── connection-pool.ts    # 연결 풀 관리
-│   │   ├── sanitizer.ts          # XSS 방지
-│   │   ├── logger.ts             # 로깅 설정
-│   │   └── __tests__/            # 서버 테스트
-│   ├── shared/                    # 공유 코드
-│   │   └── types.ts              # 공유 타입 정의
-│   └── __tests__/                 # E2E 및 부하 테스트
-├── dist/                          # 빌드 출력
-├── logs/                          # 로그 파일
-├── .kiro/                         # 프로젝트 스펙 및 설계
-└── package.json
-```
+Docker 와 nginx 를 쓰는 배포 절차는 [DEPLOYMENT.md](./DEPLOYMENT.md) 에 있습니다.
+정적 자산은 프로덕션에서 nginx 가 서빙하고 게이트웨이는 API 만 맡습니다.
 
 ## 테스트
 
 ```bash
-# 모든 테스트 실행
-npm test
+npm test              # 게이트웨이와 랜딩 단위 테스트
+npm run test:e2e      # 게이트웨이 전체 사슬
+npm run test:load     # 동시 연결 특성
+npm run type-check    # 타입 검사 (테스트 포함)
 
-# 서버 테스트만 실행
-npm run test:server
-
-# E2E 테스트 실행
-npm run test:e2e
-
-# 부하 테스트 실행
-npm run test:load
-
-# 타입 체크
-npm run type-check
+npm run check:godot   # Godot 스크립트 정적 검사
+npm run test:godot    # Godot 클라이언트 테스트
+npm run check:contract # 계약 문서와 클라이언트 처리 범위 대조
 ```
 
-## 문제 해결 가이드
+랜딩의 브라우저 스크립트는 순수 JavaScript 이며 타입 검사 대상이 아닙니다.
+검증 규칙은 게이트웨이의 `landing/validate.ts` 와 같은 규칙 이름을 씁니다.
 
-### 연결 문제
+## 프로젝트 구조
 
-**문제: "연결 실패" 오류 메시지**
+```
+├── src/
+│   ├── server/
+│   │   ├── start.ts            엔트리. 환경변수를 읽어 배선한다
+│   │   ├── gateway.ts          채널 라우팅과 중계
+│   │   ├── telnet-client.ts    상위 TCP 연결
+│   │   ├── line-framer.ts      개행 경계 복원
+│   │   ├── connection-pool.ts  연결 풀과 유휴 정리
+│   │   ├── logger.ts           winston 설정
+│   │   ├── landing/            회원가입 경로와 정적 서빙
+│   │   ├── public/             랜딩 정적 자산
+│   │   └── __tests__/          게이트웨이·랜딩 테스트
+│   ├── shared/types.ts         게이트웨이 제어 메시지 타입
+│   └── __tests__/              e2e·부하 테스트
+├── godot/                      Godot 클라이언트
+├── scripts/                    검사와 배포 스크립트
+├── downloads/                  클라이언트 빌드 배포 위치
+├── nginx.conf                  랜딩 서빙과 프록시
+└── .kiro/specs/                스펙과 설계
+```
 
-해결 방법:
-1. 텔넷 서버가 localhost:4000에서 실행 중인지 확인
-   ```bash
-   telnet localhost 4000
-   ```
-2. WebSocket Gateway가 실행 중인지 확인
-3. 방화벽 설정 확인
+## 문제 해결
 
-**문제: 자동 재연결이 작동하지 않음**
+### 게이트웨이가 상위 서버에 붙지 못한다
 
-해결 방법:
-1. 브라우저 콘솔에서 에러 로그 확인
-2. 네트워크 탭에서 WebSocket 연결 상태 확인
-3. 서버 로그 확인 (`logs/combined.log`)
+MUD 서버가 4000 과 4001 에서 듣고 있는지 확인합니다. 어드민 포트는 기본이
+루프백 바인드이므로 컨테이너에서 붙을 때는 호스트 주소를 맞춰야 합니다.
 
-### 렌더링 문제
+### 클라이언트가 붙자마자 끊긴다
 
-**문제: 터미널 텍스트가 깨져 보임**
+`welcome` 의 `channel` 이 기대와 다르면 클라이언트가 스스로 끊습니다. `/ws` 로
+붙어야 게임 채널입니다. 경로 없이 붙으면 404 입니다.
 
-해결 방법:
-1. Cascadia Mono 폰트가 설치되어 있는지 확인
-2. 브라우저 캐시 삭제 후 새로고침
-3. WebGL 지원 여부 확인 (브라우저 콘솔에서 경고 확인)
+### 회원가입이 503 을 돌려준다
 
-**문제: ANSI 색상이 표시되지 않음**
+`LANDING_SERVICE_TOKEN` 이 비어 있습니다. 게이트웨이와 MUD 서버 양쪽에 같은
+값을 넣어야 합니다.
 
-해결 방법:
-1. xterm.js가 올바르게 로드되었는지 확인
-2. 브라우저 개발자 도구에서 JavaScript 에러 확인
-3. 서버에서 올바른 ANSI 코드를 전송하는지 확인
+### 회원가입이 502 를 돌려준다
 
-### 성능 문제
+게이트웨이가 어드민 채널에 닿지 못했거나 서비스 인증이 거절됐습니다. 토큰
+불일치는 사용자에게 알리지 않고 게이트웨이 로그에만 남습니다.
 
-**문제: 터미널이 느리게 반응함**
+### 연결이 1009 로 끊긴다
 
-해결 방법:
-1. WebGL 애드온이 활성화되어 있는지 확인
-2. 브라우저 하드웨어 가속 활성화
-3. 동시 연결 수 확인 (최대 200개)
-4. 서버 리소스 사용량 확인
+라인 길이 상한(256KB)을 넘었습니다. 어드민 채널의 큰 응답에서 나올 수 있으며,
+클라이언트의 WebSocket 수신 버퍼도 같은 크기로 맞춰야 합니다.
 
-**문제: 메모리 사용량이 계속 증가함**
-
-해결 방법:
-1. 터미널 스크롤백 설정 확인 (기본값: 0)
-2. 연결 종료 시 리소스 정리 확인
-3. 서버 로그에서 메모리 누수 경고 확인
-
-### 키보드 입력 문제
-
-**문제: 특수 키가 작동하지 않음**
-
-해결 방법:
-1. 브라우저 기본 동작 방지가 활성화되어 있는지 확인
-2. 키보드 레이아웃 확인
-3. 브라우저 콘솔에서 키 이벤트 로그 확인
-
-**문제: Ctrl+C가 작동하지 않음**
-
-해결 방법:
-1. 터미널에 포커스가 있는지 확인
-2. 브라우저 단축키와 충돌하는지 확인
-3. 서버 로그에서 인터럽트 신호 전송 확인
-
-### 로그 확인
-
-서버 로그는 `logs/` 디렉토리에 저장됩니다:
+### 로그
 
 ```bash
-# 전체 로그 확인
 tail -f logs/combined.log
-
-# 에러 로그만 확인
 tail -f logs/error.log
-
-# 특정 연결 ID로 필터링
-grep "client-id-123" logs/combined.log
 ```
+
+비밀번호는 어느 경로에서도 기록하지 않습니다.
 
 ## 기술 스택
 
-- **클라이언트**: TypeScript, xterm.js, Vite
-- **서버**: Node.js, TypeScript, WebSocket (ws)
-- **테스트**: Vitest, fast-check (속성 기반 테스트)
-- **로깅**: Winston
-- **빌드**: Vite (클라이언트), tsc (서버)
+- Node.js, TypeScript, `ws`
+- Vitest, fast-check (속성 기반 테스트)
+- winston
+- 랜딩: 빌드 도구 없는 HTML, CSS, 바닐라 JavaScript
 
 ## 라이선스
 
 MIT
-
-## 기여
-
-이슈 및 풀 리퀘스트를 환영합니다.
-
-## 지원
-
-문제가 발생하면 GitHub Issues에 등록해주세요.

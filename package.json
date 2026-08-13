@@ -1,11 +1,11 @@
 {
-  "name": "karnas-chronicles-terminal",
+  "name": "karnas-chronicles-gateway",
   "version": "1.0.0",
-  "description": "WebSocket Gateway for Karnas Chronicles: Divided Dominion",
+  "description": "WebSocket gateway and landing site for The Chronicles of Karnas: Divided Dominion",
   "type": "module",
   "scripts": {
     "dev:server": "bash -c './node_modules/.bin/tsx watch src/server/start.ts'",
-    "build:server": "node node_modules/typescript/lib/tsc.js -p tsconfig.server.json",
+    "build:server": "node node_modules/typescript/lib/tsc.js -p tsconfig.build.json && node scripts/write-cjs-marker.mjs",
     "build": "npm run build:server",
     "type-check": "node node_modules/typescript/lib/tsc.js -p tsconfig.server.json --noEmit",
     "type-check:server": "node node_modules/typescript/lib/tsc.js -p tsconfig.server.json --noEmit",

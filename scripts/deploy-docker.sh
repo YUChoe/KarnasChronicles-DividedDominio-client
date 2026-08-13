@@ -6,8 +6,8 @@
 set -e
 
 ENVIRONMENT=${1:-production}
-IMAGE_NAME="karnas-chronicles-terminal"
-CONTAINER_NAME="telnet-gateway"
+IMAGE_NAME="karnas-chronicles-gateway"
+CONTAINER_NAME="karnas-gateway"
 
 echo "=========================================="
 echo "Docker 컨테이너 배포"
@@ -52,7 +52,7 @@ else
     docker run -d \
         --name ${CONTAINER_NAME} \
         --env-file ${ENV_FILE} \
-        -p 3000:3000 \
+        -p 127.0.0.1:3000:3000 \
         -v $(pwd)/logs:/app/logs \
         --restart unless-stopped \
         ${IMAGE_NAME}:latest
