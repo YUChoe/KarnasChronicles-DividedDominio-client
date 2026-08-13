@@ -11,6 +11,7 @@
     "type-check:server": "node node_modules/typescript/lib/tsc.js -p tsconfig.server.json --noEmit",
     "check:godot": "bash scripts/godot-check.sh",
     "test:godot": "bash scripts/godot-test.sh",
+    "check:contract": "python scripts/check-contract-coverage.py",
     "test": "bash -c './node_modules/.bin/vitest --run --config vitest.config.server.ts'",
     "test:server": "bash -c './node_modules/.bin/vitest --run --config vitest.config.server.ts'",
     "test:e2e": "bash -c './node_modules/.bin/vitest --run --config vitest.config.e2e.ts'",
