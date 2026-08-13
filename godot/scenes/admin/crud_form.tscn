@@ -1,0 +1,56 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/admin/crud_form.gd" id="1_form"]
+
+[node name="CrudForm" type="VBoxContainer"]
+offset_right = 520.0
+offset_bottom = 320.0
+theme_override_constants/separation = 6
+script = ExtResource("1_form")
+
+[node name="Header" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="FormTitle" type="Label" parent="Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="FormNew" type="Button" parent="Header"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "New row"
+
+[node name="FormSave" type="Button" parent="Header"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Create"
+
+[node name="FormDelete" type="Button" parent="Header"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Delete"
+
+[node name="FieldScroll" type="ScrollContainer" parent="."]
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="FormFields" type="GridContainer" parent="FieldScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 4
+columns = 2
+
+[node name="FormNotice" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="FormReferences" type="VBoxContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 2

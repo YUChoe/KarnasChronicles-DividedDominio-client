@@ -1,8 +1,11 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scenes/admin/admin.gd" id="1_admin"]
 [ext_resource type="PackedScene" path="res://scenes/admin/map_view.tscn" id="2_map"]
 [ext_resource type="PackedScene" path="res://scenes/admin/resource_table.tscn" id="3_table"]
+[ext_resource type="PackedScene" path="res://scenes/admin/crud_form.tscn" id="4_form"]
+[ext_resource type="PackedScene" path="res://scenes/admin/stats_view.tscn" id="5_stats"]
+[ext_resource type="PackedScene" path="res://scenes/admin/player_detail.tscn" id="6_player"]
 
 [node name="Admin" type="VBoxContainer"]
 offset_right = 900.0
@@ -67,6 +70,18 @@ toggle_mode = true
 layout_mode = 2
 text = "Resources"
 
+[node name="StatsTab" type="Button" parent="AdminTabs"]
+unique_name_in_owner = true
+toggle_mode = true
+layout_mode = 2
+text = "Stats & actions"
+
+[node name="PlayerTab" type="Button" parent="AdminTabs"]
+unique_name_in_owner = true
+toggle_mode = true
+layout_mode = 2
+text = "Player"
+
 [node name="MapView" parent="." instance=ExtResource("2_map")]
 unique_name_in_owner = true
 visible = false
@@ -74,6 +89,23 @@ layout_mode = 2
 size_flags_vertical = 3
 
 [node name="ResourceTable" parent="." instance=ExtResource("3_table")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="CrudForm" parent="." instance=ExtResource("4_form")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+
+[node name="StatsView" parent="." instance=ExtResource("5_stats")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PlayerDetail" parent="." instance=ExtResource("6_player")]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2

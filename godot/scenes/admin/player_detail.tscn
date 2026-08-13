@@ -1,0 +1,63 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/admin/player_detail.gd" id="1_player"]
+
+[node name="PlayerDetail" type="VBoxContainer"]
+offset_right = 880.0
+offset_bottom = 460.0
+theme_override_constants/separation = 6
+script = ExtResource("1_player")
+
+[node name="Header" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="PlayerTitle" type="Label" parent="Header"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="PlayerInput" type="LineEdit" parent="Header"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(280, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PlayerLoad" type="Button" parent="Header"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Load"
+
+[node name="PlayerEmpty" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="PlayerRowTitle" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="RowScroll" type="ScrollContainer" parent="."]
+custom_minimum_size = Vector2(0, 200)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PlayerRow" type="GridContainer" parent="RowScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 2
+columns = 2
+
+[node name="PlayerInventoryTitle" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="ItemScroll" type="ScrollContainer" parent="."]
+custom_minimum_size = Vector2(0, 120)
+layout_mode = 2
+
+[node name="PlayerItems" type="VBoxContainer" parent="ItemScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2

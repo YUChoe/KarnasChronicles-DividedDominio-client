@@ -990,5 +990,133 @@
     "ui.admin.rejection.TARGET_REQUIRED": {
         "en": "The request needs a target.",
         "ko": "대상이 필요한 요청입니다."
+    },
+    "ui.admin.tab_stats": {
+        "en": "Stats & actions",
+        "ko": "통계와 액션"
+    },
+    "ui.admin.tab_player": {
+        "en": "Player",
+        "ko": "플레이어"
+    },
+    "ui.admin.form_title": {
+        "en": "Edit row",
+        "ko": "행 편집"
+    },
+    "ui.admin.form_new": {
+        "en": "New row",
+        "ko": "새 행"
+    },
+    "ui.admin.form_create": {
+        "en": "Create",
+        "ko": "생성"
+    },
+    "ui.admin.form_update": {
+        "en": "Update",
+        "ko": "수정"
+    },
+    "ui.admin.form_delete": {
+        "en": "Delete",
+        "ko": "삭제"
+    },
+    "ui.admin.form_confirm_delete": {
+        "en": "Delete this row? Press delete again to confirm.",
+        "ko": "이 행을 삭제하시겠습니까? 삭제를 다시 누르면 실행됩니다."
+    },
+    "ui.admin.form_no_row": {
+        "en": "Select a row, or start a new one.",
+        "ko": "행을 선택하거나 새로 만드십시오."
+    },
+    "ui.admin.form_key_missing": {
+        "en": "Fill in every primary key column.",
+        "ko": "기본키 컬럼을 모두 채우십시오."
+    },
+    "ui.admin.form_key_generated": {
+        "en": "The server generates the key for this resource.",
+        "ko": "이 리소스의 기본키는 서버가 만듭니다."
+    },
+    "ui.admin.form_saved": {
+        "en": "Saved.",
+        "ko": "저장했습니다."
+    },
+    "ui.admin.form_deleted": {
+        "en": "Deleted.",
+        "ko": "삭제했습니다."
+    },
+    "ui.admin.references": {
+        "en": "Still referenced by:",
+        "ko": "다음이 아직 참조합니다:"
+    },
+    "ui.admin.reference_row": {
+        "en": "{resource}.{columns} — {count} row(s)",
+        "ko": "{resource}.{columns} — {count}행"
+    },
+    "ui.admin.reference_samples": {
+        "en": "samples {samples}",
+        "ko": "예시 {samples}"
+    },
+    "ui.admin.stats_title": {
+        "en": "Counts",
+        "ko": "집계"
+    },
+    "ui.admin.stats_refresh": {
+        "en": "Refresh stats",
+        "ko": "통계 새로 고침"
+    },
+    "ui.admin.stats_row": {
+        "en": "{name} {count}",
+        "ko": "{name} {count}"
+    },
+    "ui.admin.stats_empty": {
+        "en": "No stats yet.",
+        "ko": "통계가 없습니다."
+    },
+    "ui.admin.action_title": {
+        "en": "Live actions",
+        "ko": "실시간 액션"
+    },
+    "ui.admin.action_run": {
+        "en": "Run",
+        "ko": "실행"
+    },
+    "ui.admin.action_no_params": {
+        "en": "This action takes no parameters.",
+        "ko": "인자가 없는 액션입니다."
+    },
+    "ui.admin.action_needs_online": {
+        "en": "The target player must be online.",
+        "ko": "대상 플레이어가 접속 중이어야 합니다."
+    },
+    "ui.admin.action_result": {
+        "en": "{action} succeeded. {data}",
+        "ko": "{action} 성공. {data}"
+    },
+    "ui.admin.player_title": {
+        "en": "Player detail",
+        "ko": "플레이어 상세"
+    },
+    "ui.admin.player_id": {
+        "en": "Player id or username",
+        "ko": "플레이어 id 또는 사용자명"
+    },
+    "ui.admin.player_load": {
+        "en": "Load",
+        "ko": "조회"
+    },
+    "ui.admin.player_stats": {
+        "en": "Row",
+        "ko": "행"
+    },
+    "ui.admin.player_inventory": {
+        "en": "Inventory",
+        "ko": "인벤토리"
+    },
+    "ui.admin.player_empty": {
+        "en": "Nothing loaded.",
+        "ko": "조회한 것이 없습니다."
+    },
+    "ui.admin.player_no_items": {
+        "en": "No items.",
+        "ko": "아이템이 없습니다."
     }
 }

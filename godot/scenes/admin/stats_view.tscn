@@ -1,0 +1,74 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/admin/stats_view.gd" id="1_stats"]
+
+[node name="StatsView" type="VBoxContainer"]
+offset_right = 880.0
+offset_bottom = 460.0
+theme_override_constants/separation = 6
+script = ExtResource("1_stats")
+
+[node name="StatsHeader" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="StatsTitle" type="Label" parent="StatsHeader"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="StatsRefresh" type="Button" parent="StatsHeader"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Refresh stats"
+
+[node name="StatsCounts" type="GridContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 2
+columns = 4
+
+[node name="StatsRawScroll" type="ScrollContainer" parent="."]
+custom_minimum_size = Vector2(0, 120)
+layout_mode = 2
+
+[node name="StatsRaw" type="Label" parent="StatsRawScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ActionTitle" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="ActionRow" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ActionOptions" type="OptionButton" parent="ActionRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+
+[node name="ActionRun" type="Button" parent="ActionRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Run"
+
+[node name="ActionHint" type="Label" parent="ActionRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ActionParams" type="GridContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 4
+columns = 2
+
+[node name="ActionResult" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3

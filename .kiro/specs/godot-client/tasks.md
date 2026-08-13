@@ -506,7 +506,7 @@ Godot → 게이트웨이 → 대역 서버로 실제 사슬을 세워 확인했
 
 둘째, 게임 진입 판정에 `_main.visible` 을 쓰고 있었다. 인벤토리나 상태 화면을 보는 중에 `player_state` 나 `inventory` 가 도착하면 스냅샷 게이트가 다시 열려 탐험 화면으로 밀려났다. 진입 여부를 별도 플래그로 들고 있게 고쳤다. 이 검증에서 상태 화면이 열리자마자 사라지는 것으로 드러났다.
 
-- [ ] 11. 어드민 패널
+- [x] 11. 어드민 패널
   - 선행 조건: 서버 `server-json-protocol` Task 7 완료, `gateway-landing` Task 3.2(어드민 프록시) 완료
 - [x] 11.1 어드민 접속 계층
   - `scripts/admin/admin_connection.gd`가 Admin_Channel(`/admin`)로 별도 접속한다. 게임 연결과 독립적이다. `admin_login`으로 별도 인증하고 세션 만료(2시간)를 처리해 재인증을 요구한다. 게임 로그인 상태가 어드민 권한을 부여하지 않는다.
@@ -549,15 +549,56 @@ Godot → 게이트웨이 → 대역 서버로 실제 사슬을 세워 확인했
 
 이 결함은 어드민만의 문제가 아니다. 게임 채널도 엔티티가 많은 방에서 같은 일을 당한다. Task 1.2 부터 있었고 지금까지 드러나지 않은 것은 게임 응답이 64KB 를 넘은 적이 없어서다.
 
-- [ ] 11.4 CRUD 폼
+- [x] 11.4 CRUD 폼
   - 리소스별 생성, 수정, 삭제 폼을 제공한다. 삭제 시 확인을 요구하고 `REFERENCED` 응답에서 참조 목록을 표시한다.
+  - 컬럼 목록을 표가 받은 행에서 얻는다. 리소스마다 컬럼이 다르고 서버가 스키마를 알려주는 메시지가 없다. 그래서 새 행 폼도 한 번 조회한 뒤에야 만들 수 있다.
+  - 기본키 처리를 `scripts/admin/admin_resources.gd` 로 뽑았다. uuid 를 생성하는 다섯 리소스는 키 입력을 숨기고, `item_prices`·`factions`·`faction_relations` 는 생성 시 키를 받는다. 수정에서는 어느 경우든 키를 `values` 에 담지 않는다. 서버가 `VALIDATION_FAILED` 로 거절한다.
+  - `created_at`, `updated_at`, `password_hash` 는 어디서도 담지 않는다.
+  - 배열과 오브젝트 컬럼(`blocked_exits`, `properties`)은 JSON 문자열로 보여 주고 그대로 되돌려 보낸다. 정수와 boolean 의 형 변환은 서버가 컬럼 타입을 알고 처리한다.
+  - 삭제는 두 번 눌러야 실행된다. 확인 창을 띄우는 대신 같은 버튼을 확인 수단으로 쓴다.
   - _Requirements: 12.6, 12.9_
-- [ ] 11.5 통계와 실시간 액션
+- [x] 11.5 통계와 실시간 액션
   - 통계(방, 몬스터, 플레이어, 접속자, 오브젝트, 종족 수)를 표시한다. 실시간 액션 14종(`goto`, `kick`, `spawn_monster`, `spawn_item`, `terminate`, `create_room`, `update_room`, `create_exit`, `validate_world`, `list_monster_templates`, `list_item_templates`, `scheduler`, `change_display_name`, `room_info`)을 제공한다.
+  - `counts` 만 표로 보이고 나머지(`rooms`, `objects`, `players`, `engine`, `timestamp`)는 원본 JSON 을 그대로 나열한다. 서버가 `AdminManager` 반환값을 가공하지 않고 넘기므로 형태가 자유롭다. 화면이 형태를 가정하면 서버가 항목을 늘릴 때 깨진다.
+  - 액션 명세를 `scripts/admin/admin_actions.gd` 로 뽑아 입력란을 그 표로 만든다. 액션이 늘면 표만 고친다.
+  - `x`, `y` 는 정수로 바꿔 보낸다. 문자열로 보내면 서버가 거절한다. 빈 입력은 담지 않는다.
+  - `goto` 와 `kick` 은 대상이 접속 중이어야 한다는 안내를 함께 보인다. `change_display_name` 은 DB 값을 바꾸므로 접속 중이 아니어도 된다.
   - _Requirements: 12.10, 12.11_
-- [ ] 11.6 플레이어 상세
+- [x] 11.6 플레이어 상세
   - 플레이어 인벤토리와 능력치를 조회하는 화면을 제공한다.
+  - 전용 메시지가 없다. `players` 행은 `admin_get` 으로, 인벤토리는 `objects` 를 `location_id` 와 `location_type` 으로 걸러 `admin_list` 로 받는다. 능력치는 `players` 행의 `stat_*` 컬럼이다.
+  - `location_type` 은 `inventory` 와 `INVENTORY` 처럼 대소문자가 섞여 저장돼 있고 서버가 대소문자 무시로 비교하므로 소문자로 보낸다.
+  - 표에서 플레이어 행을 고르면 id 만 넘기고 조회하지 않는다. 다른 탭을 보는 중에 요청을 보내면 헛돈다. 플레이어 탭에 들어올 때 조회한다.
+  - `objects` 목록 응답이 리소스 표와 겹치므로 플레이어 화면이 보일 때만 그쪽으로 넘긴다.
   - _Requirements: 12.12_
+
+### Task 11.4~11.6 통합 검증 (2026-08-13)
+
+실제 서버의 어드민 채널로 확인했다. 만든 행은 같은 검증 안에서 지웠고 데이터베이스에 잔여가 없다(`item_prices` 27행 유지, `probe%` 0건).
+
+| 항목 | 결과 |
+|---|---|
+| 통계 | `rooms 520  monsters 66  players 10  objects 107  factions 3  players_online 1` |
+| 통계 원본 | `counts` 밖 항목 1,603자를 JSON 으로 표시 |
+| 실시간 액션 | `list_monster_templates 성공. {"templates":["template_forest_goblin",...` |
+| 플레이어 상세 | `id`, `username godottest`, `preferred_locale ko`, `is_admin 1` 등 행 전체 |
+| 플레이어 인벤토리 | `아이템이 없습니다.` |
+| 수정 폼 컬럼 | `item_prices` 에서 `["buy_price", "sell_price"]`. 기본키 `template_id` 가 빠진다 |
+| 새 행 폼 컬럼 | `["template_id", "buy_price", "sell_price"]`. 사람이 정하는 키라 포함된다 |
+| 생성 | `저장했습니다.` 이후 필터 `template_id=probe_test_item` 로 1행 확인 |
+| 삭제 확인 | 첫 누름은 `이 행을 삭제하시겠습니까? 삭제를 다시 누르면 실행됩니다.` |
+| 삭제 | 두 번째 누름에 `삭제했습니다.` |
+| `REFERENCED` | `factions` 삭제 시도에 참조 목록 셋 |
+
+참조 목록의 실제 내용이다.
+
+```
+monsters.faction_id — 23행  예시 (id=1050f277-...) (id=1cedf39e-...) ...
+faction_relations.faction_a_id — 2행  예시 (faction_a_id=animals, faction_b_id=ash_knights) ...
+faction_relations.faction_b_id — 2행  예시 (faction_a_id=ash_knights, faction_b_id=animals) ...
+```
+
+복합키 리소스의 `samples` 가 두 컬럼을 함께 담는 것과 `count` 가 전체 건수(23)이고 `samples` 는 최대 5건인 것을 확인했다.
 
 - [ ] 12. 품질 정리와 최종 검증
 - [ ] 12.1 입력 제약 확인
