@@ -116,3 +116,20 @@ func test_한국어_조사는_번역_값의_완성형을_그대로_쓴다() -> v
 
 func test_서버_리소스_키도_읽힌다() -> void:
 	assert_ne(_translator.t("auth.login_failed"), "auth.login_failed")
+
+
+func test_text_of_는_키_페이로드를_문장으로_바꾼다() -> void:
+	assert_eq(_translator.text_of({
+		"key": "ui.connection.reconnecting",
+		"params": {"seconds": 2, "attempt": 1},
+	}), "Reconnecting in 2s (attempt 1)")
+
+
+func test_text_of_는_언어별_dict_를_고른다() -> void:
+	# 대화 대사가 아직 이 형태로 온다
+	_translator.set_locale("ko")
+	assert_eq(_translator.text_of({"en": "Hello", "ko": "안녕"}), "안녕")
+
+
+func test_text_of_는_문자열을_그대로_돌려준다() -> void:
+	assert_eq(_translator.text_of("plain"), "plain")

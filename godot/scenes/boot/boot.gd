@@ -9,6 +9,8 @@ const LOGIN_SCENE := preload("res://scenes/login/login.tscn")
 const MAIN_SCENE := preload("res://scenes/main/main.tscn")
 const INVENTORY_SCENE := preload("res://scenes/inventory/inventory.tscn")
 const COMBAT_SCENE := preload("res://scenes/combat/combat.tscn")
+const DIALOGUE_SCENE := preload("res://scenes/dialogue/dialogue.tscn")
+const SHOP_SCENE := preload("res://scenes/shop/shop.tscn")
 
 const LABEL_LOGIN := "login"
 const LABEL_LOGOUT := "logout"
@@ -34,6 +36,8 @@ var _login: LoginScreen = null
 var _main: MainScreen = null
 var _inventory: InventoryScreen = null
 var _combat: CombatScreen = null
+var _dialogue: DialogueScreen = null
+var _shop: ShopScreen = null
 ## 로그인 후 도착한 스냅샷 종류
 var _snapshots: Dictionary = {}
 ## 안내 문구를 키로 들고 있는다. locale 이 바뀌면 다시 그려야 한다
@@ -113,8 +117,21 @@ func _build_screens() -> void:
 	_combat.action_requested.connect(_on_screen_action)
 	_combat.notice_requested.connect(_set_notice)
 
+	_dialogue = DIALOGUE_SCENE.instantiate()
+	_screens.add_child(_dialogue)
+	_dialogue.bind(_store, _translator)
+	_dialogue.action_requested.connect(_on_screen_action)
+
+	_shop = SHOP_SCENE.instantiate()
+	_screens.add_child(_shop)
+	_shop.bind(_store, _translator)
+	_shop.action_requested.connect(_on_screen_action)
+	_shop.closed.connect(_show_main)
+
 	_store.container_contents_received.connect(_on_container_contents)
 	_store.combat_changed.connect(_on_combat_changed)
+	_store.dialogue_changed.connect(_on_dialogue_changed)
+	_store.shop_changed.connect(_on_shop_changed)
 
 	var saved := CredentialStore.load_credentials()
 	if not saved.is_empty():
@@ -150,8 +167,30 @@ func _show_combat() -> void:
 
 
 func _show_only(screen: Control) -> void:
-	for candidate: Control in [_login, _main, _inventory, _combat]:
+	for candidate: Control in [
+			_login, _main, _inventory, _combat, _dialogue, _shop]:
 		candidate.visible = candidate == screen
+
+
+## 대화가 시작되면 대화 화면으로, 끝나면 탐험 화면으로 돌아간다.
+## `is_active` 가 거짓이면 상태 저장소가 비우므로 비었는지로 판단한다.
+func _on_dialogue_changed() -> void:
+	if _store.dialogue.is_empty():
+		if _dialogue.visible:
+			_show_main()
+		return
+	if not _dialogue.visible:
+		_show_only(_dialogue)
+		_clear_notice()
+
+
+## 상점 목록이 오면 상점 화면을 연다.
+func _on_shop_changed() -> void:
+	if _store.shop.is_empty() or _shop.visible:
+		return
+	_shop.clear_notice()
+	_show_only(_shop)
+	_clear_notice()
 
 
 ## 전투가 시작되면 전투 화면으로, 끝나면 탐험 화면으로 돌아간다.
@@ -290,6 +329,8 @@ func _on_action_rejected(payload: Dictionary) -> void:
 			_store.reset_session()
 			_show_login()
 			_login.show_message("ui.login.session_expired")
+		RejectionPolicy.Effect.SHOW_SHORTFALL:
+			_shop.on_insufficient_funds()
 		RejectionPolicy.Effect.LOG_CLIENT_BUG:
 			push_warning("클라이언트 버그: %s 가 %s 로 거절됐습니다" % [verb, code])
 		RejectionPolicy.Effect.REMOVE_BUTTON:

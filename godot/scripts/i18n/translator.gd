@@ -99,6 +99,17 @@ func render(message: Dictionary) -> String:
 	return t(key, Protocol.as_dict(message.get("params")))
 
 
+## 키 페이로드와 언어별 dict 를 모두 받아 문장으로 만든다.
+##
+## 대화 대사가 과도기 형태다. 계약은 `{"key": ..., "params": ...}` 를 규정하지만
+## 서버는 아직 `lines` 와 `choices[].text` 에 언어별 dict 를 담는다. 서버
+## `server-json-protocol` Task 10 이 키 방식으로 바꾼다. 그때까지 양쪽을 받는다.
+func text_of(value: Variant) -> String:
+	if value is Dictionary and (value as Dictionary).has("key"):
+		return render(value)
+	return pick(value)
+
+
 ## 언어별 dict 에서 현재 locale 값을 고른다. 스칼라면 문자열로 바꿔 돌려준다.
 ##
 ## 엔티티 이름과 설명, 방 설명이 모두 `{"en": ..., "ko": ...}` 형태다. 서버가

@@ -682,5 +682,65 @@
     "ui.combat.log": {
         "en": "Combat log",
         "ko": "전투 기록"
+    },
+    "ui.dialogue.title": {
+        "en": "Conversation",
+        "ko": "대화"
+    },
+    "ui.dialogue.end": {
+        "en": "End conversation",
+        "ko": "대화 끝내기"
+    },
+    "ui.dialogue.no_choices": {
+        "en": "There is nothing to say.",
+        "ko": "할 말이 없습니다."
+    },
+    "ui.shop.title": {
+        "en": "Shop",
+        "ko": "상점"
+    },
+    "ui.shop.close": {
+        "en": "Leave",
+        "ko": "나가기"
+    },
+    "ui.shop.stock": {
+        "en": "Stock {stock}",
+        "ko": "재고 {stock}"
+    },
+    "ui.shop.unlimited": {
+        "en": "Stock ∞",
+        "ko": "재고 무제한"
+    },
+    "ui.shop.buy": {
+        "en": "Buy {price}",
+        "ko": "구매 {price}"
+    },
+    "ui.shop.sell": {
+        "en": "Sell {price}",
+        "ko": "판매 {price}"
+    },
+    "ui.shop.prices": {
+        "en": "buy {buy} / sell {sell}",
+        "ko": "매수 {buy} / 매도 {sell}"
+    },
+    "ui.shop.my_items": {
+        "en": "Your items",
+        "ko": "내 물건"
+    },
+    "ui.shop.stock_list": {
+        "en": "For sale",
+        "ko": "판매 물품"
+    },
+    "ui.shop.empty": {
+        "en": "Nothing on offer.",
+        "ko": "판매하는 물건이 없습니다."
+    },
+    "ui.shop.nothing_to_sell": {
+        "en": "You have nothing this merchant wants.",
+        "ko": "이 상인이 살 만한 물건이 없습니다."
+    },
+    "ui.shop.shortfall": {
+        "en": "Not enough gold. You need {short} more.",
+        "ko": "골드가 부족합니다. {short} 더 필요합니다."
     }
 }

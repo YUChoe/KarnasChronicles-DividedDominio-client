@@ -1,0 +1,48 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/dialogue/dialogue.gd" id="1_dialogue"]
+
+[node name="Dialogue" type="VBoxContainer"]
+offset_right = 720.0
+offset_bottom = 420.0
+theme_override_constants/separation = 8
+script = ExtResource("1_dialogue")
+
+[node name="Header" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="DialogueTitle" type="Label" parent="Header"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="SpeakerLabel" type="Label" parent="Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="DialogueEnd" type="Button" parent="Header"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "End conversation"
+
+[node name="DialogueLines" type="RichTextLabel" parent="."]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 120)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="NoChoices" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="ChoiceScroll" type="ScrollContainer" parent="."]
+custom_minimum_size = Vector2(0, 140)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ChoiceButtons" type="VBoxContainer" parent="ChoiceScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
