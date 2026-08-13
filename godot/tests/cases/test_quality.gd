@@ -119,6 +119,57 @@ func test_모든_UI_키에_두_언어가_있다() -> void:
 				"%s 에 %s 없음" % [Protocol.as_string(key), locale])
 
 
+func test_모든_번역_파일의_키에_두_언어가_있다() -> void:
+	# 대사 번역은 Lua 스크립트에서 기계로 옮겼다. 한쪽 언어 누락을 여기서 잡는다
+	var total := 0
+	for path: String in _translation_files():
+		var data := _translation(path)
+		total += data.size()
+		for key: Variant in data:
+			var entry: Dictionary = Protocol.as_dict(data[key])
+			for locale: String in TranslatorService.SUPPORTED_LOCALES:
+				assert_true(entry.has(locale),
+					"%s: %s 에 %s 없음" % [path, Protocol.as_string(key), locale])
+	assert_true(total > 500, "%d개" % total)
+
+
+func test_번역_자리표시자가_두_언어에서_같다() -> void:
+	# `{item}` 이 한쪽에만 있으면 그 언어에서 값이 사라진다
+	for path: String in _translation_files():
+		var data := _translation(path)
+		for key: Variant in data:
+			var entry: Dictionary = Protocol.as_dict(data[key])
+			var expected := _placeholders(Protocol.as_string(entry.get("en")))
+			for locale: String in TranslatorService.SUPPORTED_LOCALES:
+				var actual := _placeholders(
+					Protocol.as_string(entry.get(locale)))
+				assert_eq(actual, expected,
+					"%s: %s (%s)" % [path, Protocol.as_string(key), locale])
+
+
+## `{name}` 자리표시자 이름을 정렬해 돌려준다.
+func _placeholders(text: String) -> Array[String]:
+	var out: Array[String] = []
+	var parts := text.split("{")
+	for index: int in range(1, parts.size()):
+		var part: String = parts[index]
+		var close := part.find("}")
+		if close >= 0:
+			out.append(part.substr(0, close))
+	out.sort()
+	return out
+
+
+func _translation_files() -> Array[String]:
+	return _collect(TranslatorService.TRANSLATION_DIR, ".json")
+
+
+func _translation(path: String) -> Dictionary:
+	var parsed: Variant = JSON.parse_string(
+		FileAccess.get_file_as_string(path))
+	return Protocol.as_dict(parsed)
+
+
 func _ui_strings() -> Dictionary:
 	var text := FileAccess.get_file_as_string(
 		"res://resources/translations/ui.json")

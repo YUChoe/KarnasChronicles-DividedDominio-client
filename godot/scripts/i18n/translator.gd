@@ -101,9 +101,8 @@ func render(message: Dictionary) -> String:
 
 ## 키 페이로드와 언어별 dict 를 모두 받아 문장으로 만든다.
 ##
-## 대화 대사가 과도기 형태다. 계약은 `{"key": ..., "params": ...}` 를 규정하지만
-## 서버는 아직 `lines` 와 `choices[].text` 에 언어별 dict 를 담는다. 서버
-## `server-json-protocol` Task 10 이 키 방식으로 바꾼다. 그때까지 양쪽을 받는다.
+## 대사와 선택지는 키 형태다. 이 함수가 언어별 dict 와 문자열도 받는 것은 엔티티
+## 이름처럼 번역 대상이 아닌 값을 같은 자리에 놓는 화면이 있기 때문이다.
 func text_of(value: Variant) -> String:
 	if value is Dictionary and (value as Dictionary).has("key"):
 		return render(value)

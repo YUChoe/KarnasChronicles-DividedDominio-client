@@ -1,0 +1,1110 @@
+{
+    "npc.village_tavern_keeper.intro.text.1": {
+        "en": "Another stranger. {player_name}, is it? Well, you're welcome to a drink, but don't expect a warm smile. We've had enough trouble from the castle folk without adding more.",
+        "ko": "또 낯선 사람이군. {player_name}이라고? 뭐, 한 잔 하고 싶으면 해. 하지만 환한 미소는 기대하지 마. 성 안 사람들 때문에 골치가 이만저만이 아니거든."
+    },
+    "npc.village_tavern_keeper.intro.choice.1": {
+        "en": "What trouble do you mean?",
+        "ko": "무슨 골치거리인가요?"
+    },
+    "npc.village_tavern_keeper.intro.choice.2": {
+        "en": "Tell me about this village.",
+        "ko": "이 마을에 대해 알려주세요."
+    },
+    "npc.village_tavern_keeper.intro.choice.3": {
+        "en": "I heard the harvests have been failing.",
+        "ko": "농사가 계속 실패하고 있다고 들었습니다."
+    },
+    "npc.village_tavern_keeper.intro.choice.4": {
+        "en": "I will leave you be.",
+        "ko": "그만 가보겠습니다."
+    },
+    "npc.village_tavern_keeper.c1.text.1": {
+        "en": "The relocation order, that's what. The Ash Knights decided our village is too close to the fortress walls, so we've been told to pack up and move further out. Further out — where the creatures roam and the roads are barely safe. Easy for them to say from behind their stone walls, isn't it? Nobody here is happy about it. Nobody.",
+        "ko": "이주 명령이야, 그게 문제지. 잿빛 기사단이 우리 마을이 요새 성벽에 너무 가깝다고 판단해서, 짐 싸서 더 먼 곳으로 이주하라는 명령을 내렸어. 더 먼 곳 — 괴물들이 돌아다니고 길도 안전하지 않은 곳으로. 돌벽 뒤에 숨어서 말하기는 쉽지, 안 그래? 여기 아무도 그 명령에 만족하는 사람 없어. 아무도."
+    },
+    "npc.village_tavern_keeper.c1.choice.2": {
+        "en": "Tell me about this village.",
+        "ko": "이 마을에 대해 알려주세요."
+    },
+    "npc.village_tavern_keeper.c1.choice.3": {
+        "en": "What about the harvests?",
+        "ko": "농사는 어떤가요?"
+    },
+    "npc.village_tavern_keeper.c1.choice.4": {
+        "en": "I see. Take care.",
+        "ko": "그렇군요. 몸 조심하세요."
+    },
+    "npc.village_tavern_keeper.c2.text.1": {
+        "en": "It's a small place — no proper name, even. But it was ours. We've got this tavern, a stable, and a militia that keeps watch. There's a public notice board by the road, too. While the castle sat empty, this village was the heart of everything round here. Now they want us gone. Typical.",
+        "ko": "작은 곳이야 — 제대로 된 이름도 없어. 하지만 우리 마을이었지. 이 술집이 있고, 마구간이 있고, 경비를 서는 자경단이 있어. 길가에 공공 게시판도 있고. 성이 비어 있는 동안, 이 마을이 이 근방의 중심이었다고. 이제 와서 우리보고 나가라니. 전형적이야."
+    },
+    "npc.village_tavern_keeper.c2.choice.1": {
+        "en": "What about the relocation order?",
+        "ko": "이주 명령은 어떻게 된 건가요?"
+    },
+    "npc.village_tavern_keeper.c2.choice.3": {
+        "en": "How are the harvests?",
+        "ko": "농사는 어떤가요?"
+    },
+    "npc.village_tavern_keeper.c2.choice.4": {
+        "en": "Thank you for telling me.",
+        "ko": "알려줘서 감사합니다."
+    },
+    "npc.village_tavern_keeper.c3.text.1": {
+        "en": "Failing? That's putting it mildly. The crops wither before they ripen, and the livestock won't breed. It's been years now — ever since they started that fool war against the so-called sorcerer. Some say it's a curse. I say it's just our rotten luck piling up. Either way, bellies are empty and tempers are short.",
+        "ko": "실패? 그건 순하게 말한 거야. 작물은 익기도 전에 시들고, 가축은 새끼를 낳지 않아. 몇 년째 이래 — 소위 마법사란 놈한테 바보 같은 전쟁을 시작한 이후로. 저주라고 하는 사람도 있어. 난 그냥 우리 불운이 쌓인 거라고 봐. 어쨌든 배는 비고 성질은 날카로워지고 있지."
+    },
+    "npc.village_tavern_keeper.c3.choice.1": {
+        "en": "What about the relocation order?",
+        "ko": "이주 명령은 어떻게 된 건가요?"
+    },
+    "npc.village_tavern_keeper.c3.choice.2": {
+        "en": "Tell me about this village.",
+        "ko": "이 마을에 대해 알려주세요."
+    },
+    "npc.village_tavern_keeper.c3.choice.4": {
+        "en": "Hard times. Farewell.",
+        "ko": "힘든 시절이군요. 안녕히."
+    },
+    "npc.village_militia.intro.text.1": {
+        "en": "Hold there, {player_name}. I'm with the village militia. If you're heading beyond the village, keep your wits about you. It's not safe out there.",
+        "ko": "거기 서, {player_name}. 나는 마을 자경단이야. 마을 밖으로 나갈 생각이면, 정신 바짝 차려. 밖은 안전하지 않아."
+    },
+    "npc.village_militia.intro.choice.1": {
+        "en": "What threats are out there?",
+        "ko": "밖에 어떤 위협이 있나요?"
+    },
+    "npc.village_militia.intro.choice.2": {
+        "en": "Tell me about the militia.",
+        "ko": "자경단에 대해 알려주세요."
+    },
+    "npc.village_militia.intro.choice.3": {
+        "en": "I heard about a relocation order.",
+        "ko": "이주 명령에 대해 들었습니다."
+    },
+    "npc.village_militia.intro.choice.4": {
+        "en": "I will be careful. Farewell.",
+        "ko": "조심하겠습니다. 안녕히."
+    },
+    "npc.village_militia.c1.text.1": {
+        "en": "Creatures — goblins, mostly, but worse things too. They've been creeping closer to the village for months. Beyond the walls, the forests are thick and hostile. Beasts that used to flee from folk now attack on sight. We do what we can to keep the road clear, but we're stretched thin. If you venture out, don't go alone.",
+        "ko": "괴물들이야 — 대부분 고블린이지만, 더 나쁜 것들도 있어. 몇 달째 마을 가까이 기어오고 있지. 성벽 밖으로 나가면 숲은 울창하고 적대적이야. 예전에는 사람을 보면 도망치던 짐승들이 이제는 보이는 대로 공격해. 길을 안전하게 유지하려고 할 수 있는 건 하고 있지만, 인원이 부족해. 밖에 나갈 거면, 혼자 가지 마."
+    },
+    "npc.village_militia.c1.choice.2": {
+        "en": "Tell me about the militia.",
+        "ko": "자경단에 대해 알려주세요."
+    },
+    "npc.village_militia.c1.choice.3": {
+        "en": "What about the relocation order?",
+        "ko": "이주 명령은요?"
+    },
+    "npc.village_militia.c1.choice.4": {
+        "en": "I will keep that in mind.",
+        "ko": "명심하겠습니다."
+    },
+    "npc.village_militia.c2.text.1": {
+        "en": "We're just villagers who picked up spears, really. No proper training, no fancy armour. But someone has to stand between the creatures and the folk who live here. The Ash Knights have their fortress and their orders — we have our village and our stubbornness. That's about the sum of it.",
+        "ko": "우리는 그냥 창을 든 마을 사람들이야, 솔직히. 제대로 된 훈련도 없고, 멋진 갑옷도 없어. 하지만 누군가는 괴물들과 여기 사는 사람들 사이에 서야 하잖아. 잿빛 기사단에는 요새와 명령이 있고 — 우리에게는 마을과 고집이 있지. 대충 그런 거야."
+    },
+    "npc.village_militia.c2.choice.1": {
+        "en": "What threats are out there?",
+        "ko": "밖에 어떤 위협이 있나요?"
+    },
+    "npc.village_militia.c2.choice.3": {
+        "en": "What about the relocation order?",
+        "ko": "이주 명령은요?"
+    },
+    "npc.village_militia.c2.choice.4": {
+        "en": "You have my respect. Farewell.",
+        "ko": "존경합니다. 안녕히."
+    },
+    "npc.village_militia.c3.text.1": {
+        "en": "*spits on the ground* The relocation order. Aye, the castle wants us to clear out — says the village is too close to the walls and they need the space for defence. Defence! As if we haven't been defending this land with our own hands while they sat behind their gates. Move further out, they say. Into the wilds, where the creatures are thicker than the trees. Nobody here trusts the castle folk. Not any more.",
+        "ko": "*땅에 침을 뱉으며* 이주 명령. 그래, 성에서 우리보고 비우라고 해 — 마을이 성벽에 너무 가까워서 방어를 위해 공간이 필요하다나. 방어! 성 안에서 문 닫고 앉아 있는 동안 우리가 맨손으로 이 땅을 지켜왔는데. 더 먼 곳으로 이주하라고, 괴물이 나무보다 많은 황야로. 여기 아무도 성 안 사람들을 믿지 않아. 더 이상은."
+    },
+    "npc.village_militia.c3.choice.1": {
+        "en": "What threats are beyond the village?",
+        "ko": "마을 밖에 어떤 위협이 있나요?"
+    },
+    "npc.village_militia.c3.choice.2": {
+        "en": "Tell me about the militia.",
+        "ko": "자경단에 대해 알려주세요."
+    },
+    "npc.village_militia.c3.choice.4": {
+        "en": "I understand your frustration.",
+        "ko": "분노를 이해합니다."
+    },
+    "npc.brother_marcus.intro.text.1": {
+        "en": "Peace be with you, {player_name}. I am Brother Marcus. This chapel is my charge — a quiet place of Alva, the sun god, within these fortress walls. You are welcome here.",
+        "ko": "평화가 함께하길, {player_name}. 나는 마르쿠스 수사입니다. 이 예배당은 내가 돌보는 곳이지요 — 요새 성벽 안에 있는 태양신 알바의 조용한 공간입니다. 환영합니다."
+    },
+    "npc.brother_marcus.intro.choice.1": {
+        "en": "Tell me about this chapel.",
+        "ko": "이 예배당에 대해 알려주세요."
+    },
+    "npc.brother_marcus.intro.choice.2": {
+        "en": "What is the faith of Alva?",
+        "ko": "알바 신앙은 어떤 것인가요?"
+    },
+    "npc.brother_marcus.intro.choice.3": {
+        "en": "What happened to the people who lived here before?",
+        "ko": "이전에 여기 살던 사람들은 어떻게 됐나요?"
+    },
+    "npc.brother_marcus.intro.choice.4": {
+        "en": "May Alva's light guide you.",
+        "ko": "알바의 빛이 인도하시길."
+    },
+    "npc.brother_marcus.c1.text.1": {
+        "en": "This chapel has been here longer than anyone can remember — a place of worship from the days when folk still gathered to honour Alva beneath the open sky. Before the remnants of the army arrived, it was just myself and a couple of homeless folk who had taken shelter within these walls. A monk and two lost souls, keeping the faith alive in silence. Now the fortress is full of people, and the chapel serves a greater purpose.",
+        "ko": "이 예배당은 누구도 기억하지 못할 만큼 오래전부터 여기 있었습니다 — 사람들이 아직 열린 하늘 아래 모여 알바를 기리던 시절의 예배 장소이지요. 패잔병들이 들어오기 전에는 저와 이 성벽 안에 몸을 의탁한 노숙자 두어 명뿐이었습니다. 수도승 하나와 길 잃은 영혼 둘이 침묵 속에 신앙을 지키고 있었지요. 이제 요새는 사람들로 가득하고, 예배당은 더 큰 목적을 위해 쓰이고 있습니다."
+    },
+    "npc.brother_marcus.c1.choice.2": {
+        "en": "What is the faith of Alva?",
+        "ko": "알바 신앙은 어떤 것인가요?"
+    },
+    "npc.brother_marcus.c1.choice.3": {
+        "en": "What became of the homeless folk?",
+        "ko": "노숙자들은 어떻게 됐나요?"
+    },
+    "npc.brother_marcus.c1.choice.4": {
+        "en": "Thank you, Brother.",
+        "ko": "감사합니다, 수사님."
+    },
+    "npc.brother_marcus.c2.text.1": {
+        "en": "Alva is the sun god — the gentle light of dawn, not the scorching heat of midday. The name comes from an old word meaning 'white' or 'bright'. Over the centuries, the faith settled into everyday life; there are no sabbaths or grand gatherings any longer. I chose to live apart from the world to study the god in solitude — in a quiet place like this, away from the bustle. That is the way of those who wish to understand Alva more deeply. We advise, we reflect, and we keep the old knowledge alive.",
+        "ko": "알바는 태양신입니다 — 한낮의 뜨거운 열기가 아니라, 새벽녘의 온화한 빛이지요. 그 이름은 '희다' 또는 '밝다'라는 뜻의 고어에서 유래했습니다. 수백 년에 걸쳐 신앙은 일상 속에 자리 잡았고, 안식일이나 큰 모임 같은 것은 더 이상 남아 있지 않습니다. 저는 일상과 떨어져 홀로 신을 공부하는 삶을 택했습니다 — 이런 한적한 곳에서, 세상의 번잡함을 벗어나. 알바를 더 깊이 이해하고자 하는 이들의 방식이지요. 우리는 조언하고, 성찰하고, 옛 지식을 살려 둡니다."
+    },
+    "npc.brother_marcus.c2.choice.1": {
+        "en": "Tell me about this chapel.",
+        "ko": "이 예배당에 대해 알려주세요."
+    },
+    "npc.brother_marcus.c2.choice.3": {
+        "en": "The homeless folk who were here...",
+        "ko": "여기 있던 노숙자들은..."
+    },
+    "npc.brother_marcus.c2.choice.4": {
+        "en": "A noble calling. Farewell.",
+        "ko": "고귀한 소명이군요. 안녕히."
+    },
+    "npc.brother_marcus.c3.text.1": {
+        "en": "*sighs quietly* That is a question I ask myself. When the soldiers arrived, everything changed so quickly. The two who sheltered here... they simply vanished one day. I do not know whether they left of their own will or were driven out by the commotion. I pray to Alva that they found safety somewhere. But in times like these, prayers are often all we have.",
+        "ko": "*조용히 한숨을 쉬며* 저도 스스로에게 묻는 질문입니다. 병사들이 들어왔을 때, 모든 것이 너무 빨리 변했지요. 여기 몸을 의탁하던 두 사람은... 어느 날 그냥 사라졌습니다. 스스로 떠난 건지 소란에 밀려난 건지 알 수 없습니다. 어딘가에서 안전을 찾았기를 알바에게 기도합니다. 하지만 이런 시대에, 기도가 우리가 가진 전부인 경우가 많지요."
+    },
+    "npc.brother_marcus.c3.choice.1": {
+        "en": "Tell me about this chapel.",
+        "ko": "이 예배당에 대해 알려주세요."
+    },
+    "npc.brother_marcus.c3.choice.2": {
+        "en": "What is the faith of Alva?",
+        "ko": "알바 신앙은 어떤 것인가요?"
+    },
+    "npc.brother_marcus.c3.choice.4": {
+        "en": "I hope they are safe. Farewell.",
+        "ko": "무사하길 바랍니다. 안녕히."
+    },
+    "npc.junkyard_drifter.intro.text.1": {
+        "en": "*looks up from a pile of rubbish* Eh? {player_name}? Don't mind me, just picking through what folk have thrown away. You'd be surprised what turns up in a heap of broken furniture and old scraps.",
+        "ko": "*쓰레기 더미에서 고개를 들며* 응? {player_name}? 신경 쓰지 마, 사람들이 버린 것들 좀 뒤지고 있을 뿐이야. 부서진 가구랑 낡은 잡동사니 더미에서 뭐가 나오는지 알면 놀랄 걸."
+    },
+    "npc.junkyard_drifter.intro.choice.1": {
+        "en": "Find anything useful?",
+        "ko": "쓸만한 거 찾았나요?"
+    },
+    "npc.junkyard_drifter.intro.choice.2": {
+        "en": "I noticed animals around here.",
+        "ko": "주변에 동물들이 보이던데요."
+    },
+    "npc.junkyard_drifter.intro.choice.3": {
+        "en": "Know anything about the area north of here?",
+        "ko": "여기 북쪽에 대해 아는 게 있나요?"
+    },
+    "npc.junkyard_drifter.intro.choice.4": {
+        "en": "Good luck with your search.",
+        "ko": "잘 찾길 바랍니다."
+    },
+    "npc.junkyard_drifter.c1.text.1": {
+        "en": "Bits and bobs. A bent nail here, a scrap of cloth there. Folk tossed out all sorts when they moved into the fortress — old furniture, broken roof tiles, things they couldn't carry. It hasn't been long enough for the rot to set in proper, so there's still decent pickings if you know where to look. Not glamorous work, but it keeps me going.",
+        "ko": "이것저것. 여기서 구부러진 못, 저기서 천 조각. 사람들이 요새로 들어오면서 온갖 걸 버렸거든 — 낡은 가구, 깨진 지붕 기와, 들고 갈 수 없는 것들. 아직 제대로 썩을 만큼 시간이 지나지 않아서, 어디를 봐야 하는지 알면 괜찮은 것들이 있어. 멋진 일은 아니지만, 이걸로 버티고 있지."
+    },
+    "npc.junkyard_drifter.c1.choice.2": {
+        "en": "What about the animals?",
+        "ko": "동물들은요?"
+    },
+    "npc.junkyard_drifter.c1.choice.3": {
+        "en": "Anything north of here?",
+        "ko": "여기 북쪽에 뭐가 있나요?"
+    },
+    "npc.junkyard_drifter.c1.choice.4": {
+        "en": "I see. Take care.",
+        "ko": "그렇군요. 몸 조심하세요."
+    },
+    "npc.junkyard_drifter.c2.text.1": {
+        "en": "Aye, they come for the scraps. Foxes, rats, the odd stray dog. Folk throw their food waste here too, so the animals have learnt there's easy pickings. They're not dangerous — just hungry, like the rest of us. I don't bother them and they don't bother me. We've got an understanding, you might say.",
+        "ko": "그래, 먹을 것 때문에 오는 거야. 여우, 쥐, 가끔 떠돌이 개도. 사람들이 음식물 쓰레기도 여기 버리니까, 동물들이 쉽게 먹을 게 있다는 걸 알게 된 거지. 위험하진 않아 — 그냥 배고픈 거야, 우리 나머지와 마찬가지로. 나는 그놈들을 건드리지 않고 그놈들도 나를 건드리지 않아. 서로 이해가 된 거라고 할 수 있지."
+    },
+    "npc.junkyard_drifter.c2.choice.1": {
+        "en": "Found anything useful?",
+        "ko": "쓸만한 거 찾았나요?"
+    },
+    "npc.junkyard_drifter.c2.choice.3": {
+        "en": "What about the cliffs to the north?",
+        "ko": "북쪽 절벽에 대해서는요?"
+    },
+    "npc.junkyard_drifter.c2.choice.4": {
+        "en": "A peaceful arrangement. Farewell.",
+        "ko": "평화로운 합의군요. 안녕히."
+    },
+    "npc.junkyard_drifter.c3.text.1": {
+        "en": "*glances around and lowers voice* North of here, there's a cliff face — drops straight down to the sea. Most folk don't bother going that way. But I've noticed something: between the rocks, there's a gap. Narrow, mind you, but deep enough that you can't see the end of it. I haven't gone in myself — I'm no fool — but something about it... the air that comes out of it feels different. Colder. Older. Make of that what you will.",
+        "ko": "*주위를 둘러보고 목소리를 낮추며* 여기 북쪽에 절벽이 있어 — 바다까지 곧장 떨어지는. 대부분 사람들은 그쪽으로 가지 않지. 하지만 내가 눈치챈 게 있어: 바위 사이에 틈이 있거든. 좁긴 하지만, 끝이 안 보일 만큼 깊어. 직접 들어가 보진 않았어 — 바보는 아니니까 — 하지만 뭔가... 거기서 나오는 공기가 달라. 더 차갑고. 더 오래된 느낌이야. 알아서 판단해."
+    },
+    "npc.junkyard_drifter.c3.choice.1": {
+        "en": "Found anything useful in the junk?",
+        "ko": "쓰레기에서 쓸만한 거 찾았나요?"
+    },
+    "npc.junkyard_drifter.c3.choice.2": {
+        "en": "What about the animals?",
+        "ko": "동물들은요?"
+    },
+    "npc.junkyard_drifter.c3.choice.4": {
+        "en": "I will keep that in mind. Farewell.",
+        "ko": "기억해 두겠습니다. 안녕히."
+    },
+    "npc.priest.intro.text.1": {
+        "en": "Blessings of Alva upon you, {player_name}. This humble chapel is dedicated to the sun god — the gentle light of dawn. Few remember the old ways, but we tend the faith still.",
+        "ko": "알바의 축복이 함께하길, {player_name}. 이 소박한 예배당은 태양신에게 바쳐진 곳입니다 — 새벽녘의 온화한 빛이지요. 옛 방식을 기억하는 이는 적지만, 우리는 여전히 신앙을 돌보고 있습니다."
+    },
+    "npc.priest.intro.choice.1": {
+        "en": "Who is Alva?",
+        "ko": "알바는 누구인가요?"
+    },
+    "npc.priest.intro.choice.2": {
+        "en": "Tell me about this chapel.",
+        "ko": "이 예배당에 대해 알려주세요."
+    },
+    "npc.priest.intro.choice.3": {
+        "en": "Where can one make an offering?",
+        "ko": "제물은 어디에 바칠 수 있나요?"
+    },
+    "npc.priest.intro.choice.4": {
+        "en": "May Alva watch over you.",
+        "ko": "알바가 지켜주시길."
+    },
+    "npc.priest.c1.text.1": {
+        "en": "Alva is the sun god of Karnas. The name comes from an old word meaning 'white' or 'bright' — not the searing heat of midday, but the soft, clean light of dawn. Over the centuries, the faith settled into everyday life like a quiet habit. There are no sabbaths or grand gatherings any longer; Alva's teachings simply guide how folk live, day by day.",
+        "ko": "알바는 카르나스의 태양신입니다. 그 이름은 '희다', '밝다'라는 뜻의 고어에서 유래했지요 — 한낮의 뜨거운 열기가 아니라, 새벽녘의 부드럽고 깨끗한 빛을 뜻합니다. 수백 년에 걸쳐 신앙은 조용한 습관처럼 일상 속에 자리 잡았습니다. 안식일이나 큰 모임 같은 것은 더 이상 남아 있지 않고, 알바의 가르침은 그저 사람들이 하루하루를 살아가는 방식을 이끌어 줄 뿐입니다."
+    },
+    "npc.priest.c1.choice.2": {
+        "en": "Tell me about this chapel.",
+        "ko": "이 예배당에 대해 알려주세요."
+    },
+    "npc.priest.c1.choice.3": {
+        "en": "Where can one make an offering?",
+        "ko": "제물은 어디에 바칠 수 있나요?"
+    },
+    "npc.priest.c1.choice.4": {
+        "en": "Thank you, Father.",
+        "ko": "감사합니다, 신부님."
+    },
+    "npc.priest.c2.text.1": {
+        "en": "This chapel has stood within the fortress walls for longer than anyone can recall. Before the remnants of the army arrived, it was a quiet place — just one monk studying the faith in solitude, and a couple of homeless folk who had taken shelter here. Now it serves a greater purpose, though I sometimes wonder what became of those who once called it home.",
+        "ko": "이 예배당은 누구도 기억하지 못할 만큼 오래전부터 요새 성벽 안에 서 있었습니다. 패잔병들이 들어오기 전에는 조용한 곳이었지요 — 홀로 신앙을 공부하는 수도승 한 명과, 이곳에 몸을 의탁한 노숙자 두어 명뿐이었습니다. 이제는 더 큰 목적을 위해 쓰이고 있지만, 가끔 예전에 이곳을 집이라 부르던 이들이 어떻게 되었는지 궁금해지곤 합니다."
+    },
+    "npc.priest.c2.choice.1": {
+        "en": "Who is Alva?",
+        "ko": "알바는 누구인가요?"
+    },
+    "npc.priest.c2.choice.3": {
+        "en": "Where can one make an offering?",
+        "ko": "제물은 어디에 바칠 수 있나요?"
+    },
+    "npc.priest.c2.choice.4": {
+        "en": "I shall remember that.",
+        "ko": "기억하겠습니다."
+    },
+    "npc.priest.c3.text.1": {
+        "en": "Out on the dry plains, you may find stone altars — flat platforms of fitted stone, about thirty centimetres thick, with a small table at the centre for placing offerings. They were built in the old days when folk still gathered to honour Alva beneath the open sky. Some say the altars still carry a trace of the dawn light, even at dusk.",
+        "ko": "마른 평야에 나가면 돌 제단을 찾을 수 있을 겁니다 — 약 30센티미터 두께로 짜 맞춰진 돌바닥 위에, 가운데 제물을 올려두는 작은 상이 있지요. 사람들이 아직 열린 하늘 아래 모여 알바를 기렸던 옛날에 지어진 것입니다. 어떤 이들은 그 제단이 해질녘에도 새벽빛의 흔적을 간직하고 있다고 말합니다."
+    },
+    "npc.priest.c3.choice.1": {
+        "en": "Who is Alva?",
+        "ko": "알바는 누구인가요?"
+    },
+    "npc.priest.c3.choice.2": {
+        "en": "Tell me about this chapel.",
+        "ko": "이 예배당에 대해 알려주세요."
+    },
+    "npc.priest.c3.choice.4": {
+        "en": "I shall seek one out.",
+        "ko": "찾아보겠습니다."
+    },
+    "npc.royal_adviser.intro.text.1": {
+        "en": "Ah, {player_name}. You have found your way to the castle. I am the king's adviser — what remains of the court, at any rate. Speak, but choose your words with care.",
+        "ko": "아, {player_name}. 성까지 찾아왔군. 나는 왕의 조언자다 — 남아 있는 궁정이라고 할 수 있는 것의. 말해 보게, 하지만 말을 가려서 하게."
+    },
+    "npc.royal_adviser.intro.choice.1": {
+        "en": "What is the political situation?",
+        "ko": "정치 상황은 어떤가요?"
+    },
+    "npc.royal_adviser.intro.choice.2": {
+        "en": "I heard the heir is missing.",
+        "ko": "왕위 계승자가 행방불명이라고 들었습니다."
+    },
+    "npc.royal_adviser.intro.choice.3": {
+        "en": "How is the king's health?",
+        "ko": "왕의 건강은 어떤가요?"
+    },
+    "npc.royal_adviser.intro.choice.4": {
+        "en": "I shall not take more of your time.",
+        "ko": "더 이상 시간을 빼앗지 않겠습니다."
+    },
+    "npc.royal_adviser.c1.text.1": {
+        "en": "Delicate. That is the kindest word for it. The king rules, but his authority wanes with each passing day. The last expedition cost us dearly — not just in lives, but in the line of succession itself. There are those who would exploit the uncertainty. I do what I can to hold things together, but I am only one man.",
+        "ko": "미묘하다. 가장 부드럽게 표현하면 그렇지. 왕이 다스리고 있지만, 권위는 날이 갈수록 약해지고 있다. 마지막 원정은 큰 대가를 치렀어 — 목숨뿐만 아니라, 왕위 계승 자체에도. 이 불확실성을 이용하려는 자들이 있다. 상황을 유지하려고 할 수 있는 건 하고 있지만, 나는 한 사람일 뿐이야."
+    },
+    "npc.royal_adviser.c1.choice.2": {
+        "en": "The missing heir...",
+        "ko": "행방불명된 계승자..."
+    },
+    "npc.royal_adviser.c1.choice.3": {
+        "en": "And the king himself?",
+        "ko": "왕 본인은요?"
+    },
+    "npc.royal_adviser.c1.choice.4": {
+        "en": "I understand. Farewell.",
+        "ko": "이해합니다. 안녕히."
+    },
+    "npc.royal_adviser.c2.text.1": {
+        "en": "...You are well informed. Yes. The king's brother and his son both vanished during the third expedition. Whether they fell in battle or were lost in the chaos, no one can say. Without a clear successor, the vultures circle. I would advise you not to speak of this too freely. There are ears in every corridor.",
+        "ko": "...소식이 빠르군. 그래. 왕의 동생과 아들 모두 세 번째 원정 중에 사라졌다. 전투에서 쓰러졌는지 혼란 속에서 길을 잃었는지, 아무도 말할 수 없어. 명확한 후계자가 없으니, 독수리들이 맴돌고 있지. 이 이야기를 너무 자유롭게 하지 않는 게 좋을 거야. 모든 복도에 귀가 있으니."
+    },
+    "npc.royal_adviser.c2.choice.1": {
+        "en": "How is the king managing?",
+        "ko": "왕은 어떻게 대처하고 있나요?"
+    },
+    "npc.royal_adviser.c2.choice.3": {
+        "en": "Is the king well?",
+        "ko": "왕은 건강한가요?"
+    },
+    "npc.royal_adviser.c2.choice.4": {
+        "en": "I shall be discreet.",
+        "ko": "조심하겠습니다."
+    },
+    "npc.royal_adviser.c3.text.1": {
+        "en": "*pauses, choosing words carefully* The king... rests. He has been resting for some time now. The burdens of rule weigh heavily upon him, as you might imagine. I attend to matters in his stead when he is... indisposed. That is all I can say on the matter. I trust you understand the delicacy of the situation.",
+        "ko": "*잠시 멈추고 말을 고르며* 왕은... 쉬고 계시다. 꽤 오랫동안 쉬고 계시지. 통치의 짐이 무겁게 짓누르고 있다네, 짐작하겠지만. 왕이... 자리를 비울 때는 내가 대신 일을 처리하고 있다. 이 문제에 대해서는 그 이상 말할 수 없네. 상황의 민감함을 이해하리라 믿네."
+    },
+    "npc.royal_adviser.c3.choice.1": {
+        "en": "What is the political situation?",
+        "ko": "정치 상황은 어떤가요?"
+    },
+    "npc.royal_adviser.c3.choice.2": {
+        "en": "And the missing heir?",
+        "ko": "행방불명된 계승자는요?"
+    },
+    "npc.royal_adviser.c3.choice.4": {
+        "en": "I understand. I shall say no more.",
+        "ko": "이해합니다. 더 이상 묻지 않겠습니다."
+    },
+    "npc.necropolis_monk.intro.text.1": {
+        "en": "The gaunt monk stands motionless before the entrance to the necropolis. His hollow eyes settle on you for a long moment, then he raises one bony hand and gestures slowly — a sweeping arc from the darkness below towards the faint light above. It is the only guidance he offers: a silent reminder that those who have risen from death must find their way back to the living.",
+        "ko": "수척한 수도승이 네크로폴리스 입구 앞에 미동도 없이 서 있다. 텅 빈 눈이 한참 동안 당신에게 머문 뒤, 앙상한 손 하나를 들어 천천히 제스처를 취한다 — 아래의 어둠에서 위의 희미한 빛을 향해 크게 호를 그리는 동작이다. 그것이 그가 제공하는 유일한 안내이다: 죽음에서 일어난 자는 산 자들의 세계로 돌아가야 한다는 침묵의 일깨움."
+    },
+    "npc.royal_guard.intro.text.1": {
+        "en": "Hold. {player_name}, this is the entrance to the castle. State your purpose or move along.",
+        "ko": "멈춰라. {player_name}, 여기는 성 입구다. 용건을 밝히거나 물러가라."
+    },
+    "npc.royal_guard.intro.choice.1": {
+        "en": "I wish to enter the castle.",
+        "ko": "성에 들어가고 싶습니다."
+    },
+    "npc.royal_guard.intro.choice.2": {
+        "en": "Who do you protect?",
+        "ko": "누구를 지키고 있나요?"
+    },
+    "npc.royal_guard.intro.choice.3": {
+        "en": "I will be on my way.",
+        "ko": "가던 길을 가겠습니다."
+    },
+    "npc.royal_guard.c1.text.1": {
+        "en": "Not without proper authority. The castle is restricted to the king's court and those with express permission. I do not make the rules, but I enforce them. If you have business with the adviser, you will need to obtain clearance first.",
+        "ko": "적절한 권한 없이는 안 된다. 성은 왕의 궁정과 명시적 허가를 받은 자만 출입할 수 있다. 규칙을 만든 건 내가 아니지만, 시행하는 건 나다. 조언자와 볼일이 있다면, 먼저 허가를 받아야 한다."
+    },
+    "npc.royal_guard.c1.choice.2": {
+        "en": "Who is inside?",
+        "ko": "안에 누가 있나요?"
+    },
+    "npc.royal_guard.c1.choice.3": {
+        "en": "Understood.",
+        "ko": "알겠습니다."
+    },
+    "npc.royal_guard.c2.text.1": {
+        "en": "The king and what remains of his court. That is all you need to know. My duty is to ensure no one passes without authorisation. These are troubled times, and the castle must remain secure. I will not discuss this further.",
+        "ko": "왕과 남아 있는 궁정 사람들이다. 그것만 알면 된다. 내 임무는 허가 없이 아무도 지나가지 못하게 하는 것이다. 어려운 시기이고, 성은 안전하게 유지되어야 한다. 더 이상 이야기하지 않겠다."
+    },
+    "npc.royal_guard.c2.choice.1": {
+        "en": "Can I enter?",
+        "ko": "들어갈 수 있나요?"
+    },
+    "npc.royal_guard.c2.choice.3": {
+        "en": "Very well. Farewell.",
+        "ko": "알겠습니다. 안녕히."
+    },
+    "npc.gate_warden.intro.text.1": {
+        "en": "Another one passing through, eh? {player_name}, mind yourself out there. The western road is not what it used to be.",
+        "ko": "또 지나가는 사람인가? {player_name}, 밖에서 조심하게. 서쪽 길은 예전 같지 않다."
+    },
+    "npc.gate_warden.intro.choice.1": {
+        "en": "What is happening beyond the walls?",
+        "ko": "성벽 밖에서 무슨 일이 벌어지고 있나요?"
+    },
+    "npc.gate_warden.intro.choice.2": {
+        "en": "Tell me about the relocation order.",
+        "ko": "이주 명령에 대해 알려주세요."
+    },
+    "npc.gate_warden.intro.choice.3": {
+        "en": "I will be careful.",
+        "ko": "조심하겠습니다."
+    },
+    "npc.gate_warden.c1.text.1": {
+        "en": "Creatures roam the plains — goblins, wild beasts, things that weren't there a generation ago. The villages beyond the gate have been ordered to empty out. Folk are meant to move further from the walls so we can maintain a clear line of sight. Not everyone is happy about it, as you might imagine.",
+        "ko": "괴물들이 평야를 돌아다닌다 — 고블린, 야생 짐승, 한 세대 전에는 없던 것들. 성문 너머 마을들은 비우라는 명령을 받았다. 사람들은 성벽에서 더 멀리 이동해야 한다, 시야를 확보하기 위해서. 모두가 기꺼워하는 건 아니지, 짐작하겠지만."
+    },
+    "npc.gate_warden.c1.choice.2": {
+        "en": "About the relocation order...",
+        "ko": "이주 명령에 대해서..."
+    },
+    "npc.gate_warden.c1.choice.3": {
+        "en": "Thank you for the warning.",
+        "ko": "경고 감사합니다."
+    },
+    "npc.gate_warden.c2.text.1": {
+        "en": "Orders from the castle. Clear the settlements near the walls for defensive purposes. I enforce it because it is my duty, but I know full well what it means for those folk. They lose their homes, their crops, everything. And they blame us — rightly so, perhaps. But if the creatures breach the walls, none of it will matter.",
+        "ko": "성에서 내려온 명령이다. 방어를 위해 성벽 근처 정착지를 비우라는 거지. 임무니까 시행하지만, 그 사람들에게 무엇을 의미하는지 잘 안다. 집도, 농작물도, 모든 걸 잃는 거야. 그리고 우리를 탓하지 — 어쩌면 당연하겠지. 하지만 괴물들이 성벽을 뚫으면, 그 어떤 것도 의미가 없어진다."
+    },
+    "npc.gate_warden.c2.choice.1": {
+        "en": "What creatures are out there?",
+        "ko": "밖에 어떤 괴물들이 있나요?"
+    },
+    "npc.gate_warden.c2.choice.3": {
+        "en": "A difficult position.",
+        "ko": "어려운 처지군요."
+    },
+    "npc.knight_lieutenant.intro.text.1": {
+        "en": "At ease, {player_name}. I am the lieutenant of the Ash Knights stationed here. What brings you to our post?",
+        "ko": "편히 서라, {player_name}. 나는 이곳에 주둔 중인 잿빛 기사단의 부관이다. 무슨 용건인가?"
+    },
+    "npc.knight_lieutenant.intro.choice.1": {
+        "en": "Tell me about the Ash Knights.",
+        "ko": "잿빛 기사단에 대해 알려주세요."
+    },
+    "npc.knight_lieutenant.intro.choice.2": {
+        "en": "What is the goblin threat?",
+        "ko": "고블린 위협이란 무엇인가요?"
+    },
+    "npc.knight_lieutenant.intro.choice.3": {
+        "en": "Farewell.",
+        "ko": "안녕히 계세요."
+    },
+    "npc.knight_lieutenant.c1.text.1": {
+        "en": "We are the last knightly order standing after the empire fell. We uphold justice — though some might say our methods are harsh. Without discipline, there would be nothing left but chaos.",
+        "ko": "우리는 제국이 무너진 뒤 남은 유일한 기사단이다. 정의를 수호하지만 — 어떤 이들은 우리의 방식이 가혹하다고 하지. 규율이 없으면 혼란만 남을 뿐이다."
+    },
+    "npc.knight_lieutenant.c1.choice.2": {
+        "en": "What about the goblins?",
+        "ko": "고블린은 어떤가요?"
+    },
+    "npc.knight_lieutenant.c1.choice.3": {
+        "en": "Farewell.",
+        "ko": "안녕히 계세요."
+    },
+    "npc.knight_lieutenant.c2.text.1": {
+        "en": "Goblins have nested in the brush within our own walls. Small, wretched creatures — not terribly dangerous alone, but they breed like vermin. We are mustering folk to clear them out before they become a proper menace.",
+        "ko": "고블린들이 성벽 안 수풀에 둥지를 틀었다. 작고 비참한 놈들이지 — 혼자서는 크게 위험하지 않지만 해충처럼 번식한다. 본격적인 위협이 되기 전에 소탕하려고 사람들을 모으고 있다."
+    },
+    "npc.knight_lieutenant.c2.choice.1": {
+        "en": "Tell me about the Ash Knights.",
+        "ko": "잿빛 기사단에 대해 알려주세요."
+    },
+    "npc.knight_lieutenant.c2.choice.3": {
+        "en": "Farewell.",
+        "ko": "안녕히 계세요."
+    },
+    "npc.fisherman.intro.text.1": {
+        "en": "Aye, {player_name}. Come to watch the sea, have you? Not much else to do round here. The fish still bite, at least — that is more than most can say about their livelihoods.",
+        "ko": "그래, {player_name}. 바다 구경하러 왔나? 여기서 할 수 있는 게 별로 없지. 물고기는 아직 물긴 해 — 대부분의 사람들 생계보다는 나은 편이야."
+    },
+    "npc.fisherman.intro.choice.1": {
+        "en": "Tell me about the harbour.",
+        "ko": "항구에 대해 알려주세요."
+    },
+    "npc.fisherman.intro.choice.2": {
+        "en": "What is to the north and south?",
+        "ko": "북쪽과 남쪽에는 뭐가 있나요?"
+    },
+    "npc.fisherman.intro.choice.3": {
+        "en": "Good fishing to you.",
+        "ko": "좋은 낚시 되세요."
+    },
+    "npc.fisherman.c1.text.1": {
+        "en": "Harbour is a generous word for it. There is a narrow gap in the northern cliffs where you can squeeze a small boat through to a tiny landing. That is our harbour. It is enough for fishing, but you will not be sailing any galleons out of here. The cliffs keep us safe from the sea, at least.",
+        "ko": "항구라고 하기엔 좀 거창하지. 북쪽 절벽에 좁은 틈이 있어서 작은 배를 밀어 넣으면 조그만 선착장이 나와. 그게 우리 항구야. 낚시하기엔 충분하지만, 여기서 대형 범선을 띄울 생각은 마. 절벽이 바다로부터는 지켜주니까, 그건 다행이지."
+    },
+    "npc.fisherman.c1.choice.2": {
+        "en": "And to the south?",
+        "ko": "남쪽은요?"
+    },
+    "npc.fisherman.c1.choice.3": {
+        "en": "Thank you for the information.",
+        "ko": "정보 감사합니다."
+    },
+    "npc.fisherman.c2.text.1": {
+        "en": "North is all cliffs — sheer rock face dropping straight into the sea. Nobody gets in or out that way, which suits us fine. To the south, the walls are half-crumbled and there is a low cliff below. A stream runs out from the castle grounds and flows to the sea through there. Used to be a proper jetty once, but it is nothing but ruins now. I would not wander too far south if I were you.",
+        "ko": "북쪽은 전부 절벽이야 — 깎아지른 바위가 바다로 곧장 떨어지지. 그쪽으로는 아무도 드나들 수 없어, 우리한텐 오히려 좋지. 남쪽은 성벽이 반쯤 무너져 있고 아래로 낮은 절벽이 있어. 성 안에서 나온 샘물이 그쪽으로 흘러 바다로 들어가지. 한때 제대로 된 잔교가 있었는데, 이제는 폐허뿐이야. 내가 너라면 남쪽으로 너무 멀리 가지 않겠어."
+    },
+    "npc.fisherman.c2.choice.1": {
+        "en": "Tell me about the harbour.",
+        "ko": "항구에 대해 알려주세요."
+    },
+    "npc.fisherman.c2.choice.3": {
+        "en": "I will keep that in mind.",
+        "ko": "명심하겠습니다."
+    },
+    "npc.refugee.intro.text.1": {
+        "en": "Please... {player_name}, is it? Have you come from inside the walls? Do you know if they are letting anyone else in?",
+        "ko": "제발... {player_name}이라고요? 성벽 안에서 오신 건가요? 다른 사람들도 들여보내 주는지 아시나요?"
+    },
+    "npc.refugee.intro.choice.1": {
+        "en": "What happened to you?",
+        "ko": "무슨 일이 있었나요?"
+    },
+    "npc.refugee.intro.choice.2": {
+        "en": "Are you looking for someone?",
+        "ko": "누군가를 찾고 있나요?"
+    },
+    "npc.refugee.intro.choice.3": {
+        "en": "I am sorry, I do not know.",
+        "ko": "죄송합니다, 모르겠습니다."
+    },
+    "npc.refugee.c1.text.1": {
+        "en": "We fled when the creatures came. Our village was overrun in a single night. I got separated from my husband and children in the chaos. I have been waiting here by the gate for days, hoping they might turn up. The guards will not let me inside — they say the walls are at capacity. But out here... out here there is nothing.",
+        "ko": "괴물들이 왔을 때 도망쳤어요. 마을이 하룻밤 만에 짓밟혔습니다. 혼란 속에서 남편과 아이들과 헤어졌어요. 며칠째 성문 앞에서 기다리고 있어요, 혹시 나타날까 해서. 경비병들은 안으로 들여보내 주지 않아요 — 성벽 안이 꽉 찼다고. 하지만 여기 밖에는... 밖에는 아무것도 없어요."
+    },
+    "npc.refugee.c1.choice.2": {
+        "en": "Your family...",
+        "ko": "가족분들이..."
+    },
+    "npc.refugee.c1.choice.3": {
+        "en": "I hope they are safe.",
+        "ko": "무사하길 바랍니다."
+    },
+    "npc.refugee.c2.text.1": {
+        "en": "My husband. My two children. We were running together, but the road was dark and the creatures were everywhere. I told them to keep running towards the port... I do not know if they made it. Every day I watch the road, hoping to see them. Every day, nothing.",
+        "ko": "남편이요. 두 아이도. 함께 달리고 있었는데, 길은 어둡고 괴물들이 사방에 있었어요. 항구 쪽으로 계속 달리라고 했는데... 도착했는지 모르겠어요. 매일 길을 바라보며 그들이 보이길 바라요. 매일, 아무도 안 와요."
+    },
+    "npc.refugee.c2.choice.1": {
+        "en": "How did you end up here?",
+        "ko": "어떻게 여기까지 오셨나요?"
+    },
+    "npc.refugee.c2.choice.3": {
+        "en": "Do not lose hope.",
+        "ko": "희망을 잃지 마세요."
+    },
+    "npc.knight_recruiter.intro.text.1": {
+        "en": "You there, {player_name}! You look like someone who can handle themselves. Ever thought about joining the Ash Knights?",
+        "ko": "이봐, {player_name}! 제법 자신을 지킬 줄 아는 사람처럼 보이는군. 잿빛 기사단에 입단할 생각은 없나?"
+    },
+    "npc.knight_recruiter.intro.choice.1": {
+        "en": "What does joining the Ash Knights entail?",
+        "ko": "잿빛 기사단에 입단하면 어떻게 되나요?"
+    },
+    "npc.knight_recruiter.intro.choice.2": {
+        "en": "What is the situation beyond the walls?",
+        "ko": "성벽 밖 상황은 어떤가요?"
+    },
+    "npc.knight_recruiter.intro.choice.3": {
+        "en": "Not interested.",
+        "ko": "관심 없습니다."
+    },
+    "npc.knight_recruiter.c1.text.1": {
+        "en": "We stand for justice in a world gone mad. Mind you, justice here means keeping order — and order sometimes demands a firm hand. But without us, these people would have nothing. Think on it.",
+        "ko": "우리는 미쳐버린 세상에서 정의를 지킨다. 물론, 여기서 정의란 질서를 유지하는 것이고 — 질서는 때로 강경한 손길을 요구하지. 하지만 우리가 없으면 이 사람들에겐 아무것도 남지 않아. 생각해 보게."
+    },
+    "npc.knight_recruiter.c1.choice.2": {
+        "en": "What about beyond the walls?",
+        "ko": "성벽 밖은 어떤가요?"
+    },
+    "npc.knight_recruiter.c1.choice.3": {
+        "en": "I will think about it.",
+        "ko": "생각해 보겠습니다."
+    },
+    "npc.knight_recruiter.c2.text.1": {
+        "en": "Beyond the walls? Creatures roam freely — goblins, beasts, worse things. The folk out there have been ordered to relocate, but most of them resent us for it. Inside, we have our own troubles with goblins nesting in the brush. Nowhere is truly safe.",
+        "ko": "성벽 밖이라고? 괴물들이 자유롭게 돌아다닌다 — 고블린, 짐승, 더 나쁜 것들도. 밖의 사람들에게 이주 명령을 내렸지만 대부분 우리를 원망하고 있지. 안에서도 수풀에 고블린이 둥지를 틀어서 문제야. 어디도 진정으로 안전하지 않다."
+    },
+    "npc.knight_recruiter.c2.choice.1": {
+        "en": "Tell me about joining.",
+        "ko": "입단에 대해 알려주세요."
+    },
+    "npc.knight_recruiter.c2.choice.3": {
+        "en": "I see. Farewell.",
+        "ko": "알겠습니다. 안녕히."
+    },
+    "npc.disgruntled_farmer.intro.text.1": {
+        "en": "What do you want, {player_name}? Come to gawk at us like the rest of them behind those walls?",
+        "ko": "뭘 원하는 거야, {player_name}? 성벽 뒤에 있는 놈들처럼 우리를 구경하러 온 거야?"
+    },
+    "npc.disgruntled_farmer.intro.choice.1": {
+        "en": "Why are you so angry?",
+        "ko": "왜 그렇게 화가 나 있나요?"
+    },
+    "npc.disgruntled_farmer.intro.choice.2": {
+        "en": "What happened to your farm?",
+        "ko": "농장에 무슨 일이 있었나요?"
+    },
+    "npc.disgruntled_farmer.intro.choice.3": {
+        "en": "I meant no offence.",
+        "ko": "기분 나쁘게 하려는 건 아니었습니다."
+    },
+    "npc.disgruntled_farmer.c1.text.1": {
+        "en": "Angry? I have every right to be! They ordered us to leave our land — our homes, our fields — so their precious walls have a clear view. And what do we get? Nothing. Not a single coin, not a scrap of food. Meanwhile, those lot inside eat and sleep safe and sound. They do not care about us. Never have.",
+        "ko": "화가 나냐고? 당연히 화가 나지! 우리 땅을 떠나라고 명령했어 — 집도, 밭도 — 그 소중한 성벽의 시야를 확보하겠다고. 그래서 우리가 뭘 받았냐? 아무것도. 동전 한 닢, 음식 한 조각도 없어. 그 사이 안에 있는 놈들은 편히 먹고 자고. 우리 따위 신경도 안 써. 한 번도 안 그랬어."
+    },
+    "npc.disgruntled_farmer.c1.choice.2": {
+        "en": "Your crops...",
+        "ko": "농작물은..."
+    },
+    "npc.disgruntled_farmer.c1.choice.3": {
+        "en": "I understand your frustration.",
+        "ko": "분노를 이해합니다."
+    },
+    "npc.disgruntled_farmer.c2.text.1": {
+        "en": "Trampled. Half by the creatures that come out at night, half by the knights who marched through without a care. Three generations my family worked that soil. Now it is ruined, and I am told to move further away as if the land means nothing. If this is their idea of protection, I want no part of it.",
+        "ko": "짓밟혔어. 반은 밤에 나타나는 괴물들한테, 반은 아무렇지도 않게 행군한 기사들한테. 삼 대에 걸쳐 우리 가족이 일군 땅이야. 이제 망가졌고, 땅이 아무 의미도 없다는 듯이 더 멀리 이동하라고 해. 이게 그들이 말하는 보호라면, 난 그딴 거 필요 없어."
+    },
+    "npc.disgruntled_farmer.c2.choice.1": {
+        "en": "About the relocation order...",
+        "ko": "이주 명령에 대해서..."
+    },
+    "npc.disgruntled_farmer.c2.choice.3": {
+        "en": "I am sorry for your loss.",
+        "ko": "유감입니다."
+    },
+    "npc.drunken_refugee.intro.text.1": {
+        "en": "*hic* ...Who're you? {player_name}? Doesn't matter... nothing matters any more. Sit down if you want, I don't care...",
+        "ko": "*딸꾹* ...누구야? {player_name}? 상관없어... 이제 아무것도 상관없다고. 앉고 싶으면 앉아, 난 신경 안 써..."
+    },
+    "npc.drunken_refugee.intro.choice.1": {
+        "en": "What happened to you?",
+        "ko": "무슨 일이 있었나요?"
+    },
+    "npc.drunken_refugee.intro.choice.2": {
+        "en": "I heard rumours about a great sorcerer.",
+        "ko": "대마법사에 대한 소문을 들었습니다."
+    },
+    "npc.drunken_refugee.intro.choice.3": {
+        "en": "Have you heard any other rumours?",
+        "ko": "다른 소문을 들은 게 있나요?"
+    },
+    "npc.drunken_refugee.intro.choice.4": {
+        "en": "Take care of yourself.",
+        "ko": "몸 조심하세요."
+    },
+    "npc.drunken_refugee.c1.text.1": {
+        "en": "The expedition... the third one. I went with them, you know. We were going to find this so-called sorcerer and put an end to it all. *hic* ...We found nothing. Just a blinding light — bright, enormous — and then everyone was screaming. I barely made it back. My family... I don't even know if they're still alive.",
+        "ko": "원정이야... 세 번째. 나도 같이 갔었어. 소위 마법사란 놈을 찾아서 모든 걸 끝내려고 했지. *딸꾹* ...아무것도 못 찾았어. 그냥 눈부신 빛 — 밝고, 거대한 — 그리고 모두가 비명을 질렀어. 겨우 돌아왔다. 가족은... 살아 있는지조차 모르겠어."
+    },
+    "npc.drunken_refugee.c1.choice.2": {
+        "en": "Tell me about this sorcerer.",
+        "ko": "그 마법사에 대해 말해주세요."
+    },
+    "npc.drunken_refugee.c1.choice.3": {
+        "en": "Any other rumours?",
+        "ko": "다른 소문은요?"
+    },
+    "npc.drunken_refugee.c1.choice.4": {
+        "en": "I am sorry. Take care.",
+        "ko": "유감입니다. 몸 조심하세요."
+    },
+    "npc.drunken_refugee.c2.text.1": {
+        "en": "Sorcerer? *laughs bitterly* Nobody's ever seen him. Nobody can even explain what happened properly. They say he appeared about a hundred years ago and everything went wrong after that — forests grew wild, creatures came out of nowhere. But sorcery? In this world? Nobody believes in such nonsense. It was just... a light. A terrible, blinding light. That's all anyone remembers.",
+        "ko": "마법사? *씁쓸하게 웃으며* 아무도 본 적 없어. 무슨 일이 있었는지 제대로 설명하는 사람도 없고. 백여 년 전에 나타났다고 하고 그 뒤로 모든 게 엉망이 됐다지 — 숲은 미쳐 자라고, 괴물들이 어디선가 나타나고. 하지만 마법이라고? 이 세상에서? 아무도 그런 헛소리를 믿지 않아. 그냥... 빛이었어. 끔찍하고 눈부신 빛. 그게 다야."
+    },
+    "npc.drunken_refugee.c2.choice.1": {
+        "en": "What happened on the expedition?",
+        "ko": "원정에서 무슨 일이 있었나요?"
+    },
+    "npc.drunken_refugee.c2.choice.3": {
+        "en": "Any other rumours?",
+        "ko": "다른 소문은요?"
+    },
+    "npc.drunken_refugee.c2.choice.4": {
+        "en": "I hope you find your family.",
+        "ko": "가족을 찾길 바랍니다."
+    },
+    "npc.drunken_refugee.c3.text.1": {
+        "en": "*hic* Rumours? Oh, there's plenty of those going round... which sort?",
+        "ko": "*딸꾹* 소문? 아, 그런 건 넘쳐나지... 어떤 종류?"
+    },
+    "npc.drunken_refugee.c3.choice.31": {
+        "en": "Is the king truly alive?",
+        "ko": "왕이 정말 살아 있나요?"
+    },
+    "npc.drunken_refugee.c3.choice.32": {
+        "en": "What about the blinding light?",
+        "ko": "그 눈부신 빛은 뭐였나요?"
+    },
+    "npc.drunken_refugee.c3.choice.4": {
+        "en": "Never mind. Rest well.",
+        "ko": "됐어요. 푹 쉬세요."
+    },
+    "npc.drunken_refugee.c31.text.1": {
+        "en": "*lowers voice* The king? *hic* ...I'll tell you what I think. I think the king's dead. Been dead for a while, maybe. The advisers — they're the ones running things now. You ever notice how nobody actually sees him? Always 'the king is resting' or 'the king is in council'. Council with whom, I ask? Dead men don't hold council. *hic* ...But what do I know. I'm just a drunk.",
+        "ko": "*목소리를 낮추며* 왕? *딸꾹* ...내 생각을 말해줄까. 왕은 죽었어. 꽤 오래전에, 아마. 대신들이 — 지금 실제로 일을 돌리는 건 그 사람들이야. 아무도 왕을 직접 본 적 없다는 거 눈치챘어? 항상 '왕이 쉬고 계신다'거나 '왕이 회의 중이시다'라고만 하지. 누구랑 회의를 한다는 거야? 죽은 사람은 회의를 하지 않아. *딸꾹* ...하지만 내가 뭘 알겠어. 난 그냥 술주정뱅이야."
+    },
+    "npc.drunken_refugee.c31.choice.32": {
+        "en": "What about the blinding light?",
+        "ko": "그 눈부신 빛은 뭐였나요?"
+    },
+    "npc.drunken_refugee.c31.choice.1": {
+        "en": "Tell me about the expedition.",
+        "ko": "원정에 대해 말해주세요."
+    },
+    "npc.drunken_refugee.c31.choice.4": {
+        "en": "Interesting. Take care.",
+        "ko": "흥미롭군요. 몸 조심하세요."
+    },
+    "npc.drunken_refugee.c32.text.1": {
+        "en": "*stares into his cup* The light... *hic* ...everyone talks about it like it was some weapon. But I was there, you know. And when that light hit us... it didn't feel like an attack. It felt... warm. Clean. Like the first light of dawn, if dawn could kill you. Some of the old folk in the chapel — they whisper that it was Alva. The sun god himself, shining down on us. Whether to protect or to punish, nobody can say. *hic* ...Makes you think, doesn't it?",
+        "ko": "*잔을 들여다보며* 그 빛... *딸꾹* ...다들 무기였다는 듯이 말하지. 하지만 나는 거기 있었어. 그 빛이 우리를 덮쳤을 때... 공격 같은 느낌이 아니었어. 그건... 따뜻했어. 깨끗했고. 새벽의 첫 빛 같았어, 새벽빛이 사람을 죽일 수 있다면 말이야. 예배당의 늙은이들 중에 — 그게 알바였다고 속삭이는 사람들이 있어. 태양신 자신이 우리에게 빛을 비추었다고. 보호하려 한 건지 벌하려 한 건지, 아무도 말할 수 없지. *딸꾹* ...생각하게 만들지, 안 그래?"
+    },
+    "npc.drunken_refugee.c32.choice.31": {
+        "en": "Is the king truly alive?",
+        "ko": "왕이 정말 살아 있나요?"
+    },
+    "npc.drunken_refugee.c32.choice.1": {
+        "en": "Tell me about the expedition.",
+        "ko": "원정에 대해 말해주세요."
+    },
+    "npc.drunken_refugee.c32.choice.4": {
+        "en": "It does. Farewell.",
+        "ko": "그러게요. 안녕히."
+    },
+    "npc.wandering_bard.intro.text.1": {
+        "en": "Ah, a fresh face. {player_name}, is it? Pull up a chair. I have stories, if you have the stomach for them. Not the cheerful sort, mind you.",
+        "ko": "아, 새로운 얼굴이군. {player_name}이라고? 의자를 끌어당겨. 이야기가 있다네, 들을 배짱이 있다면. 유쾌한 종류는 아니지만."
+    },
+    "npc.wandering_bard.intro.choice.1": {
+        "en": "Tell me about the Golden Age.",
+        "ko": "황금의 시대에 대해 들려주세요."
+    },
+    "npc.wandering_bard.intro.choice.2": {
+        "en": "What happened to the empire?",
+        "ko": "제국에 무슨 일이 있었나요?"
+    },
+    "npc.wandering_bard.intro.choice.3": {
+        "en": "Have you heard any rumours?",
+        "ko": "소문을 들은 게 있나요?"
+    },
+    "npc.wandering_bard.intro.choice.4": {
+        "en": "Perhaps another time.",
+        "ko": "다음에 듣겠습니다."
+    },
+    "npc.wandering_bard.c1.text.1": {
+        "en": "The Golden Age... when the empire of Karnas stretched across the continent. Gods and men walked closer then, or so the old songs say. Machines of wondrous craft, prosperity beyond measure. But balance is a fickle thing. It all came crashing down — gods, men, and everything in between.",
+        "ko": "황금의 시대라... 카르나스 제국이 대륙을 가로질러 뻗어 있던 때지. 신과 인간이 더 가까이 걸었다고, 옛 노래들은 그렇게 전하네. 경이로운 기계들, 헤아릴 수 없는 번영. 하지만 균형이란 변덕스러운 것이야. 모든 것이 무너져 내렸지 — 신도, 인간도, 그 사이의 모든 것도."
+    },
+    "npc.wandering_bard.c1.choice.2": {
+        "en": "And then what happened?",
+        "ko": "그 다음엔 어떻게 됐나요?"
+    },
+    "npc.wandering_bard.c1.choice.3": {
+        "en": "Any rumours floating about?",
+        "ko": "떠도는 소문은 없나요?"
+    },
+    "npc.wandering_bard.c1.choice.4": {
+        "en": "Thank you for the tale.",
+        "ko": "이야기 감사합니다."
+    },
+    "npc.wandering_bard.c2.text.1": {
+        "en": "The empire burned. Then, about a hundred years ago, someone they call the Great Sorcerer appeared — though no one has ever laid eyes on him. After that, the forests grew thick and hostile, and creatures from old tales began crawling out. Goblins, orcs, beasts that attack on sight. The world changed, and not for the better. Now we huddle here in Greyhaven, the last refuge of the living.",
+        "ko": "제국은 불탔지. 그리고 약 백여 년 전, 대마법사라 불리는 자가 나타났다네 — 물론 아무도 직접 본 적은 없지만. 그 뒤로 숲은 울창하고 적대적으로 변했고, 옛 이야기 속 괴물들이 기어 나오기 시작했어. 고블린, 오크, 보이는 대로 공격하는 짐승들. 세상이 변했고, 좋은 쪽은 아니야. 이제 우리는 산 자들의 마지막 피난처인 잿빛 항구에 모여 있다네."
+    },
+    "npc.wandering_bard.c2.choice.1": {
+        "en": "Tell me about the Golden Age.",
+        "ko": "황금의 시대에 대해 들려주세요."
+    },
+    "npc.wandering_bard.c2.choice.3": {
+        "en": "Any rumours floating about?",
+        "ko": "떠도는 소문은 없나요?"
+    },
+    "npc.wandering_bard.c2.choice.4": {
+        "en": "A grim tale indeed.",
+        "ko": "참으로 암울한 이야기군요."
+    },
+    "npc.wandering_bard.c3.text.1": {
+        "en": "Rumours? A bard always has an ear to the ground. Which sort interests you?",
+        "ko": "소문? 음유시인은 언제나 귀를 열어두고 있지. 어떤 종류가 궁금한가?"
+    },
+    "npc.wandering_bard.c3.choice.31": {
+        "en": "Tell me about Alva, the sun god.",
+        "ko": "태양신 알바에 대해 알려주세요."
+    },
+    "npc.wandering_bard.c3.choice.32": {
+        "en": "I heard the harvests have been failing.",
+        "ko": "농사가 계속 실패하고 있다고 들었습니다."
+    },
+    "npc.wandering_bard.c3.choice.33": {
+        "en": "Is it true the Great Sorcerer came from the future?",
+        "ko": "대마법사가 미래에서 왔다는 게 사실인가요?"
+    },
+    "npc.wandering_bard.c3.choice.4": {
+        "en": "Never mind. Farewell.",
+        "ko": "됐습니다. 안녕히."
+    },
+    "npc.wandering_bard.c31.text.1": {
+        "en": "Alva — the sun god. The name means 'white' or 'bright' in the old tongue. Not the blinding glare of noon, mind you, but the gentle glow of first light. Folk used to gather at stone altars on the plains to leave offerings. These days the faith has faded into habit — no grand rites, just quiet customs woven into daily life. There is still a chapel inside the fortress, tended by a monk who chose solitude over the bustle of the world.",
+        "ko": "알바 — 태양신이지. 그 이름은 고어로 '희다' 또는 '밝다'라는 뜻이야. 한낮의 눈부신 빛이 아니라, 첫 빛의 온화한 빛을 말하는 거지. 사람들은 평야의 돌 제단에 모여 제물을 바치곤 했어. 요즘은 신앙이 습관처럼 희미해졌지 — 거창한 의식은 없고, 그저 일상에 스며든 조용한 관습뿐이야. 요새 안에 아직 예배당이 있는데, 세상의 번잡함 대신 고독을 택한 수도승이 돌보고 있다네."
+    },
+    "npc.wandering_bard.c31.choice.32": {
+        "en": "What about the failing harvests?",
+        "ko": "농사 실패에 대해서는요?"
+    },
+    "npc.wandering_bard.c31.choice.33": {
+        "en": "And the Great Sorcerer?",
+        "ko": "대마법사는요?"
+    },
+    "npc.wandering_bard.c31.choice.4": {
+        "en": "Interesting. Thank you.",
+        "ko": "흥미롭군요. 감사합니다."
+    },
+    "npc.wandering_bard.c32.text.1": {
+        "en": "Aye, the crops wither and the livestock bear no young. It has been this way for years now — ever since the war against the Great Sorcerer began, some say. Whether it is a curse or simply rotten luck, the result is the same: empty bellies and growing despair. The farmers blame the sorcerer. The priests say nothing. And the rest of us just try to get by.",
+        "ko": "그래, 작물은 시들고 가축은 새끼를 낳지 않아. 몇 년째 이런 상태야 — 대마법사와의 전쟁이 시작된 이후부터라고 하는 사람들도 있지. 저주인지 그냥 운이 나쁜 건지, 결과는 같아: 빈 배와 커져가는 절망. 농부들은 마법사를 탓하고, 사제들은 아무 말도 않고, 나머지 우리는 그냥 버텨나갈 뿐이야."
+    },
+    "npc.wandering_bard.c32.choice.31": {
+        "en": "Tell me about Alva.",
+        "ko": "알바에 대해 알려주세요."
+    },
+    "npc.wandering_bard.c32.choice.33": {
+        "en": "And the Great Sorcerer?",
+        "ko": "대마법사는요?"
+    },
+    "npc.wandering_bard.c32.choice.4": {
+        "en": "Dark times indeed.",
+        "ko": "정말 암울한 시대군요."
+    },
+    "npc.wandering_bard.c33.text.1": {
+        "en": "Ha! That is the wildest tale of the lot. Some folk whisper that the Great Sorcerer is not from our time at all — that he came from the future, bringing knowledge and ruin in equal measure. Nobody believes in sorcery, of course, but the things that have happened since his appearance... forests swallowing roads, creatures crawling from nowhere, the dead refusing to stay dead. If he is not a sorcerer, then what is he? A good question with no good answer.",
+        "ko": "하! 그건 소문 중에서도 가장 황당한 이야기지. 대마법사가 우리 시대 사람이 아니라 — 미래에서 왔다고 속삭이는 사람들이 있어. 지식과 파멸을 동시에 가져왔다나. 물론 아무도 마법 같은 건 믿지 않지만, 그가 나타난 이후 벌어진 일들은... 숲이 길을 삼키고, 괴물들이 어디선가 기어 나오고, 죽은 자들이 죽은 채로 있지 않으려 하고. 마법사가 아니라면 대체 뭐란 말인가? 좋은 답이 없는 좋은 질문이야."
+    },
+    "npc.wandering_bard.c33.choice.31": {
+        "en": "Tell me about Alva.",
+        "ko": "알바에 대해 알려주세요."
+    },
+    "npc.wandering_bard.c33.choice.32": {
+        "en": "What about the failing harvests?",
+        "ko": "농사 실패에 대해서는요?"
+    },
+    "npc.wandering_bard.c33.choice.4": {
+        "en": "A mystery indeed. Farewell.",
+        "ko": "정말 수수께끼로군요. 안녕히."
+    },
+    "npc.former_merchant.intro.text.1": {
+        "en": "Hm? Oh, {player_name}. Forgive me, I was lost in thought. I used to be a merchant, you know. Had a fine cart, good stock. That feels like another lifetime now.",
+        "ko": "흠? 아, {player_name}. 미안, 생각에 빠져 있었어. 나도 한때 상인이었다네. 좋은 수레에, 괜찮은 물건들. 이제는 전생 같은 이야기지."
+    },
+    "npc.former_merchant.intro.choice.1": {
+        "en": "What happened to your trade?",
+        "ko": "장사는 어떻게 된 건가요?"
+    },
+    "npc.former_merchant.intro.choice.2": {
+        "en": "How did merchants become bandits?",
+        "ko": "상인들이 어떻게 도적이 됐나요?"
+    },
+    "npc.former_merchant.intro.choice.3": {
+        "en": "Times are hard for everyone.",
+        "ko": "모두에게 힘든 시절이군요."
+    },
+    "npc.former_merchant.c1.text.1": {
+        "en": "Plundered. Three times on the same road. First it was goblins — they took everything and smashed what they could not carry. Then bandits, who were once merchants themselves. The third time, I did not even bother rebuilding the cart. What is the point? The roads belong to the creatures now.",
+        "ko": "약탈당했지. 같은 길에서 세 번이나. 처음엔 고블린이었어 — 모든 걸 가져가고 못 가져가는 건 부쉈지. 그다음엔 도적들, 한때 상인이었던 자들이야. 세 번째엔 수레를 다시 만들 생각도 안 했어. 무슨 소용이야? 이제 길은 괴물들 차지야."
+    },
+    "npc.former_merchant.c1.choice.2": {
+        "en": "Merchants turned bandits?",
+        "ko": "상인이 도적으로?"
+    },
+    "npc.former_merchant.c1.choice.3": {
+        "en": "A bitter tale.",
+        "ko": "씁쓸한 이야기군요."
+    },
+    "npc.former_merchant.c2.text.1": {
+        "en": "When you lose everything — your goods, your livelihood, your hope — what is left? Some folk turned to stealing just to survive. I do not blame them, not really. The raids never stopped, the knights could not protect the roads, and honest trade became impossible. Society crumbled, one broken cart at a time. I was lucky enough to make it here. Others were not.",
+        "ko": "모든 걸 잃으면 — 물건도, 생계도, 희망도 — 뭐가 남겠나? 어떤 이들은 살아남으려고 도둑질을 시작했어. 탓하지 않아, 진심으로. 습격은 멈추지 않았고, 기사들은 길을 지키지 못했고, 정직한 거래는 불가능해졌지. 사회가 무너졌어, 부서진 수레 하나씩. 나는 운 좋게 여기까지 왔지. 다른 이들은 그러지 못했고."
+    },
+    "npc.former_merchant.c2.choice.1": {
+        "en": "Tell me about the raids.",
+        "ko": "습격에 대해 알려주세요."
+    },
+    "npc.former_merchant.c2.choice.3": {
+        "en": "I hope things improve.",
+        "ko": "상황이 나아지길 바랍니다."
+    },
+    "npc.smuggler.intro": {
+        "en": "Psst... {player_name}. Over here. You look like someone who knows the value of discretion. I have goods that are hard to come by — for the right price, naturally.",
+        "ko": "쉿... {player_name}. 이쪽이야. 입이 무거운 사람처럼 보이는군. 구하기 힘든 물건들이 있어 — 물론, 적절한 대가를 치른다면."
+    },
+    "npc.smuggler.item_buy": {
+        "en": "{item}{mark} ({price} silver, {weight}kg)",
+        "ko": "{item}{mark} ({price} 실버, {weight}kg)"
+    },
+    "npc.smuggler.buy_menu": {
+        "en": "Take a look... but keep your voice down.",
+        "ko": "한번 봐... 근데 목소리 낮춰."
+    },
+    "npc.smuggler.item_sell": {
+        "en": "{item}{mark} ({price} silver)",
+        "ko": "{item}{mark} ({price} 실버)"
+    },
+    "npc.smuggler.sell_menu": {
+        "en": "Got something for me? Let us see what you have.",
+        "ko": "나한테 줄 게 있어? 뭘 가져왔는지 보자."
+    },
+    "npc.smuggler.buy_done": {
+        "en": "Pleasure doing business. {item} for {price} silver. Keep it hidden, eh?",
+        "ko": "좋은 거래야. {item}, {price} 실버. 숨겨서 가져가, 알겠지?"
+    },
+    "npc.smuggler.no_silver": {
+        "en": "You are short on silver, friend. Come back when your pockets are heavier.",
+        "ko": "은이 부족하군, 친구. 주머니가 두둑해지면 다시 와."
+    },
+    "npc.smuggler.too_heavy": {
+        "en": "You can barely stand as it is. Lighten your load first.",
+        "ko": "지금도 겨우 서 있잖아. 짐부터 줄여."
+    },
+    "npc.smuggler.buy_failed": {
+        "en": "Something went wrong. Let us try again.",
+        "ko": "뭔가 잘못됐어. 다시 해보자."
+    },
+    "npc.smuggler.sell_done": {
+        "en": "I will take that {item} off your hands. {price} silver, as agreed.",
+        "ko": "{item}을(를) 받지. {price} 실버, 약속대로."
+    },
+    "npc.smuggler.npc_no_silver": {
+        "en": "I am a bit light on silver myself right now. Try something cheaper.",
+        "ko": "나도 지금 은이 좀 부족해. 더 싼 걸로 해봐."
+    },
+    "npc.smuggler.item_gone": {
+        "en": "You do not seem to have that item any more.",
+        "ko": "그 물건을 더 이상 가지고 있지 않은 것 같군."
+    },
+    "npc.smuggler.sell_failed": {
+        "en": "That did not work out. Let us try something else.",
+        "ko": "안 됐어. 다른 걸 해보자."
+    },
+    "npc.smuggler.choice.show_goods": {
+        "en": "Show me what you have.",
+        "ko": "뭐가 있는지 보여줘."
+    },
+    "npc.smuggler.choice.have_to_sell": {
+        "en": "I have something to sell.",
+        "ko": "팔 물건이 있어."
+    },
+    "npc.smuggler.choice.not_interested": {
+        "en": "Not interested.",
+        "ko": "관심 없어."
+    },
+    "npc.smuggler.choice.back": {
+        "en": "Back",
+        "ko": "돌아가기"
+    },
+    "npc.smuggler.choice.buy_more": {
+        "en": "Buy more",
+        "ko": "더 구매"
+    },
+    "npc.smuggler.choice.sell": {
+        "en": "Sell",
+        "ko": "판매"
+    },
+    "npc.smuggler.choice.buy": {
+        "en": "Buy",
+        "ko": "구매"
+    },
+    "npc.smuggler.choice.sell_more": {
+        "en": "Sell more",
+        "ko": "더 판매"
+    },
+    "npc.town_merchant.intro": {
+        "en": "Welcome, {player_name}! I'm {npc_display}. Browse my wares or sell me something.",
+        "ko": "어서 오세요, {player_name}님! 저는 {npc_display}입니다. 물건을 구경하시거나 팔 것이 있으면 말씀하세요."
+    },
+    "npc.town_merchant.item_buy": {
+        "en": "{item}{mark} ({price} silver, {weight}kg)",
+        "ko": "{item}{mark} ({price} 실버, {weight}kg)"
+    },
+    "npc.town_merchant.buy_menu": {
+        "en": "Here's what I have. Take your time.",
+        "ko": "제가 가진 물건입니다. 천천히 보세요."
+    },
+    "npc.town_merchant.item_sell": {
+        "en": "{item}{mark} ({price} silver)",
+        "ko": "{item}{mark} ({price} 실버)"
+    },
+    "npc.town_merchant.sell_menu": {
+        "en": "What would you like to sell? Let me have a look.",
+        "ko": "무엇을 파시겠어요? 한번 보여주세요."
+    },
+    "npc.town_merchant.buy_done": {
+        "en": "You bought {item} for {price} silver. A fine choice!",
+        "ko": "{item}을(를) {price} 실버에 구매했습니다. 좋은 선택이에요!"
+    },
+    "npc.town_merchant.no_silver": {
+        "en": "You don't have enough silver for that.",
+        "ko": "실버가 부족합니다."
+    },
+    "npc.town_merchant.too_heavy": {
+        "en": "You can't carry any more. You're already weighed down.",
+        "ko": "더 이상 들 수 없습니다. 이미 짐이 너무 무겁습니다."
+    },
+    "npc.town_merchant.buy_failed": {
+        "en": "Sorry, that didn't work out. Try something else.",
+        "ko": "죄송합니다, 거래가 성사되지 않았습니다."
+    },
+    "npc.town_merchant.sell_done": {
+        "en": "You sold {item} for {price} silver. Pleasure doing business!",
+        "ko": "{item}을(를) {price} 실버에 판매했습니다. 좋은 거래였어요!"
+    },
+    "npc.town_merchant.npc_no_silver": {
+        "en": "I'm afraid I don't have enough silver to buy that from you.",
+        "ko": "죄송합니다, 그것을 살 만큼 실버가 충분하지 않습니다."
+    },
+    "npc.town_merchant.item_gone": {
+        "en": "It seems you no longer have that item.",
+        "ko": "그 물건을 더 이상 가지고 있지 않은 것 같습니다."
+    },
+    "npc.town_merchant.choice.buy": {
+        "en": "Buy",
+        "ko": "구매"
+    },
+    "npc.town_merchant.choice.sell": {
+        "en": "Sell",
+        "ko": "판매"
+    },
+    "npc.town_merchant.choice.back": {
+        "en": "Back",
+        "ko": "돌아가기"
+    },
+    "npc.town_merchant.choice.buy_more": {
+        "en": "Buy more",
+        "ko": "더 구매"
+    },
+    "npc.town_merchant.choice.sell_more": {
+        "en": "Sell more",
+        "ko": "더 판매"
+    },
+    "npc.dialogue.farewell": {
+        "en": "Bye.",
+        "ko": "안녕히."
+    }
+}

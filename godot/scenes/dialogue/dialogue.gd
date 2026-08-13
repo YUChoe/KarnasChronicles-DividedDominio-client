@@ -7,8 +7,8 @@ extends VBoxContainer
 ## 예외이며 선택지가 엔티티가 아니라 대화 트리의 분기이기 때문이다. 그 번호를
 ## `dialogue_choice` 의 `params.choice` 로 되돌려 보낸다.
 ##
-## 발화와 선택지는 과도기 형태다. 계약은 키와 params 를 규정하지만 서버가 아직
-## 언어별 dict 를 보낸다. `Translator.text_of` 가 양쪽을 받는다.
+## 발화와 선택지는 `{"key": ..., "params": {...}}` 다. 아이템 이름처럼 원본이
+## 이중언어인 params 값은 언어별 dict 로 오고 `Translator` 가 locale 을 고른다.
 
 signal action_requested(verb: String, target_id: String, params: Dictionary)
 
