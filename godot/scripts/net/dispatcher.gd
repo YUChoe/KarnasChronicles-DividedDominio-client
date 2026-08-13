@@ -44,7 +44,7 @@ func handle_frame(text: String) -> void:
 		_route_gateway(message_type, payload)
 		return
 
-	if not Protocol.SERVER_TYPES.has(message_type):
+	if not _known_type(message_type):
 		push_warning("계약에 없는 type 을 무시합니다: %s" % message_type)
 		unknown_type_received.emit(message_type)
 		return
@@ -54,6 +54,11 @@ func handle_frame(text: String) -> void:
 	if payload.get("seq") != null:
 		response_received.emit(
 			Protocol.as_int(payload.get("seq"), 0), message_type, payload)
+
+
+## 이 채널이 아는 type 인가. 어드민 디스패처가 목록을 바꾼다.
+func _known_type(message_type: String) -> bool:
+	return Protocol.SERVER_TYPES.has(message_type)
 
 
 ## 게이트웨이 프레임은 상태 저장소로 가지 않는다. 게임 상태가 아니다.

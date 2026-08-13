@@ -57,6 +57,58 @@ const SERVER_TYPES: Array[String] = [
 	ACTION_REJECTED, ERROR,
 ]
 
+# 어드민 채널. 클라이언트 → 서버
+const ADMIN_LOGIN := "admin_login"
+const SERVICE_LOGIN := "service_login"
+const ACCOUNT_CREATE := "account_create"
+const ADMIN_LIST := "admin_list"
+const ADMIN_GET := "admin_get"
+const ADMIN_CREATE := "admin_create"
+const ADMIN_UPDATE := "admin_update"
+const ADMIN_DELETE := "admin_delete"
+const ADMIN_STATS := "admin_stats"
+const ADMIN_MAP := "admin_map"
+const ADMIN_ACTION := "admin_action"
+
+# 어드민 채널. 서버 → 클라이언트
+const ADMIN_LOGIN_RESULT := "admin_login_result"
+const SERVICE_LOGIN_RESULT := "service_login_result"
+const ACCOUNT_CREATE_RESULT := "account_create_result"
+const ADMIN_LIST_RESULT := "admin_list_result"
+const ADMIN_GET_RESULT := "admin_get_result"
+## 생성·수정·삭제가 응답 타입을 공유한다
+const ADMIN_MUTATE_RESULT := "admin_mutate_result"
+const ADMIN_STATS_RESULT := "admin_stats_result"
+const ADMIN_MAP_RESULT := "admin_map_result"
+const ADMIN_ACTION_RESULT := "admin_action_result"
+const ADMIN_REJECTED := "admin_rejected"
+
+const ADMIN_SERVER_TYPES: Array[String] = [
+	WELCOME, PONG, ERROR,
+	ADMIN_LOGIN_RESULT, SERVICE_LOGIN_RESULT, ACCOUNT_CREATE_RESULT,
+	ADMIN_LIST_RESULT, ADMIN_GET_RESULT, ADMIN_MUTATE_RESULT,
+	ADMIN_STATS_RESULT, ADMIN_MAP_RESULT, ADMIN_ACTION_RESULT,
+	ADMIN_REJECTED,
+]
+
+## 어드민 리소스 8종과 대상 테이블
+const ADMIN_RESOURCES: Array[String] = [
+	"players", "rooms", "room_connections", "monsters",
+	"objects", "item_prices", "factions", "faction_relations",
+]
+
+## 어드민 채널에만 있는 사유 코드. 게임 채널의 코드에 더해진다.
+const USERNAME_TAKEN := "USERNAME_TAKEN"
+const REFERENCED := "REFERENCED"
+const PLAYER_NOT_ONLINE := "PLAYER_NOT_ONLINE"
+const VALIDATION_FAILED := "VALIDATION_FAILED"
+const SESSION_EXPIRED := "SESSION_EXPIRED"
+
+const ADMIN_REJECTION_CODES: Array[String] = [
+	USERNAME_TAKEN, REFERENCED, PLAYER_NOT_ONLINE,
+	VALIDATION_FAILED, SESSION_EXPIRED,
+]
+
 ## 게이트웨이가 자체 생성하는 프레임.
 ##
 ## MUD 서버가 아니라 게이트웨이가 만든다. `docs/protocol/` 에 정의돼 있지 않아

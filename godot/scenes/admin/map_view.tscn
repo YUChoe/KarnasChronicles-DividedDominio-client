@@ -1,0 +1,53 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/admin/map_view.gd" id="1_map"]
+
+[node name="MapView" type="VBoxContainer"]
+offset_right = 880.0
+offset_bottom = 420.0
+theme_override_constants/separation = 6
+script = ExtResource("1_map")
+
+[node name="Controls" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="MapRefresh" type="Button" parent="Controls"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Refresh"
+
+[node name="MapAuto" type="CheckBox" parent="Controls"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Auto refresh"
+
+[node name="MapBounds" type="Label" parent="Controls"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MapScroll" type="ScrollContainer" parent="."]
+custom_minimum_size = Vector2(0, 260)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="MapGrid" type="GridContainer" parent="MapScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 1
+theme_override_constants/v_separation = 1
+columns = 1
+
+[node name="MapDetail" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="MapBlocked" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="MapFactions" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2

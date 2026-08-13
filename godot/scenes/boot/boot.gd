@@ -12,6 +12,7 @@ const COMBAT_SCENE := preload("res://scenes/combat/combat.tscn")
 const DIALOGUE_SCENE := preload("res://scenes/dialogue/dialogue.tscn")
 const SHOP_SCENE := preload("res://scenes/shop/shop.tscn")
 const STATUS_SCENE := preload("res://scenes/status/status.tscn")
+const ADMIN_SCENE := preload("res://scenes/admin/admin.tscn")
 
 const LABEL_LOGIN := "login"
 const LABEL_LOGOUT := "logout"
@@ -40,6 +41,7 @@ var _combat: CombatScreen = null
 var _dialogue: DialogueScreen = null
 var _shop: ShopScreen = null
 var _status: StatusScreen = null
+var _admin: AdminScreen = null
 ## 로그인 후 도착한 스냅샷 종류
 var _snapshots: Dictionary = {}
 ## 게임 화면에 한 번 들어왔는가. 화면 표시 상태로 판정하면 인벤토리나 상태
@@ -140,6 +142,12 @@ func _build_screens() -> void:
 	_status.closed.connect(_show_main)
 	_status.action_requested.connect(_on_screen_action)
 
+	_admin = ADMIN_SCENE.instantiate()
+	_screens.add_child(_admin)
+	_admin.bind(_translator, _config)
+	_admin.closed.connect(_show_main)
+	_admin.notice_requested.connect(_set_notice)
+
 	_store.container_contents_received.connect(_on_container_contents)
 	_store.combat_changed.connect(_on_combat_changed)
 	_store.dialogue_changed.connect(_on_dialogue_changed)
@@ -187,7 +195,8 @@ func _show_combat() -> void:
 
 func _show_only(screen: Control) -> void:
 	for candidate: Control in [
-			_login, _main, _inventory, _combat, _dialogue, _shop, _status]:
+			_login, _main, _inventory, _combat, _dialogue, _shop, _status,
+			_admin]:
 		candidate.visible = candidate == screen
 
 
@@ -367,8 +376,11 @@ func _on_action_rejected(payload: Dictionary) -> void:
 				_set_notice(key, {"reason_code": code})
 
 
+## 어드민 패널은 게임 연결과 독립된 채널로 별도 접속하고 별도 인증한다.
 func _on_admin_requested() -> void:
-	_set_notice("ui.notice.admin_pending")
+	_show_only(_admin)
+	_clear_notice()
+	_admin.on_opened()
 
 
 func _on_request_timed_out(_seq: int, label: String) -> void:

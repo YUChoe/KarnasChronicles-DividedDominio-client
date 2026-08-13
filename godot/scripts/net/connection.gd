@@ -19,6 +19,13 @@ enum State {
 
 ## 서버 세션 유휴 타이머 갱신 주기. 계약이 60초를 규정한다.
 const PING_INTERVAL := 60.0
+## 프레임 버퍼 크기. 계약이 라인 하나의 상한을 256KB 로 정한다.
+##
+## `WebSocketPeer` 의 기본값은 64KB 다. 그대로 두면 큰 응답을 받는 순간 peer 가
+## 1009(Message Too Big)로 연결을 끊는다. 어드민 맵 응답이 방 520개 기준 82KB 라
+## 실제로 끊겼다. 게임 채널도 엔티티가 많은 방에서 같은 일을 당할 수 있다.
+const FRAME_BUFFER_BYTES := 256 * 1024
+
 ## 재연결 지수 백오프. 1초에서 시작해 2배씩 늘리고 30초를 상한으로 둔다.
 const RECONNECT_BASE_DELAY := 1.0
 const RECONNECT_MAX_DELAY := 30.0
@@ -38,6 +45,8 @@ var dispatcher: Dispatcher = null
 ## `client_info` 로 통지할 locale. 접속 설정에서 주입한다.
 var locale := ClientConfig.DEFAULT_LOCALE
 var expected_channel := Protocol.CHANNEL_GAME
+## 접속 후 `client_info` 를 보낼지. 어드민 채널은 이 타입을 거절한다
+var announce_client_info := true
 
 var _socket: WebSocketPeer = null
 var _state: State = State.DISCONNECTED
@@ -137,6 +146,8 @@ func _process(delta: float) -> void:
 
 func _start_socket() -> void:
 	_socket = WebSocketPeer.new()
+	_socket.inbound_buffer_size = FRAME_BUFFER_BYTES
+	_socket.outbound_buffer_size = FRAME_BUFFER_BYTES
 	_seq = 0
 	_idle_seconds = 0.0
 
@@ -236,7 +247,8 @@ func _on_welcome_received(payload: Dictionary) -> void:
 		return
 
 	_set_state(State.READY)
-	_send_client_info()
+	if announce_client_info:
+		_send_client_info()
 
 
 ## 접속 후 단방향 통지. 응답을 기다리지 않는다.

@@ -1,0 +1,77 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/admin/resource_table.gd" id="1_table"]
+
+[node name="ResourceTable" type="VBoxContainer"]
+offset_right = 880.0
+offset_bottom = 420.0
+theme_override_constants/separation = 6
+script = ExtResource("1_table")
+
+[node name="Controls" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ResourceLabel" type="Label" parent="Controls"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="ResourceOptions" type="OptionButton" parent="Controls"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
+
+[node name="FilterEdit" type="LineEdit" parent="Controls"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
+
+[node name="SortEdit" type="LineEdit" parent="Controls"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(140, 0)
+layout_mode = 2
+
+[node name="SortDesc" type="CheckBox" parent="Controls"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "descending"
+
+[node name="ApplyButton" type="Button" parent="Controls"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Apply"
+
+[node name="PageRow" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="PrevButton" type="Button" parent="PageRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Previous"
+
+[node name="NextButton" type="Button" parent="PageRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Next"
+
+[node name="PageLabel" type="Label" parent="PageRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TableEmpty" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="TableScroll" type="ScrollContainer" parent="."]
+custom_minimum_size = Vector2(0, 280)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="TableGrid" type="GridContainer" parent="TableScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 2
+columns = 1

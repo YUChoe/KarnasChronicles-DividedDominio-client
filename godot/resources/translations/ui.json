@@ -115,10 +115,6 @@
         "en": "The gateway refused the connection: {reason}",
         "ko": "게이트웨이가 연결을 거부했습니다: {reason}"
     },
-    "ui.notice.admin_pending": {
-        "en": "The admin panel arrives in Task 11.",
-        "ko": "어드민 패널은 Task 11 에서 추가됩니다."
-    },
     "ui.notice.request_timeout": {
         "en": "The server did not answer the {label} request.",
         "ko": "서버가 {label} 요청에 응답하지 않았습니다."
@@ -822,5 +818,177 @@
     "ui.stat.charisma": {
         "en": "Charisma",
         "ko": "매력"
+    },
+    "ui.admin.title": {
+        "en": "Admin panel",
+        "ko": "어드민 패널"
+    },
+    "ui.admin.close": {
+        "en": "Back to game",
+        "ko": "게임으로"
+    },
+    "ui.admin.connect": {
+        "en": "Connect",
+        "ko": "접속"
+    },
+    "ui.admin.login": {
+        "en": "Sign in",
+        "ko": "로그인"
+    },
+    "ui.admin.username": {
+        "en": "Username",
+        "ko": "사용자명"
+    },
+    "ui.admin.password": {
+        "en": "Password",
+        "ko": "비밀번호"
+    },
+    "ui.admin.connecting": {
+        "en": "Connecting…",
+        "ko": "접속 중…"
+    },
+    "ui.admin.connected": {
+        "en": "Connected. Sign in to continue.",
+        "ko": "접속했습니다. 로그인하십시오."
+    },
+    "ui.admin.disconnected": {
+        "en": "Not connected",
+        "ko": "연결 끊김"
+    },
+    "ui.admin.signed_in": {
+        "en": "Signed in as {name}",
+        "ko": "{name}(으)로 접속"
+    },
+    "ui.admin.session_expires": {
+        "en": "Session expires at {expires_at}",
+        "ko": "세션 만료 {expires_at}"
+    },
+    "ui.admin.session_expired": {
+        "en": "The admin session expired. Sign in again.",
+        "ko": "어드민 세션이 만료되었습니다. 다시 로그인하십시오."
+    },
+    "ui.admin.tab_map": {
+        "en": "World map",
+        "ko": "월드 맵"
+    },
+    "ui.admin.tab_table": {
+        "en": "Resources",
+        "ko": "리소스"
+    },
+    "ui.admin.map_refresh": {
+        "en": "Refresh",
+        "ko": "새로 고침"
+    },
+    "ui.admin.map_auto": {
+        "en": "Auto refresh",
+        "ko": "자동 갱신"
+    },
+    "ui.admin.map_bounds": {
+        "en": "x {min_x}…{max_x}  y {min_y}…{max_y}  rooms {count}",
+        "ko": "x {min_x}…{max_x}  y {min_y}…{max_y}  방 {count}개"
+    },
+    "ui.admin.map_no_selection": {
+        "en": "Select a room.",
+        "ko": "방을 선택하십시오."
+    },
+    "ui.admin.map_detail": {
+        "en": "({x}, {y}) {room_type}  creatures {creature_count}  players {player_count}  items {item_count}",
+        "ko": "({x}, {y}) {room_type}  몬스터 {creature_count}  플레이어 {player_count}  아이템 {item_count}"
+    },
+    "ui.admin.map_blocked": {
+        "en": "Blocked {exits}",
+        "ko": "막힌 출구 {exits}"
+    },
+    "ui.admin.map_factions": {
+        "en": "Factions {factions}",
+        "ko": "종족 {factions}"
+    },
+    "ui.admin.table_resource": {
+        "en": "Resource",
+        "ko": "리소스"
+    },
+    "ui.admin.table_page": {
+        "en": "Page {page} of {pages}  ({total} rows)",
+        "ko": "{page} / {pages} 페이지  (총 {total}행)"
+    },
+    "ui.admin.table_prev": {
+        "en": "Previous",
+        "ko": "이전"
+    },
+    "ui.admin.table_next": {
+        "en": "Next",
+        "ko": "다음"
+    },
+    "ui.admin.table_filter": {
+        "en": "Filter column=value",
+        "ko": "필터 컬럼=값"
+    },
+    "ui.admin.table_sort": {
+        "en": "Sort column",
+        "ko": "정렬 컬럼"
+    },
+    "ui.admin.table_apply": {
+        "en": "Apply",
+        "ko": "적용"
+    },
+    "ui.admin.table_empty": {
+        "en": "No rows.",
+        "ko": "행이 없습니다."
+    },
+    "ui.admin.table_sort_asc": {
+        "en": "ascending",
+        "ko": "오름차순"
+    },
+    "ui.admin.table_sort_desc": {
+        "en": "descending",
+        "ko": "내림차순"
+    },
+    "ui.admin.rejection.USERNAME_TAKEN": {
+        "en": "That username is already taken.",
+        "ko": "이미 사용 중인 사용자명입니다."
+    },
+    "ui.admin.rejection.REFERENCED": {
+        "en": "Other records still reference this row.",
+        "ko": "다른 레코드가 이 행을 참조하고 있습니다."
+    },
+    "ui.admin.rejection.PLAYER_NOT_ONLINE": {
+        "en": "That player has no active game session.",
+        "ko": "해당 플레이어의 게임 세션이 없습니다."
+    },
+    "ui.admin.rejection.VALIDATION_FAILED": {
+        "en": "The input failed validation.",
+        "ko": "입력 값 검증에 실패했습니다."
+    },
+    "ui.admin.rejection.SESSION_EXPIRED": {
+        "en": "The admin session expired.",
+        "ko": "어드민 세션이 만료되었습니다."
+    },
+    "ui.admin.rejection.unknown": {
+        "en": "The request was refused ({reason_code}).",
+        "ko": "요청이 거절되었습니다 ({reason_code})."
+    },
+    "ui.admin.detail": {
+        "en": "Detail: {detail}",
+        "ko": "상세: {detail}"
+    },
+    "ui.admin.rejection.NOT_AUTHENTICATED": {
+        "en": "Sign in to the admin channel first.",
+        "ko": "먼저 어드민 채널에 로그인하십시오."
+    },
+    "ui.admin.rejection.NOT_FOUND": {
+        "en": "No such row or target.",
+        "ko": "해당 행이나 대상이 없습니다."
+    },
+    "ui.admin.rejection.NOT_APPLICABLE": {
+        "en": "That message does not belong to this channel.",
+        "ko": "이 채널에서 다룰 수 없는 메시지입니다."
+    },
+    "ui.admin.rejection.INVALID_PARAMS": {
+        "en": "The request had invalid parameters.",
+        "ko": "요청 인자가 올바르지 않습니다."
+    },
+    "ui.admin.rejection.TARGET_REQUIRED": {
+        "en": "The request needs a target.",
+        "ko": "대상이 필요한 요청입니다."
     }
 }
