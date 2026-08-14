@@ -235,7 +235,26 @@ func _on_combat_changed() -> void:
 
 ## 화면이 요청한 액션을 보낸다. 화면이 네트워크 계층을 알지 않게 한다.
 func _on_screen_action(verb: String, target_id: String, params: Dictionary) -> void:
+	# 소모품을 쓰면 서버는 event 만 보내고 inventory 를 다시 밀지 않는다. 다음
+	# 스냅샷까지 이미 없어진 물건이 목록에 남아 보이므로 미리 지운다. 거절되면
+	# 되돌리고, 서버 목록이 오면 그 값이 이긴다
+	if verb == "use" and _is_consumable(target_id):
+		_store.hide_inventory_item(target_id)
+
 	_action_sender.send_action(verb, target_id, params)
+
+
+## 소지품에 있는 소모품인지 본다. 목록에 없으면 감출 것도 없다.
+func _is_consumable(object_id: String) -> bool:
+	if object_id.is_empty():
+		return false
+
+	for value: Variant in Protocol.as_array(_store.inventory.get("items")):
+		var item: Dictionary = Protocol.as_dict(value)
+		if Protocol.as_string(item.get("id")) == object_id:
+			return Items.category_of(item) == "consumable"
+
+	return false
 
 
 ## 컨테이너를 열면 내용이 인벤토리 화면에 있으므로 그리로 넘긴다.
@@ -350,6 +369,10 @@ func _on_action_rejected(payload: Dictionary) -> void:
 	var code := Protocol.as_string(payload.get("reason_code"), "UNKNOWN")
 	var verb := Protocol.as_string(payload.get("verb"))
 	var effect := RejectionPolicy.effect_for(code)
+
+	# 낙관적으로 감춘 소모품을 되돌린다. 서버가 쓰지 않았다고 답했다
+	if verb == "use":
+		_store.unhide_inventory_item(Protocol.as_string(payload.get("target")))
 
 	# 이름 변경 거절은 그 화면이 안내한다. 잔여 시간이 담겨 오기 때문이다
 	if verb == "changename" and _status.visible:

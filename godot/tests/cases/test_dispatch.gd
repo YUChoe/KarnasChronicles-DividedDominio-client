@@ -424,3 +424,69 @@ func test_어드민_디스패처는_어드민_타입을_받는다() -> void:
 		"expires_at": "2026-08-08T18:45:00",
 	}))
 	assert_eq(received, [true])
+
+
+# 소모품 낙관적 감춤
+
+func _inventory_with_two() -> void:
+	_send({
+		"type": "inventory",
+		"seq": null,
+		"total_weight": 1.0,
+		"max_weight": 20.0,
+		"gold": 0,
+		"items": [
+			{"id": "potion-1", "category": "consumable"},
+			{"id": "sword-1", "category": "weapon"},
+		],
+		"equipped": {},
+	})
+
+
+func test_감춘_소지품은_목록에서_빠진다() -> void:
+	# 소모품을 쓰면 서버가 inventory 를 다시 밀지 않는다. 화면에서만 지운다
+	_inventory_with_two()
+
+	assert_true(_state.hide_inventory_item("potion-1"))
+
+	var items := Protocol.as_array(_state.inventory.get("items"))
+	assert_eq(items.size(), 1)
+	assert_eq(Protocol.as_string(Protocol.as_dict(items[0]).get("id")), "sword-1")
+
+
+func test_되돌리면_원래_자리로_돌아온다() -> void:
+	_inventory_with_two()
+	_state.hide_inventory_item("potion-1")
+
+	_state.unhide_inventory_item("potion-1")
+
+	var items := Protocol.as_array(_state.inventory.get("items"))
+	assert_eq(items.size(), 2)
+	assert_eq(Protocol.as_string(Protocol.as_dict(items[0]).get("id")), "potion-1")
+
+
+func test_서버_목록이_오면_감춤이_사라진다() -> void:
+	# 서버 데이터가 언제나 우선이다. 감춘 기록을 들고 있을 이유가 없다
+	_inventory_with_two()
+	_state.hide_inventory_item("potion-1")
+
+	_inventory_with_two()
+	_state.unhide_inventory_item("potion-1")
+
+	assert_eq(Protocol.as_array(_state.inventory.get("items")).size(), 2)
+
+
+func test_없는_소지품은_감추지_않는다() -> void:
+	_inventory_with_two()
+
+	assert_false(_state.hide_inventory_item("ghost-1"))
+	assert_false(_state.hide_inventory_item(""))
+	assert_eq(Protocol.as_array(_state.inventory.get("items")).size(), 2)
+
+
+func test_두_번_감춰도_한_번만_센다() -> void:
+	_inventory_with_two()
+	_state.hide_inventory_item("potion-1")
+
+	assert_false(_state.hide_inventory_item("potion-1"))
+	assert_eq(Protocol.as_array(_state.inventory.get("items")).size(), 1)

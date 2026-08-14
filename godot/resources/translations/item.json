@@ -198,5 +198,13 @@
     "obj.take_from.success": {
         "en": "You take {name} out.",
         "ko": "{name}을(를) 꺼냈습니다."
+    },
+    "obj.health_potion.use": {
+        "en": "{player} drinks the {item}. A warm feeling spreads through your body.",
+        "ko": "{player}이(가) {item}을(를) 마셨습니다. 따뜻한 기운이 온몸에 퍼집니다."
+    },
+    "obj.forgotten_scripture.read": {
+        "en": "As {player} reads the ancient scripture, a faint golden light emanates from the text...",
+        "ko": "{player}이(가) 고대 경전을 읽자, 희미한 금빛이 글자에서 흘러나옵니다..."
     }
 }

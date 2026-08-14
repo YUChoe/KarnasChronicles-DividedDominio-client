@@ -52,6 +52,8 @@ var nearby_rooms: Array = []
 
 var inventory: Dictionary = {}
 var equipped: Dictionary = {}
+## 낙관적으로 감춘 소지품. uuid → {index, item}. 거절되면 되돌린다
+var _hidden_items: Dictionary = {}
 
 var combat: Dictionary = {}
 var dialogue: Dictionary = {}
@@ -75,6 +77,7 @@ func reset_session() -> void:
 	nearby_rooms = []
 	inventory = {}
 	equipped = {}
+	_hidden_items.clear()
 	combat = {}
 	dialogue = {}
 	shop = {}
@@ -172,8 +175,49 @@ func apply_inventory(payload: Dictionary) -> void:
 		"items": Protocol.as_array(payload.get("items")),
 	}
 	equipped = Protocol.as_dict(payload.get("equipped"))
+	# 서버 목록이 왔으므로 낙관적으로 감춘 것들은 의미가 없다
+	_hidden_items.clear()
 	inventory_changed.emit()
 	snapshot_received.emit(Protocol.INVENTORY)
+
+
+## 소지품 하나를 화면에서 감춘다. 감춘 항목은 되돌릴 수 있게 들고 있는다.
+##
+## 소모품을 쓰면 서버는 `event` 만 보내고 `inventory` 를 다시 밀지 않는다.
+## 다음 스냅샷까지 이미 없어진 물건이 목록에 남아 보이므로 여기서 지운다.
+## 서버 목록이 오면 그 값이 이긴다. 정확한 동기화가 목적이 아니다.
+func hide_inventory_item(object_id: String) -> bool:
+	if object_id.is_empty() or _hidden_items.has(object_id):
+		return false
+
+	var items := Protocol.as_array(inventory.get("items"))
+	for index: int in range(items.size()):
+		var item: Dictionary = Protocol.as_dict(items[index])
+		if Protocol.as_string(item.get("id")) != object_id:
+			continue
+
+		_hidden_items[object_id] = {"index": index, "item": item}
+		items.remove_at(index)
+		inventory["items"] = items
+		inventory_changed.emit()
+		return true
+
+	return false
+
+
+## 감췄던 소지품을 되돌린다. 요청이 거절됐을 때 부른다.
+func unhide_inventory_item(object_id: String) -> void:
+	if not _hidden_items.has(object_id):
+		return
+
+	var stashed: Dictionary = Protocol.as_dict(_hidden_items[object_id])
+	_hidden_items.erase(object_id)
+
+	var items := Protocol.as_array(inventory.get("items"))
+	var index := Protocol.as_int(stashed.get("index"))
+	items.insert(clampi(index, 0, items.size()), stashed.get("item"))
+	inventory["items"] = items
+	inventory_changed.emit()
 
 
 func apply_container_contents(payload: Dictionary) -> void:
