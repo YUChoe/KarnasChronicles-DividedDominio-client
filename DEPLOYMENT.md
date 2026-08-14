@@ -128,8 +128,23 @@ Godot 클라이언트를 내보내고 `downloads/` 에 둡니다. nginx 가 그 
 `/downloads/` 로 서빙합니다.
 
 ```bash
-# Godot 에디터 또는 CLI 로 내보낸 뒤
-cp karnas-windows.zip downloads/
+npm run build:godot                  # build/windows/ 에 내보낸다
+npm run build:godot -- --pack-only   # 템플릿 없이 리소스 묶음만 확인한다
+```
+
+프로젝트는 Godot 4.2.2 를 대상으로 합니다. 내보내기에는 같은 버전의 템플릿이
+필요하고 엔진 배포물에는 들어 있지 않습니다. 편집기의 `편집기 > 내보내기 템플릿
+관리 > 다운로드` 로 받거나 `Godot_v4.2.2-stable_export_templates.tpz` 를
+`%APPDATA%/Godot/export_templates/4.2.2.stable/` 에 풉니다. 템플릿이 없으면
+빌드 스크립트가 그 경로를 알려 주고 멈춥니다.
+
+`export_presets.cfg` 는 저장소에 있습니다. 서명 자격 정보를 담지 않습니다.
+서명이 필요해지면 그 값은 환경변수나 별도 파일로 빼야 합니다.
+
+내보낸 뒤 배포용으로 묶습니다.
+
+```bash
+tar -a -cf downloads/karnas-windows.zip -C build/windows .
 ```
 
 그다음 `src/server/public/app.js` 의 `DOWNLOADS` 에 항목을 넣습니다.

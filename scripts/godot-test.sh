@@ -26,6 +26,14 @@ if [ ! -x "$GODOT_BIN" ]; then
   exit 2
 fi
 
+# 전역 클래스 캐시가 없으면 먼저 만든다. `class_name` 등록이 그 캐시에 들어가며,
+# 없으면 러너가 테스트 클래스를 미선언 식별자로 본다. 새로 클론했거나 `.godot`
+# 를 지운 뒤 첫 실행이 그렇다.
+if [ ! -f "$PROJECT_DIR/.godot/global_script_class_cache.cfg" ]; then
+  timeout "$TEST_TIMEOUT" "$GODOT_BIN" --headless --path "$PROJECT_DIR" \
+    --import > /dev/null 2>&1
+fi
+
 output=$(timeout "$TEST_TIMEOUT" "$GODOT_BIN" --headless --path "$PROJECT_DIR" \
   --script res://tests/runner.gd 2>&1)
 status=$?

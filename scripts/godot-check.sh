@@ -14,6 +14,13 @@
 # `.godot/global_script_class_cache.cfg` 에 들어간다. 임포트를 먼저 돌리지
 # 않으면 `--check-only` 가 새 전역 클래스를 미선언 식별자로 본다.
 #
+# 그 캐시가 아직 없으면(새로 클론했거나 `.godot` 를 지웠을 때) `--import` 로
+# 먼저 만든다. `--editor --quit` 은 첫 프레임에 종료하므로 파일 시스템 스캔이
+# 중간에 끊기고("Scan thread aborted") 캐시가 만들어지지 않는다. 그 상태에서는
+# autoload 스크립트가 전역 클래스를 못 찾아 실제와 무관한 파스 오류가 쏟아진다.
+# 이 준비 단계의 출력은 판정에 쓰지 않는다. 캐시가 없는 상태의 파스 결과라
+# 신뢰할 수 없다.
+#
 # 두 층 모두 외부 타임아웃을 걸어 멈춘 프로세스를 회수한다.
 #
 # 사용법:
@@ -38,6 +45,21 @@ echo "프로젝트: $PROJECT_DIR"
 echo
 
 failed=0
+
+# 0층. 전역 클래스 캐시가 없으면 먼저 만든다. 판정에는 쓰지 않는다.
+CLASS_CACHE="$PROJECT_DIR/.godot/global_script_class_cache.cfg"
+if [ ! -f "$CLASS_CACHE" ]; then
+  echo "== 전역 클래스 캐시 생성 =="
+  timeout "$IMPORT_TIMEOUT" "$GODOT_BIN" --headless --path "$PROJECT_DIR" \
+    --import > /dev/null 2>&1
+  if [ -f "$CLASS_CACHE" ]; then
+    echo "OK      캐시를 만들었습니다"
+  else
+    echo "FAIL    캐시를 만들지 못했습니다: $CLASS_CACHE"
+    failed=$((failed + 1))
+  fi
+  echo
+fi
 
 # 1층. 프로젝트 전체 임포트. 종료 코드를 쓰지 않고 출력으로 판정한다.
 # class_name 전역 캐시를 여기서 갱신하므로 스크립트 검사보다 먼저 돌린다.

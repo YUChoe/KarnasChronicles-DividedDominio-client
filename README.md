@@ -105,6 +105,7 @@ npm run type-check    # 타입 검사 (테스트 포함)
 
 npm run check:godot   # Godot 스크립트 정적 검사
 npm run test:godot    # Godot 클라이언트 테스트
+npm run build:godot   # Godot 클라이언트 내보내기
 npm run check:contract # 계약 문서와 클라이언트 처리 범위 대조
 ```
 
