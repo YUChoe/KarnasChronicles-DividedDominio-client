@@ -100,6 +100,8 @@ func _route(message_type: String, payload: Dictionary) -> void:
 			state.apply_inventory(payload)
 		Protocol.CONTAINER_CONTENTS:
 			state.apply_container_contents(payload)
+		Protocol.READABLE_CONTENT:
+			state.apply_readable_content(payload)
 		Protocol.COMBAT_STATE:
 			state.apply_combat_state(payload)
 		Protocol.DIALOGUE:

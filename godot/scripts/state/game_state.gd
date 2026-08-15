@@ -24,6 +24,8 @@ signal combat_changed()
 signal dialogue_changed()
 signal shop_changed()
 signal container_contents_received(container_id: String, items: Array)
+## 읽을 수 있는 물건의 본문이 도착했다. 화면이 이 신호로 읽기 창을 연다
+signal readable_content_received(payload: Dictionary)
 signal who_result_received(players: Array)
 signal chat_received(entry: Dictionary)
 signal event_received(entry: Dictionary)
@@ -218,6 +220,12 @@ func unhide_inventory_item(object_id: String) -> void:
 	items.insert(clampi(index, 0, items.size()), stashed.get("item"))
 	inventory["items"] = items
 	inventory_changed.emit()
+
+
+## 본문은 언어별 dict 이며 번역 키가 아니다. 책과 두루마리의 본문은 DB 의
+## 이중언어 컬럼에 담긴 콘텐츠라 번역 파일로 옮기지 않는다.
+func apply_readable_content(payload: Dictionary) -> void:
+	readable_content_received.emit(payload.duplicate(true))
 
 
 func apply_container_contents(payload: Dictionary) -> void:

@@ -490,3 +490,33 @@ func test_두_번_감춰도_한_번만_센다() -> void:
 
 	assert_false(_state.hide_inventory_item("potion-1"))
 	assert_eq(Protocol.as_array(_state.inventory.get("items")).size(), 1)
+
+
+# 읽기 본문
+
+func test_readable_content_는_신호로_전달된다() -> void:
+	# 본문은 상태에 쌓이지 않는다. 읽는 순간의 응답이다
+	var received: Array = []
+	_state.readable_content_received.connect(
+		func(payload: Dictionary) -> void: received.append(payload))
+
+	_send({
+		"type": "readable_content",
+		"seq": 52,
+		"object_id": "98355bcf-0000-0000-0000-000000000007",
+		"readable_type": "scroll",
+		"page": 1,
+		"total_pages": 1,
+		"content": {"en": "Hear us", "ko": "들으소서"},
+	})
+
+	assert_eq(received.size(), 1)
+	var payload: Dictionary = Protocol.as_dict(received[0])
+	assert_eq(Protocol.as_string(
+		Protocol.as_dict(payload.get("content")).get("ko")), "들으소서")
+	assert_eq(Protocol.as_int(payload.get("total_pages")), 1)
+
+
+func test_readable_content_는_계약_타입이다() -> void:
+	# 처리하지 않으면 접속마다 "계약에 없는 type" 경고가 난다
+	assert_true(Protocol.SERVER_TYPES.has(Protocol.READABLE_CONTENT))

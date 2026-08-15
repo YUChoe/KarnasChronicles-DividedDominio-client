@@ -1118,5 +1118,21 @@
     "ui.admin.player_no_items": {
         "en": "No items.",
         "ko": "아이템이 없습니다."
+    },
+    "ui.reading.close": {
+        "en": "Close",
+        "ko": "닫기"
+    },
+    "ui.reading.previous": {
+        "en": "Previous page",
+        "ko": "이전 쪽"
+    },
+    "ui.reading.next": {
+        "en": "Next page",
+        "ko": "다음 쪽"
+    },
+    "ui.reading.page": {
+        "en": "Page {page} of {total}",
+        "ko": "{total}쪽 중 {page}쪽"
     }
 }

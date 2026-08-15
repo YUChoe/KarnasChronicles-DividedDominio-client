@@ -1,0 +1,48 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/reading/reading.gd" id="1_reading"]
+
+[node name="Reading" type="VBoxContainer"]
+offset_right = 720.0
+offset_bottom = 480.0
+theme_override_constants/separation = 8
+script = ExtResource("1_reading")
+
+[node name="Header" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="ReadingTitle" type="Label" parent="Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ReadingClose" type="Button" parent="Header"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="ReadingContent" type="RichTextLabel" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 320)
+bbcode_enabled = false
+fit_content = true
+scroll_active = true
+
+[node name="Footer" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ReadingPrevious" type="Button" parent="Footer"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="ReadingPage" type="Label" parent="Footer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ReadingNext" type="Button" parent="Footer"]
+unique_name_in_owner = true
+layout_mode = 2

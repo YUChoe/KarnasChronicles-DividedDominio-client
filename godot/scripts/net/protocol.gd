@@ -41,6 +41,7 @@ const ENTITY_UPDATE := "entity_update"
 const PLAYER_STATE := "player_state"
 const INVENTORY := "inventory"
 const CONTAINER_CONTENTS := "container_contents"
+const READABLE_CONTENT := "readable_content"
 const COMBAT_STATE := "combat_state"
 const DIALOGUE := "dialogue"
 const SHOP := "shop"
@@ -52,7 +53,8 @@ const ERROR := "error"
 const SERVER_TYPES: Array[String] = [
 	WELCOME, LOGIN_RESULT, LOGOUT_RESULT, PONG,
 	ROOM_INFO, ENTITY_ENTER, ENTITY_LEAVE, ENTITY_UPDATE,
-	PLAYER_STATE, INVENTORY, CONTAINER_CONTENTS, COMBAT_STATE,
+	PLAYER_STATE, INVENTORY, CONTAINER_CONTENTS, READABLE_CONTENT,
+	COMBAT_STATE,
 	DIALOGUE, SHOP, WHO_RESULT, CHAT, EVENT,
 	ACTION_REJECTED, ERROR,
 ]

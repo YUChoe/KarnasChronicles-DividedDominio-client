@@ -12,6 +12,7 @@ const COMBAT_SCENE := preload("res://scenes/combat/combat.tscn")
 const DIALOGUE_SCENE := preload("res://scenes/dialogue/dialogue.tscn")
 const SHOP_SCENE := preload("res://scenes/shop/shop.tscn")
 const STATUS_SCENE := preload("res://scenes/status/status.tscn")
+const READING_SCENE := preload("res://scenes/reading/reading.tscn")
 const ADMIN_SCENE := preload("res://scenes/admin/admin.tscn")
 
 const LABEL_LOGIN := "login"
@@ -41,6 +42,7 @@ var _combat: CombatScreen = null
 var _dialogue: DialogueScreen = null
 var _shop: ShopScreen = null
 var _status: StatusScreen = null
+var _reading: ReadingScreen = null
 var _admin: AdminScreen = null
 ## 로그인 후 도착한 스냅샷 종류
 var _snapshots: Dictionary = {}
@@ -142,6 +144,12 @@ func _build_screens() -> void:
 	_status.closed.connect(_show_main)
 	_status.action_requested.connect(_on_screen_action)
 
+	_reading = READING_SCENE.instantiate()
+	_screens.add_child(_reading)
+	_reading.bind(_store, _translator)
+	_reading.closed.connect(_show_main)
+	_reading.action_requested.connect(_on_screen_action)
+
 	_admin = ADMIN_SCENE.instantiate()
 	_screens.add_child(_admin)
 	_admin.bind(_translator, _config)
@@ -149,6 +157,7 @@ func _build_screens() -> void:
 	_admin.notice_requested.connect(_set_notice)
 
 	_store.container_contents_received.connect(_on_container_contents)
+	_store.readable_content_received.connect(_on_readable_content)
 	_store.combat_changed.connect(_on_combat_changed)
 	_store.dialogue_changed.connect(_on_dialogue_changed)
 	_store.shop_changed.connect(_on_shop_changed)
@@ -196,7 +205,7 @@ func _show_combat() -> void:
 func _show_only(screen: Control) -> void:
 	for candidate: Control in [
 			_login, _main, _inventory, _combat, _dialogue, _shop, _status,
-			_admin]:
+			_reading, _admin]:
 		candidate.visible = candidate == screen
 
 
@@ -255,6 +264,14 @@ func _is_consumable(object_id: String) -> bool:
 			return Items.category_of(item) == "consumable"
 
 	return false
+
+
+## 본문이 도착하면 읽기 화면을 연다. 방과 소지품 어느 쪽에서 읽어도 같다.
+func _on_readable_content(payload: Dictionary) -> void:
+	_reading.show_content(payload)
+	if not _reading.visible:
+		_show_only(_reading)
+		_clear_notice()
 
 
 ## 컨테이너를 열면 내용이 인벤토리 화면에 있으므로 그리로 넘긴다.
