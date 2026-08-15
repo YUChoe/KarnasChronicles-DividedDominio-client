@@ -44,7 +44,6 @@ const CONTAINER_CONTENTS := "container_contents"
 const READABLE_CONTENT := "readable_content"
 const COMBAT_STATE := "combat_state"
 const DIALOGUE := "dialogue"
-const SHOP := "shop"
 const WHO_RESULT := "who_result"
 const EVENT := "event"
 const ACTION_REJECTED := "action_rejected"
@@ -55,7 +54,7 @@ const SERVER_TYPES: Array[String] = [
 	ROOM_INFO, ENTITY_ENTER, ENTITY_LEAVE, ENTITY_UPDATE,
 	PLAYER_STATE, INVENTORY, CONTAINER_CONTENTS, READABLE_CONTENT,
 	COMBAT_STATE,
-	DIALOGUE, SHOP, WHO_RESULT, CHAT, EVENT,
+	DIALOGUE, WHO_RESULT, CHAT, EVENT,
 	ACTION_REJECTED, ERROR,
 ]
 

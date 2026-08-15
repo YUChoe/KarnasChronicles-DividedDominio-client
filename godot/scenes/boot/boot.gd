@@ -10,7 +10,6 @@ const MAIN_SCENE := preload("res://scenes/main/main.tscn")
 const INVENTORY_SCENE := preload("res://scenes/inventory/inventory.tscn")
 const COMBAT_SCENE := preload("res://scenes/combat/combat.tscn")
 const DIALOGUE_SCENE := preload("res://scenes/dialogue/dialogue.tscn")
-const SHOP_SCENE := preload("res://scenes/shop/shop.tscn")
 const STATUS_SCENE := preload("res://scenes/status/status.tscn")
 const READING_SCENE := preload("res://scenes/reading/reading.tscn")
 const ADMIN_SCENE := preload("res://scenes/admin/admin.tscn")
@@ -40,7 +39,6 @@ var _main: MainScreen = null
 var _inventory: InventoryScreen = null
 var _combat: CombatScreen = null
 var _dialogue: DialogueScreen = null
-var _shop: ShopScreen = null
 var _status: StatusScreen = null
 var _reading: ReadingScreen = null
 var _admin: AdminScreen = null
@@ -132,12 +130,6 @@ func _build_screens() -> void:
 	_dialogue.bind(_store, _translator)
 	_dialogue.action_requested.connect(_on_screen_action)
 
-	_shop = SHOP_SCENE.instantiate()
-	_screens.add_child(_shop)
-	_shop.bind(_store, _translator)
-	_shop.action_requested.connect(_on_screen_action)
-	_shop.closed.connect(_show_main)
-
 	_status = STATUS_SCENE.instantiate()
 	_screens.add_child(_status)
 	_status.bind(_store, _translator)
@@ -160,7 +152,6 @@ func _build_screens() -> void:
 	_store.readable_content_received.connect(_on_readable_content)
 	_store.combat_changed.connect(_on_combat_changed)
 	_store.dialogue_changed.connect(_on_dialogue_changed)
-	_store.shop_changed.connect(_on_shop_changed)
 
 	var saved := CredentialStore.load_credentials()
 	if not saved.is_empty():
@@ -204,7 +195,7 @@ func _show_combat() -> void:
 
 func _show_only(screen: Control) -> void:
 	for candidate: Control in [
-			_login, _main, _inventory, _combat, _dialogue, _shop, _status,
+			_login, _main, _inventory, _combat, _dialogue, _status,
 			_reading, _admin]:
 		candidate.visible = candidate == screen
 
@@ -219,15 +210,6 @@ func _on_dialogue_changed() -> void:
 	if not _dialogue.visible:
 		_show_only(_dialogue)
 		_clear_notice()
-
-
-## 상점 목록이 오면 상점 화면을 연다.
-func _on_shop_changed() -> void:
-	if _store.shop.is_empty() or _shop.visible:
-		return
-	_shop.clear_notice()
-	_show_only(_shop)
-	_clear_notice()
 
 
 ## 전투가 시작되면 전투 화면으로, 끝나면 탐험 화면으로 돌아간다.
@@ -404,8 +386,6 @@ func _on_action_rejected(payload: Dictionary) -> void:
 			_store.reset_session()
 			_show_login()
 			_login.show_message("ui.login.session_expired")
-		RejectionPolicy.Effect.SHOW_SHORTFALL:
-			_shop.on_insufficient_funds()
 		RejectionPolicy.Effect.LOG_CLIENT_BUG:
 			push_warning("클라이언트 버그: %s 가 %s 로 거절됐습니다" % [verb, code])
 		RejectionPolicy.Effect.REMOVE_BUTTON:

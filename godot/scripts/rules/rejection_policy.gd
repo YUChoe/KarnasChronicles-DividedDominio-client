@@ -21,8 +21,6 @@ enum Effect {
 	SHOW_NOTICE,
 	## 턴 대기를 표시한다
 	SHOW_TURN_WAIT,
-	## 상점 UI 에 부족액을 표시한다
-	SHOW_SHORTFALL,
 	## 수량 입력 상한을 조정한다
 	ADJUST_QUANTITY,
 	## 교체 확인을 제안한다
@@ -41,7 +39,7 @@ const EFFECTS := {
 	Protocol.WRONG_STATE: Effect.SHOW_NOTICE,
 	Protocol.NOT_YOUR_TURN: Effect.SHOW_TURN_WAIT,
 	Protocol.OUT_OF_RANGE: Effect.SHOW_NOTICE,
-	Protocol.INSUFFICIENT_FUNDS: Effect.SHOW_SHORTFALL,
+	Protocol.INSUFFICIENT_FUNDS: Effect.SHOW_NOTICE,
 	Protocol.INSUFFICIENT_QUANTITY: Effect.ADJUST_QUANTITY,
 	Protocol.INVENTORY_FULL: Effect.SHOW_NOTICE,
 	Protocol.SLOT_OCCUPIED: Effect.CONFIRM_REPLACE,

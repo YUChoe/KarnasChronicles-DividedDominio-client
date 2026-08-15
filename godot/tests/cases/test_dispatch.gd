@@ -275,20 +275,6 @@ func test_dialogue_는_is_active_가_거짓이면_비운다() -> void:
 	assert_true(_state.dialogue.is_empty())
 
 
-func test_shop_을_보관한다() -> void:
-	_send({
-		"type": "shop",
-		"seq": 51,
-		"merchant_id": "2be3c315-0000-0000-0000-000000000008",
-		"items": [{
-			"template_id": "health_potion",
-			"name": {"en": "Health Potion", "ko": "체력 물약"},
-			"buy_price": 50, "sell_price": 20, "stock": null,
-		}],
-	})
-	assert_eq(Protocol.as_array(_state.shop.get("items")).size(), 1)
-
-
 # 로그와 목록
 
 func test_chat_을_로그에_쌓는다() -> void:

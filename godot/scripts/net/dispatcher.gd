@@ -106,8 +106,6 @@ func _route(message_type: String, payload: Dictionary) -> void:
 			state.apply_combat_state(payload)
 		Protocol.DIALOGUE:
 			state.apply_dialogue(payload)
-		Protocol.SHOP:
-			state.apply_shop(payload)
 		Protocol.WHO_RESULT:
 			state.apply_who_result(payload)
 		Protocol.CHAT:

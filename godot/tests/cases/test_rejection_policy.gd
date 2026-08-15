@@ -42,9 +42,10 @@ func test_턴이_아니면_턴_대기를_표시한다() -> void:
 		RejectionPolicy.Effect.SHOW_TURN_WAIT)
 
 
-func test_골드_부족은_부족액을_표시한다() -> void:
+func test_화폐_부족은_안내를_표시한다() -> void:
+	# 상점을 두지 않으므로 부족액을 그릴 자리가 없다
 	assert_eq(RejectionPolicy.effect_for(Protocol.INSUFFICIENT_FUNDS),
-		RejectionPolicy.Effect.SHOW_SHORTFALL)
+		RejectionPolicy.Effect.SHOW_NOTICE)
 
 
 func test_슬롯_사용_중은_교체를_제안한다() -> void:

@@ -15,7 +15,6 @@ extends RefCounted
 const EXAMINE := "examine"
 const ATTACK := "attack"
 const TALK := "talk"
-const SHOP_OPEN := "shop_open"
 const GET := "get"
 const OPEN := "open"
 const READ := "read"
@@ -24,7 +23,6 @@ const USE := "use"
 const EQUIP := "equip"
 const UNEQUIP := "unequip"
 const GIVE := "give"
-const SHOP_SELL := "shop_sell"
 const FOLLOW := "follow"
 const FLEE := "flee"
 const USE_ITEM := "use_item"
@@ -58,16 +56,12 @@ static func for_room_entity(entity: Dictionary, context: Dictionary = {}) -> Arr
 ## `talk` 은 항상 표시한다. 서버가 대화 스크립트 없는 대상에게도 침묵 응답을
 ## 주기 때문이다. `can_talk` 은 버튼 표시 조건이 아니라 우선순위 판단용이다.
 ##
-## 상인 구분이 없다. 모든 캐릭터와 거래할 수 있으므로 적대가 아닌 대상에게
-## 거래 버튼을 표시한다.
+## 상인 구분이 없다. 거래는 대화 안에서 이루어지므로 `talk` 하나로 닿는다.
 static func for_monster(entity: Dictionary) -> Array[String]:
 	if not Protocol.as_bool(entity.get("is_alive"), true):
 		return [EXAMINE]
 
-	var verbs: Array[String] = [EXAMINE, ATTACK, TALK]
-	if Protocol.as_string(entity.get("disposition")) != DISPOSITION_HOSTILE:
-		verbs.append(SHOP_OPEN)
-	return verbs
+	return [EXAMINE, ATTACK, TALK]
 
 
 ## 방에 놓인 오브젝트
@@ -95,11 +89,6 @@ static func for_room_player(_entity: Dictionary, context: Dictionary = {}) -> Ar
 ##
 ## `context` 키:
 ##   `has_other_players` — 같은 방에 다른 플레이어가 있는가(`give`)
-##   `shop_open` — 상점 화면이 열려 있는가
-##   `shop_sell_prices` — `template_id` → 매도가. 상점 응답에서 만든다
-##
-## 매도가가 아이템 엔티티에 없는 것은 가격이 `item_prices` 테이블의 템플릿
-## 단위 값이기 때문이다. 실물 아이템의 속성이 아니다.
 static func for_inventory_item(item: Dictionary, context: Dictionary = {}) -> Array[String]:
 	var verbs: Array[String] = [EXAMINE, DROP]
 
@@ -117,8 +106,6 @@ static func for_inventory_item(item: Dictionary, context: Dictionary = {}) -> Ar
 		verbs.append(READ)
 	if Protocol.as_bool(context.get("has_other_players")):
 		verbs.append(GIVE)
-	if _can_sell(item, context):
-		verbs.append(SHOP_SELL)
 	if Protocol.as_bool(item.get("is_container")):
 		verbs.append(OPEN)
 
@@ -144,12 +131,3 @@ static func combat_bar(is_my_turn: bool) -> Array[String]:
 		return []
 	return [FLEE, USE_ITEM, END_TURN]
 
-
-static func _can_sell(item: Dictionary, context: Dictionary) -> bool:
-	if not Protocol.as_bool(context.get("shop_open")):
-		return false
-	var template_id := Protocol.as_string(item.get("template_id"))
-	if template_id.is_empty():
-		return false
-	var prices: Dictionary = Protocol.as_dict(context.get("shop_sell_prices"))
-	return Protocol.as_int(prices.get(template_id)) > 0

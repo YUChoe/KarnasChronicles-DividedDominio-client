@@ -87,10 +87,6 @@
         "en": "Sell items to merchants",
         "ko": "상인에게 아이템을 판매합니다"
     },
-    "cmd.shop.desc": {
-        "en": "View merchant's inventory",
-        "ko": "상점의 상품 목록을 봅니다"
-    },
     "cmd.south.desc": {
         "en": "Move south",
         "ko": "south 방향으로 이동합니다"
@@ -367,10 +363,6 @@
         "en": "flee",
         "ko": "flee"
     },
-    "cmd.endturn.desc": {
-        "en": "End your turn",
-        "ko": "턴을 넘깁니다"
-    },
     "cmd.endturn.usage": {
         "en": "endturn",
         "ko": "endturn"
@@ -422,9 +414,5 @@
     "cmd.trade.usage": {
         "en": "trade <item_name> <monster_name>",
         "ko": "trade <아이템이름> <몬스터이름>"
-    },
-    "cmd.shop.usage": {
-        "en": "shop [list|buy <item>] [merchant_name]",
-        "ko": "shop [list|buy <아이템>] [상인이름]"
     }
 }

@@ -42,11 +42,12 @@ func _player(overrides: Dictionary = {}) -> Dictionary:
 # 몬스터 (방)
 
 func test_몬스터는_조사_공격_대화를_받는다() -> void:
+	# 거래는 대화 안에서 이루어지므로 별도 버튼이 없다
 	assert_eq(ActionRules.for_room_entity(_monster()),
-		["examine", "attack", "talk", "shop_open"])
+		["examine", "attack", "talk"])
 
 
-func test_적대_몬스터는_거래를_받지_않는다() -> void:
+func test_적대_몬스터도_같은_동사를_받는다() -> void:
 	assert_eq(ActionRules.for_room_entity(_monster({"disposition": "hostile"})),
 		["examine", "attack", "talk"])
 
@@ -107,37 +108,6 @@ func test_같은_방에_다른_플레이어가_있으면_건네기를_받는다(
 		_object(), {"has_other_players": true})
 	assert_true(verbs.has("give"))
 
-
-func test_상점이_닫혀_있으면_판매를_받지_않는다() -> void:
-	var verbs := ActionRules.for_inventory_item(_object(), {
-		"shop_open": false,
-		"shop_sell_prices": {"health_potion": 20},
-	})
-	assert_false(verbs.has("shop_sell"))
-
-
-func test_상점이_열려_있고_매도가가_있으면_판매를_받는다() -> void:
-	var verbs := ActionRules.for_inventory_item(_object(), {
-		"shop_open": true,
-		"shop_sell_prices": {"health_potion": 20},
-	})
-	assert_true(verbs.has("shop_sell"))
-
-
-func test_매도가가_0_이면_판매를_받지_않는다() -> void:
-	var verbs := ActionRules.for_inventory_item(_object(), {
-		"shop_open": true,
-		"shop_sell_prices": {"health_potion": 0},
-	})
-	assert_false(verbs.has("shop_sell"))
-
-
-func test_template_id_가_없으면_판매를_받지_않는다() -> void:
-	var verbs := ActionRules.for_inventory_item(_object({"template_id": null}), {
-		"shop_open": true,
-		"shop_sell_prices": {"health_potion": 20},
-	})
-	assert_false(verbs.has("shop_sell"))
 
 
 # 플레이어 (방)

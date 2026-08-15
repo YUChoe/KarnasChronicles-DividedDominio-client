@@ -224,11 +224,7 @@ func _refresh_detail() -> void:
 
 
 func _action_context() -> Dictionary:
-	return {
-		"has_other_players": not _room_players().is_empty(),
-		"shop_open": not _state.shop.is_empty(),
-		"shop_sell_prices": _shop_sell_prices(),
-	}
+	return {"has_other_players": not _room_players().is_empty()}
 
 
 func _room_players() -> Dictionary:
@@ -244,15 +240,6 @@ func _room_players() -> Dictionary:
 		players[id] = _translator.pick(entity.get("name"))
 	return players
 
-
-func _shop_sell_prices() -> Dictionary:
-	var prices: Dictionary = {}
-	for value: Variant in Protocol.as_array(_state.shop.get("items")):
-		var entry: Dictionary = Protocol.as_dict(value)
-		var template_id := Protocol.as_string(entry.get("template_id"))
-		if not template_id.is_empty():
-			prices[template_id] = Protocol.as_int(entry.get("sell_price"))
-	return prices
 
 
 func _refresh_give_targets() -> void:
@@ -281,7 +268,7 @@ func _on_verb_pressed(verb: String) -> void:
 	# 요구사항이 정한 셋에 `give` 를 더한다. 계약의 `give` params 에 quantity 가
 	# 있고 스택 아이템을 나눠 건넬 수 있어야 한다.
 	var params: Dictionary = {}
-	if _quantity_row.visible and verb in ["drop", "put", "shop_sell", "give"]:
+	if _quantity_row.visible and verb in ["drop", "put", "give"]:
 		params["quantity"] = int(_quantity.value)
 
 	if verb == "give":

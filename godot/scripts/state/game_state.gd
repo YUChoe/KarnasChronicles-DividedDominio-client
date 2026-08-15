@@ -22,7 +22,6 @@ signal entities_changed()
 signal inventory_changed()
 signal combat_changed()
 signal dialogue_changed()
-signal shop_changed()
 signal container_contents_received(container_id: String, items: Array)
 ## 읽을 수 있는 물건의 본문이 도착했다. 화면이 이 신호로 읽기 창을 연다
 signal readable_content_received(payload: Dictionary)
@@ -59,7 +58,6 @@ var _hidden_items: Dictionary = {}
 
 var combat: Dictionary = {}
 var dialogue: Dictionary = {}
-var shop: Dictionary = {}
 
 var chat_log: Array = []
 var event_log: Array = []
@@ -82,7 +80,6 @@ func reset_session() -> void:
 	_hidden_items.clear()
 	combat = {}
 	dialogue = {}
-	shop = {}
 	player_changed.emit()
 	room_changed.emit()
 	entities_changed.emit()
@@ -247,11 +244,6 @@ func apply_dialogue(payload: Dictionary) -> void:
 	else:
 		dialogue = {}
 	dialogue_changed.emit()
-
-
-func apply_shop(payload: Dictionary) -> void:
-	shop = payload.duplicate(true)
-	shop_changed.emit()
 
 
 func apply_who_result(payload: Dictionary) -> void:
