@@ -18,12 +18,12 @@ var LOCALES = ['en', 'ko'];
 var STORAGE_KEY = 'karnas.locale';
 
 /**
- * 배포된 클라이언트 빌드.
+ * 클라이언트 배포처.
  *
- * 비어 있으면 다운로드 절이 준비 중 문구를 보여 준다. 릴리스를 올릴 때
- * `{ href: '/downloads/...', label: { en: ..., ko: ... } }` 를 넣는다.
+ * 빌드는 디스코드에서 나눈다. 파일을 이 사이트에 올리지 않으므로 받는 사람과
+ * 이야기할 자리가 같은 곳에 있다.
  */
-var DOWNLOADS = [];
+var DISCORD_INVITE = 'https://discord.gg/5V87vSUbw';
 
 var TEXT = window.LANDING_TEXT || {};
 var locale = LOCALES[0];
@@ -104,21 +104,20 @@ function each(selector, visit) {
 
 function renderDownloads() {
   var host = document.querySelector('[data-downloads]');
-  var pending = document.querySelector('[data-downloads-empty]');
-  if (!host || !pending) {
+  if (!host) {
     return;
   }
 
   host.textContent = '';
-  pending.hidden = DOWNLOADS.length > 0;
 
-  DOWNLOADS.forEach(function (item) {
-    var link = document.createElement('a');
-    link.className = 'button';
-    link.href = item.href;
-    link.textContent = item.label[locale] || item.label[LOCALES[0]];
-    host.appendChild(link);
-  });
+  var link = document.createElement('a');
+  link.className = 'button primary';
+  link.href = DISCORD_INVITE;
+  // 외부로 나가는 링크다. 원래 탭을 조작하지 못하게 막는다
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.textContent = text('download.discord');
+  host.appendChild(link);
 }
 
 /**

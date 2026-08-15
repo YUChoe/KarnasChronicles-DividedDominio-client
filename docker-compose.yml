@@ -44,8 +44,6 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./src/server/public:/usr/share/nginx/html:ro
-      # 클라이언트 빌드를 배포하려면 여기에 파일을 놓는다
-      - ./downloads:/usr/share/nginx/html/downloads:ro
     depends_on:
       - gateway
     restart: unless-stopped

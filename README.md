@@ -130,7 +130,6 @@ npm run check:contract # 계약 문서와 클라이언트 처리 범위 대조
 │   └── __tests__/              e2e·부하 테스트
 ├── godot/                      Godot 클라이언트
 ├── scripts/                    검사와 배포 스크립트
-├── downloads/                  클라이언트 빌드 배포 위치
 ├── nginx.conf                  랜딩 서빙과 프록시
 └── .kiro/specs/                스펙과 설계
 ```

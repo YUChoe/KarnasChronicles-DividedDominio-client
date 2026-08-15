@@ -124,8 +124,8 @@ Node 는 파일에서 가장 가까운 `package.json` 으로 모듈 종류를 �
 
 ## 클라이언트 빌드 배포
 
-Godot 클라이언트를 내보내고 `downloads/` 에 둡니다. nginx 가 그 디렉터리를
-`/downloads/` 로 서빙합니다.
+빌드는 디스코드에서 나눕니다. 파일을 이 사이트에 올리지 않으므로 nginx 에
+배포용 경로가 없습니다. 랜딩의 다운로드 절은 초대 링크로 안내합니다.
 
 ```bash
 npm run build:godot                  # build/windows/ 에 내보낸다
@@ -141,23 +141,15 @@ npm run build:godot -- --pack-only   # 템플릿 없이 리소스 묶음만 확�
 `export_presets.cfg` 는 저장소에 있습니다. 서명 자격 정보를 담지 않습니다.
 서명이 필요해지면 그 값은 환경변수나 별도 파일로 빼야 합니다.
 
-내보낸 뒤 배포용으로 묶습니다.
+내보낸 `build/windows/` 를 압축해 디스코드에 올립니다.
 
 ```bash
-tar -a -cf downloads/karnas-windows.zip -C build/windows .
+tar -a -cf karnas-windows.zip -C build/windows .
 ```
 
-그다음 `src/server/public/app.js` 의 `DOWNLOADS` 에 항목을 넣습니다.
-
-```js
-var DOWNLOADS = [
-  { href: '/downloads/karnas-windows.zip',
-    label: { en: 'Windows (64-bit)', ko: '윈도우 (64비트)' } }
-];
-```
-
-비어 있으면 랜딩의 다운로드 절은 준비 중 문구를 보여 줍니다. 없는 파일로
-링크가 걸리지 않게 하려는 것입니다.
+초대 링크는 `src/server/public/app.js` 의 `DISCORD_INVITE` 와 `index.html` 의
+다운로드 절 두 곳에 있습니다. 링크가 바뀌면 두 곳을 함께 고칩니다. HTML 쪽은
+JS 가 막힌 환경에서 보이는 자리입니다.
 
 클라이언트가 붙을 주소는 게임 안에서 설정합니다. 배포 도메인을 쓰려면
 `wss://<도메인>/ws` 입니다.

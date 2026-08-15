@@ -4,9 +4,6 @@ node_modules/
 # Build outputs
 dist/
 build/
-# 클라이언트 배포물. downloads/README.md 만 추적한다
-downloads/*
-!downloads/README.md
 
 # Logs
 logs/

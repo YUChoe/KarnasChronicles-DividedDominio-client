@@ -43,7 +43,7 @@ window.LANDING_TEXT = {
       '그 사이의 폐허에는 아직 위험을 무릅쓸 만한 것들이 남아 있습니다.'
   },
   'hero.register': { en: 'Create an account', ko: '계정 만들기' },
-  'hero.download': { en: 'Download the client', ko: '클라이언트 받기' },
+  'hero.download': { en: 'Get the client', ko: '클라이언트 받기' },
 
   'about.title': { en: 'Karnas after the Fall', ko: '몰락 이후의 카르나스' },
   'about.explore.title': { en: 'Hold, then venture', ko: '거점과 폐허' },
@@ -118,17 +118,19 @@ window.LANDING_TEXT = {
     ko: '화면 이미지를 준비하고 있습니다.'
   },
 
-  'download.title': { en: 'Download', ko: '다운로드' },
+  'download.title': { en: 'Get the client', ko: '클라이언트 받기' },
   'download.body': {
     en:
-      'The client is a standalone application. No installation is required ' +
-      'beyond unpacking the archive.',
-    ko: '클라이언트는 단독 실행 파일입니다. 압축을 풀면 바로 실행됩니다.'
+      'Builds are shared on our Discord server. The client is a standalone ' +
+      'application — unpack the archive and run it. Come and say hello while ' +
+      'you are there.',
+    ko:
+      '빌드는 디스코드에서 나눕니다. 클라이언트는 단독 실행 파일이라 압축을 ' +
+      '풀면 바로 실행됩니다. 오신 김에 인사도 남겨 주세요.'
   },
-  'download.pending': {
-    en:
-      'Builds are being prepared. Create your account now and it will be waiting.',
-    ko: '빌드를 준비하고 있습니다. 계정을 먼저 만들어 두셔도 됩니다.'
+  'download.discord': {
+    en: 'Join the Discord',
+    ko: '디스코드 참여하기'
   },
 
   'register.title': { en: 'Create an account', ko: '계정 만들기' },
