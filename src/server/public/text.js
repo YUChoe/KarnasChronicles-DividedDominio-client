@@ -11,8 +11,10 @@
 
 window.LANDING_TEXT = {
   'meta.description': {
-    en: 'A text-based multiplayer world of fallen kingdoms and divided rule.',
-    ko: '무너진 왕국과 갈라진 지배권을 다루는 텍스트 기반 멀티플레이 세계.'
+    en: 'A text-based multiplayer world set on Karnas after the Fall, where the '
+      + 'knights lost their war and the mages have not opened their gates.',
+    ko: '몰락 이후의 카르나스를 배경으로 한 텍스트 기반 멀티플레이 세계. '
+      + '기사단은 전쟁에서 졌고 마법사들은 아직 성문을 열지 않았다.'
   },
   'brand': {
     en: 'The Chronicles of Karnas',
@@ -23,47 +25,59 @@ window.LANDING_TEXT = {
     ko: '카르나스 연대기: 분할된 지배권'
   },
   'hero.tagline': {
-    en: 'The old realm has fallen. What remains is divided, and it is contested.',
-    ko: '옛 왕국은 무너졌습니다. 남은 것은 갈라졌고, 아직 다투는 중입니다.'
+    en: 'The knights lost the war. The mages will not open their gates. '
+      + 'What is left of Karnas belongs to whoever can hold it.',
+    ko: '기사단은 전쟁에서 졌습니다. 마법사들은 성문을 열지 않습니다. '
+      + '남은 카르나스는 지킬 수 있는 자의 것입니다.'
   },
   'hero.lede': {
     en:
-      'A text-based multiplayer world. Explore ruined settlements, speak with ' +
-      'those who stayed, trade for what you need, and choose whom to stand beside.',
+      "Two years of war ended in the knights' defeat, and the golden empire " +
+      'burned with it. A few years on, the roads are ash and the fields are ' +
+      'grey. What survives is held one place at a time — a fortress, a port, ' +
+      'a chapel — and the ruins between them still hold things worth the risk.',
     ko:
-      '텍스트 기반 멀티플레이 세계입니다. 폐허가 된 정착지를 돌아보고, 남은 ' +
-      '사람들과 이야기하고, 필요한 물건을 거래하고, 누구 편에 설지 고릅니다.'
+      '2년의 전쟁은 기사단의 패배로 끝났고, 황금 제국도 그 불길에 함께 ' +
+      '무너졌습니다. 몇 해가 지난 지금 길에는 재가 깔리고 밭은 잿빛입니다. ' +
+      '남은 것은 한 곳씩 붙들려 있습니다 — 요새 하나, 항구 하나, 예배당 하나. ' +
+      '그 사이의 폐허에는 아직 위험을 무릅쓸 만한 것들이 남아 있습니다.'
   },
   'hero.register': { en: 'Create an account', ko: '계정 만들기' },
   'hero.download': { en: 'Download the client', ko: '클라이언트 받기' },
 
-  'about.title': { en: 'The world', ko: '세계' },
-  'about.explore.title': { en: 'Explore', ko: '탐험' },
+  'about.title': { en: 'Karnas after the Fall', ko: '몰락 이후의 카르나스' },
+  'about.explore.title': { en: 'Hold, then venture', ko: '거점과 폐허' },
   'about.explore.body': {
     en:
-      'A coordinate world of towns, roads, wilderness and ruins. Each room ' +
-      'describes what is there and where you may go next.',
+      'Fort Duskfall keeps its discipline, Greyhaven Port keeps its traffic, ' +
+      'and the wasteland between them keeps everything else. You gather what ' +
+      'you need in a settlement, then walk out into the ruins.',
     ko:
-      '마을과 길, 야지와 폐허가 좌표로 이어진 세계입니다. 방마다 무엇이 있고 ' +
-      '어디로 갈 수 있는지 알려 줍니다.'
+      '황혼의 요새는 규율을 지키고 잿빛 항구는 뱃길을 지킵니다. 그 사이의 ' +
+      '황무지가 나머지 전부를 갖고 있습니다. 거점에서 필요한 것을 갖춘 뒤 ' +
+      '폐허로 걸어 나가는 것이 이 세계의 하루입니다.'
   },
-  'about.talk.title': { en: 'Talk and trade', ko: '대화와 거래' },
+  'about.talk.title': { en: 'The ones who stayed', ko: '남은 사람들' },
   'about.talk.body': {
     en:
-      'Those who remain have their own accounts of what happened. Some will ' +
-      'sell you what they can spare; some will ask something in return.',
+      'Soldiers who came back, refugees who did not choose to be here, a monk ' +
+      'keeping a chapel lit. Each of them tells the war differently. Some ' +
+      'will sell you what they can spare; some want something in return.',
     ko:
-      '남은 사람들은 무슨 일이 있었는지 저마다 다르게 말합니다. 여분을 팔기도 ' +
-      '하고, 대가를 요구하기도 합니다.'
+      '돌아온 병사, 원해서 온 것이 아닌 난민, 예배당의 불을 지키는 수사. ' +
+      '저마다 전쟁을 다르게 이야기합니다. 여분을 팔기도 하고 대가를 ' +
+      '요구하기도 합니다.'
   },
-  'about.fight.title': { en: 'Stand your ground', ko: '전투' },
+  'about.fight.title': { en: 'What the war left', ko: '전쟁이 남긴 것' },
   'about.fight.body': {
     en:
-      'Combat is turn-based and honest about its numbers. Factions remember ' +
-      'whom you sided with.',
+      'Combat is turn-based and honest about its numbers, and the factions ' +
+      'remember whom you stood beside. One rule is not negotiable: go near ' +
+      "the mages' castles and nothing comes back.",
     ko:
-      '전투는 턴 방식이고 수치를 숨기지 않습니다. 종족과 세력은 당신이 누구 ' +
-      '편에 섰는지 기억합니다.'
+      '전투는 턴 방식이고 수치를 숨기지 않습니다. 세력들은 당신이 누구 편에 ' +
+      '섰는지 기억합니다. 다만 흥정이 통하지 않는 규칙이 하나 있습니다. ' +
+      '마법사의 성 근처로 가면 아무도 돌아오지 못합니다.'
   },
   'about.language': {
     en:
