@@ -16,7 +16,7 @@ const FILTER_ALL := "all"
 
 @onready var _title: Label = %InventoryTitle
 @onready var _weight: Label = %WeightLabel
-@onready var _gold: Label = %GoldLabel
+@onready var _silver: Label = %SilverLabel
 @onready var _close: Button = %InventoryClose
 @onready var _unequip_all: Button = %UnequipAllButton
 @onready var _filters: HFlowContainer = %FilterButtons
@@ -128,8 +128,10 @@ func _refresh_header() -> void:
 		"max": _state.inventory.get("max_weight", 0.0),
 	})
 	# 골드는 인벤토리와 플레이어 상태 양쪽에 온다. 인벤토리 쪽이 더 최신이다
-	var gold: Variant = _state.inventory.get("gold", _state.player.get("gold", 0))
-	_gold.text = _translator.t("ui.inventory.gold", {"gold": Protocol.as_int(gold)})
+	var silver: Variant = _state.inventory.get(
+		"silver", _state.player.get("silver", 0))
+	_silver.text = _translator.t(
+		"ui.inventory.silver", {"silver": Protocol.as_int(silver)})
 
 
 func _refresh_items() -> void:

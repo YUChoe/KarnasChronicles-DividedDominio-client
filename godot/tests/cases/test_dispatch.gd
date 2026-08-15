@@ -95,7 +95,7 @@ func test_player_state_가_플레이어를_채운다() -> void:
 			"max_hp": 50,
 			"stamina": 30,
 			"max_stamina": 50,
-			"gold": 1240,
+			"silver": 1240,
 			"stats": {
 				"strength": 10, "dexterity": 14, "constitution": 12,
 				"intelligence": 8, "wisdom": 10, "charisma": 6,
@@ -118,11 +118,11 @@ func test_inventory_가_무게와_골드와_장착을_채운다() -> void:
 		"seq": null,
 		"total_weight": 12.0,
 		"max_weight": 20.0,
-		"gold": 1240,
+		"silver": 1240,
 		"items": [{"id": "b8593baf-0000-0000-0000-000000000004"}],
 		"equipped": {"right_hand": "c277fa85-0000-0000-0000-000000000005"},
 	})
-	assert_eq(Protocol.as_int(_state.inventory.get("gold")), 1240)
+	assert_eq(Protocol.as_int(_state.inventory.get("silver")), 1240)
 	assert_eq(Protocol.as_array(_state.inventory.get("items")).size(), 1)
 	assert_eq(_state.equipped.size(), 1)
 
@@ -420,7 +420,7 @@ func _inventory_with_two() -> void:
 		"seq": null,
 		"total_weight": 1.0,
 		"max_weight": 20.0,
-		"gold": 0,
+		"silver": 0,
 		"items": [
 			{"id": "potion-1", "category": "consumable"},
 			{"id": "sword-1", "category": "weapon"},

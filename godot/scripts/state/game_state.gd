@@ -170,7 +170,7 @@ func apply_inventory(payload: Dictionary) -> void:
 		"total_weight": payload.get("total_weight", 0.0),
 		"max_weight": payload.get("max_weight", 0.0),
 		# 계약 문서의 예시에는 없지만 서버가 실제로 보낸다
-		"gold": Protocol.as_int(payload.get("gold")),
+		"silver": Protocol.as_int(payload.get("silver")),
 		"items": Protocol.as_array(payload.get("items")),
 	}
 	equipped = Protocol.as_dict(payload.get("equipped"))

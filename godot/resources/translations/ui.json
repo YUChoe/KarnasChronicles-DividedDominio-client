@@ -136,8 +136,8 @@
         "ko": "대상이 너무 멀리 있습니다."
     },
     "ui.rejection.INSUFFICIENT_FUNDS": {
-        "en": "You do not have enough gold.",
-        "ko": "골드가 부족합니다."
+        "en": "You do not have enough silver.",
+        "ko": "실버가 부족합니다."
     },
     "ui.rejection.INSUFFICIENT_QUANTITY": {
         "en": "You do not have that many.",
@@ -471,9 +471,9 @@
         "en": "Weight {current} / {max}",
         "ko": "무게 {current} / {max}"
     },
-    "ui.inventory.gold": {
-        "en": "Gold {gold}",
-        "ko": "골드 {gold}"
+    "ui.inventory.silver": {
+        "en": "Silver {silver}",
+        "ko": "실버 {silver}"
     },
     "ui.inventory.empty": {
         "en": "Nothing here.",
