@@ -3,8 +3,8 @@ extends VBoxContainer
 
 ## 로그인 화면.
 ##
-## 회원가입 경로를 제공하지 않는다. 계정 생성은 랜딩 사이트가 서버의 계정 생성
-## 경로를 호출해 처리하며 이 화면은 링크만 보여준다.
+## 회원가입은 이 화면에서 시작한다. 계정 생성은 게임 채널의 `register` 이며
+## 회원가입 화면이 맡는다. 여기서는 그 화면을 여는 신호만 낸다.
 ##
 ## 거절 사유 문구는 화면이 자체 보유한다. 서버가 `message.key` 를 함께 보내지만
 ## 실패 사유가 셋뿐이고 화면 맥락에 맞는 안내가 필요하다. 어드민 패널도 같은
@@ -14,6 +14,7 @@ extends VBoxContainer
 ## 언어로 다시 그려야 한다.
 
 signal submitted(username: String, password: String, remember: bool)
+signal register_requested
 
 const REJECTION_PREFIX := "ui.login.rejected."
 ## 계약이 정의한 로그인 실패 사유. 사용자명 존재 여부를 구분해 알려주지 않는
@@ -30,7 +31,7 @@ const KNOWN_REASONS: Array[String] = [
 @onready var _remember: CheckBox = %RememberCheck
 @onready var _submit: Button = %SubmitButton
 @onready var _message: Label = %MessageLabel
-@onready var _landing: LinkButton = %LandingLink
+@onready var _register: Button = %RegisterButton
 
 var _translator: TranslatorService = null
 var _message_key := ""
@@ -41,7 +42,7 @@ func _ready() -> void:
 	_submit.pressed.connect(_on_submit_pressed)
 	_username.text_submitted.connect(_on_text_submitted)
 	_password.text_submitted.connect(_on_text_submitted)
-	_landing.pressed.connect(_on_landing_pressed)
+	_register.pressed.connect(_on_register_pressed)
 
 
 func bind(translator: TranslatorService) -> void:
@@ -58,13 +59,9 @@ func apply_texts() -> void:
 	_password_label.text = _translator.t("ui.login.password")
 	_remember.text = _translator.t("ui.login.remember")
 	_submit.text = _translator.t("ui.login.submit")
-	_landing.text = _translator.t("ui.login.landing")
+	_register.text = _translator.t("ui.login.register")
 	_message.text = ("" if _message_key.is_empty()
 		else _translator.t(_message_key, _message_params))
-
-
-func set_landing_url(url: String) -> void:
-	_landing.uri = url
 
 
 ## 저장된 자격으로 폼을 채운다. 자동 로그인은 호출 측이 결정한다.
@@ -142,9 +139,5 @@ func _on_submit_pressed() -> void:
 	submitted.emit(username, password, _remember.button_pressed)
 
 
-func _on_landing_pressed() -> void:
-	if _landing.uri.is_empty():
-		return
-	var status := OS.shell_open(_landing.uri)
-	if status != OK:
-		push_warning("랜딩 사이트를 열 수 없습니다: %s (%d)" % [_landing.uri, status])
+func _on_register_pressed() -> void:
+	register_requested.emit()

@@ -53,7 +53,7 @@ func test_리소스가_여덟이다() -> void:
 
 func test_어드민_응답_타입이_모두_목록에_있다() -> void:
 	for message_type: String in [
-			Protocol.ADMIN_LOGIN_RESULT, Protocol.SERVICE_LOGIN_RESULT,
+			Protocol.ADMIN_LOGIN_RESULT,
 			Protocol.ACCOUNT_CREATE_RESULT, Protocol.ADMIN_LIST_RESULT,
 			Protocol.ADMIN_GET_RESULT, Protocol.ADMIN_MUTATE_RESULT,
 			Protocol.ADMIN_STATS_RESULT, Protocol.ADMIN_MAP_RESULT,

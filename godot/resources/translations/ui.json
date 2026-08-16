@@ -55,10 +55,6 @@
         "en": "Sign in",
         "ko": "로그인"
     },
-    "ui.login.landing": {
-        "en": "Need an account? Register on the website.",
-        "ko": "계정이 필요하십니까? 웹사이트에서 가입하십시오."
-    },
     "ui.login.need_both": {
         "en": "Enter both a username and a password.",
         "ko": "사용자명과 비밀번호를 모두 입력하십시오."
@@ -90,6 +86,90 @@
     "ui.login.rejected.unknown": {
         "en": "Sign-in failed ({reason_code}).",
         "ko": "로그인에 실패했습니다 ({reason_code})."
+    },
+    "ui.login.register": {
+        "en": "Create an account",
+        "ko": "계정 만들기"
+    },
+    "ui.register.title": {
+        "en": "Create an account",
+        "ko": "계정 만들기"
+    },
+    "ui.register.confirm": {
+        "en": "Confirm",
+        "ko": "비밀번호 확인"
+    },
+    "ui.register.email": {
+        "en": "Email (optional)",
+        "ko": "이메일 (선택)"
+    },
+    "ui.register.hint": {
+        "en": "3 to 20 characters. Letters, digits and underscores only. Password at least 8 characters.",
+        "ko": "3~20자. 영문, 숫자, 밑줄만 씁니다. 비밀번호는 8자 이상입니다."
+    },
+    "ui.register.submit": {
+        "en": "Create account",
+        "ko": "계정 만들기"
+    },
+    "ui.register.cancel": {
+        "en": "Back to sign in",
+        "ko": "로그인으로 돌아가기"
+    },
+    "ui.register.sending": {
+        "en": "Creating your account…",
+        "ko": "계정을 만들고 있습니다…"
+    },
+    "ui.register.done": {
+        "en": "Your account is ready. Sign in with it.",
+        "ko": "계정이 준비됐습니다. 이 계정으로 로그인하십시오."
+    },
+    "ui.register.send_failed": {
+        "en": "Could not send the request.",
+        "ko": "요청을 보내지 못했습니다."
+    },
+    "ui.register.need_required": {
+        "en": "Enter both a username and a password.",
+        "ko": "사용자명과 비밀번호를 모두 입력하십시오."
+    },
+    "ui.register.username_length": {
+        "en": "The username must be 3 to 20 characters.",
+        "ko": "사용자명은 3~20자여야 합니다."
+    },
+    "ui.register.username_charset": {
+        "en": "The username may contain only letters, digits and underscores.",
+        "ko": "사용자명에는 영문, 숫자, 밑줄만 쓸 수 있습니다."
+    },
+    "ui.register.password_length": {
+        "en": "The password must be at least 8 characters.",
+        "ko": "비밀번호는 8자 이상이어야 합니다."
+    },
+    "ui.register.password_bytes": {
+        "en": "The password is too long.",
+        "ko": "비밀번호가 너무 깁니다."
+    },
+    "ui.register.password_mismatch": {
+        "en": "The two passwords do not match.",
+        "ko": "두 비밀번호가 일치하지 않습니다."
+    },
+    "ui.register.email_format": {
+        "en": "That email address is not valid.",
+        "ko": "이메일 주소 형식이 올바르지 않습니다."
+    },
+    "ui.register.rejected.USERNAME_TAKEN": {
+        "en": "That username is already taken.",
+        "ko": "이미 사용 중인 사용자명입니다."
+    },
+    "ui.register.rejected.VALIDATION_FAILED": {
+        "en": "The server rejected those details.",
+        "ko": "서버가 입력을 거절했습니다."
+    },
+    "ui.register.rejected.INTERNAL_ERROR": {
+        "en": "The server could not create the account. Please try again.",
+        "ko": "서버가 계정을 만들지 못했습니다. 다시 시도하십시오."
+    },
+    "ui.register.rejected.unknown": {
+        "en": "Could not create the account ({reason_code}).",
+        "ko": "계정을 만들지 못했습니다 ({reason_code})."
     },
     "ui.main.sign_out": {
         "en": "Sign out",

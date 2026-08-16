@@ -18,6 +18,7 @@ const PATH_GAME := "/ws"
 const PATH_ADMIN := "/admin"
 
 # 클라이언트 → 서버
+const REGISTER := "register"
 const LOGIN := "login"
 const LOGOUT := "logout"
 const ACTION := "action"
@@ -26,11 +27,12 @@ const PING := "ping"
 const CLIENT_INFO := "client_info"
 
 const CLIENT_TYPES: Array[String] = [
-	LOGIN, LOGOUT, ACTION, CHAT, PING, CLIENT_INFO,
+	REGISTER, LOGIN, LOGOUT, ACTION, CHAT, PING, CLIENT_INFO,
 ]
 
 # 서버 → 클라이언트
 const WELCOME := "welcome"
+const REGISTER_RESULT := "register_result"
 const LOGIN_RESULT := "login_result"
 const LOGOUT_RESULT := "logout_result"
 const PONG := "pong"
@@ -50,7 +52,7 @@ const ACTION_REJECTED := "action_rejected"
 const ERROR := "error"
 
 const SERVER_TYPES: Array[String] = [
-	WELCOME, LOGIN_RESULT, LOGOUT_RESULT, PONG,
+	WELCOME, REGISTER_RESULT, LOGIN_RESULT, LOGOUT_RESULT, PONG,
 	ROOM_INFO, ENTITY_ENTER, ENTITY_LEAVE, ENTITY_UPDATE,
 	PLAYER_STATE, INVENTORY, CONTAINER_CONTENTS, READABLE_CONTENT,
 	COMBAT_STATE,
@@ -60,7 +62,6 @@ const SERVER_TYPES: Array[String] = [
 
 # 어드민 채널. 클라이언트 → 서버
 const ADMIN_LOGIN := "admin_login"
-const SERVICE_LOGIN := "service_login"
 const ACCOUNT_CREATE := "account_create"
 const ADMIN_LIST := "admin_list"
 const ADMIN_GET := "admin_get"
@@ -73,7 +74,6 @@ const ADMIN_ACTION := "admin_action"
 
 # 어드민 채널. 서버 → 클라이언트
 const ADMIN_LOGIN_RESULT := "admin_login_result"
-const SERVICE_LOGIN_RESULT := "service_login_result"
 const ACCOUNT_CREATE_RESULT := "account_create_result"
 const ADMIN_LIST_RESULT := "admin_list_result"
 const ADMIN_GET_RESULT := "admin_get_result"
@@ -86,7 +86,7 @@ const ADMIN_REJECTED := "admin_rejected"
 
 const ADMIN_SERVER_TYPES: Array[String] = [
 	WELCOME, PONG, ERROR,
-	ADMIN_LOGIN_RESULT, SERVICE_LOGIN_RESULT, ACCOUNT_CREATE_RESULT,
+	ADMIN_LOGIN_RESULT, ACCOUNT_CREATE_RESULT,
 	ADMIN_LIST_RESULT, ADMIN_GET_RESULT, ADMIN_MUTATE_RESULT,
 	ADMIN_STATS_RESULT, ADMIN_MAP_RESULT, ADMIN_ACTION_RESULT,
 	ADMIN_REJECTED,

@@ -42,7 +42,6 @@ window.LANDING_TEXT = {
       '남은 것은 한 곳씩 붙들려 있습니다 — 요새 하나, 항구 하나, 예배당 하나. ' +
       '그 사이의 폐허에는 아직 위험을 무릅쓸 만한 것들이 남아 있습니다.'
   },
-  'hero.register': { en: 'Create an account', ko: '계정 만들기' },
   'hero.download': { en: 'Get the client', ko: '클라이언트 받기' },
 
   'about.title': { en: 'Karnas after the Fall', ko: '몰락 이후의 카르나스' },
@@ -133,85 +132,6 @@ window.LANDING_TEXT = {
     ko: '디스코드 참여하기'
   },
 
-  'register.title': { en: 'Create an account', ko: '계정 만들기' },
-  'register.body': {
-    en: 'One account is all you need. You may change your display name in the game.',
-    ko: '계정 하나면 됩니다. 표시 이름은 게임 안에서 바꿀 수 있습니다.'
-  },
-  'register.username': { en: 'Username', ko: '사용자명' },
-  'register.username.hint': {
-    en: '3 to 20 characters. Letters, digits and underscores only.',
-    ko: '3~20자. 영문, 숫자, 밑줄만 씁니다.'
-  },
-  'register.password': { en: 'Password', ko: '비밀번호' },
-  'register.password.hint': {
-    en: 'At least 8 characters.',
-    ko: '8자 이상.'
-  },
-  'register.confirm': { en: 'Confirm password', ko: '비밀번호 확인' },
-  'register.email': { en: 'Email (optional)', ko: '이메일 (선택)' },
-  'register.email.hint': {
-    en: 'Used only to recover your account. Leave it empty if you prefer.',
-    ko: '계정 복구에만 씁니다. 비워 두셔도 됩니다.'
-  },
-  'register.locale': { en: 'Preferred language', ko: '선호 언어' },
-  'register.submit': { en: 'Create account', ko: '계정 만들기' },
-  'register.sending': { en: 'Creating your account…', ko: '계정을 만들고 있습니다…' },
-  'register.done': {
-    en: 'Your account is ready. Sign in with it from the game client.',
-    ko: '계정이 준비됐습니다. 게임 클라이언트에서 이 계정으로 접속하세요.'
-  },
-
-  'error.username.required': { en: 'Enter a username.', ko: '사용자명을 입력하세요.' },
-  'error.username.length': {
-    en: 'The username must be 3 to 20 characters.',
-    ko: '사용자명은 3~20자여야 합니다.'
-  },
-  'error.username.charset': {
-    en: 'Use letters, digits and underscores only.',
-    ko: '영문, 숫자, 밑줄만 쓸 수 있습니다.'
-  },
-  'error.password.required': { en: 'Enter a password.', ko: '비밀번호를 입력하세요.' },
-  'error.password.length': {
-    en: 'The password must be at least 8 characters.',
-    ko: '비밀번호는 8자 이상이어야 합니다.'
-  },
-  'error.password.bytes': {
-    en: 'The password is too long. Keep it under 72 bytes.',
-    ko: '비밀번호가 너무 깁니다. 72바이트 이하로 줄이세요.'
-  },
-  'error.passwordConfirm.mismatch': {
-    en: 'The two passwords do not match.',
-    ko: '두 비밀번호가 서로 다릅니다.'
-  },
-  'error.email.format': {
-    en: 'Check the email address.',
-    ko: '이메일 주소를 확인하세요.'
-  },
-  'error.email.length': {
-    en: 'The email address is too long.',
-    ko: '이메일 주소가 너무 깁니다.'
-  },
-  'error.taken': {
-    en: 'That username is taken. Choose another.',
-    ko: '이미 쓰이는 사용자명입니다. 다른 이름을 고르세요.'
-  },
-  'error.validation': {
-    en: 'The server rejected these details. Check each field.',
-    ko: '서버가 입력을 거절했습니다. 각 항목을 확인하세요.'
-  },
-  'error.rate': {
-    en: 'Too many attempts. Try again later.',
-    ko: '시도가 너무 많습니다. 잠시 후 다시 시도하세요.'
-  },
-  'error.disabled': {
-    en: 'Registration is closed on this server.',
-    ko: '이 서버는 회원가입을 받지 않습니다.'
-  },
-  'error.upstream': {
-    en: 'The game server could not be reached. Try again shortly.',
-    ko: '게임 서버에 닿지 못했습니다. 잠시 후 다시 시도하세요.'
-  },
 
   'footer.note': {
     en: 'A text-based world, played in your own words.',

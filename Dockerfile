@@ -1,8 +1,8 @@
 # WebSocket 게이트웨이 이미지
 #
-# 이 이미지는 게이트웨이와 `/api/register` 를 담는다. 랜딩 정적 자산도 함께
-# 넣는다. 프로덕션에서는 nginx 가 서빙하므로 이미지의 사본은 nginx 에 물릴
-# 원본이자 정적 서빙을 켰을 때(`LANDING_SERVE_STATIC=1`) 쓰는 자산이다.
+# 이 이미지는 게이트웨이와 랜딩 정적 자산을 담는다. 프로덕션에서는 nginx 가
+# 서빙하므로 이미지의 사본은 nginx 에 물릴 원본이자 정적 서빙을 켰을 때
+# (`LANDING_SERVE_STATIC=1`) 쓰는 자산이다.
 
 # 1단계: 서버 빌드
 FROM node:20-alpine AS builder

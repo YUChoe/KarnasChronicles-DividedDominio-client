@@ -6,6 +6,7 @@ extends Node
 ## 않고 이곳에서 주입받는다. autoload 식별자를 직접 참조하는 곳은 여기뿐이다.
 
 const LOGIN_SCENE := preload("res://scenes/login/login.tscn")
+const REGISTER_SCENE := preload("res://scenes/register/register.tscn")
 const MAIN_SCENE := preload("res://scenes/main/main.tscn")
 const INVENTORY_SCENE := preload("res://scenes/inventory/inventory.tscn")
 const COMBAT_SCENE := preload("res://scenes/combat/combat.tscn")
@@ -35,6 +36,8 @@ var _dispatcher: Dispatcher = null
 var _store: GameStateStore = null
 var _translator: TranslatorService = null
 var _login: LoginScreen = null
+var _register: RegisterScreen = null
+var _register_flow: RegisterFlow = null
 var _main: MainScreen = null
 var _inventory: InventoryScreen = null
 var _combat: CombatScreen = null
@@ -100,8 +103,18 @@ func _build_screens() -> void:
 	_login = LOGIN_SCENE.instantiate()
 	_screens.add_child(_login)
 	_login.bind(_translator)
-	_login.set_landing_url(_config.landing_url)
 	_login.submitted.connect(_on_login_submitted)
+	_login.register_requested.connect(_show_register)
+
+	_register = REGISTER_SCENE.instantiate()
+	_screens.add_child(_register)
+	_register.bind(_translator)
+	_register.cancelled.connect(_show_login)
+
+	_register_flow = RegisterFlow.new()
+	_register_flow.bind(_action_sender, _register, _login)
+	_register_flow.completed.connect(_show_login)
+	_dispatcher.register_result_received.connect(_register_flow.on_result)
 
 	_main = MAIN_SCENE.instantiate()
 	_screens.add_child(_main)
@@ -169,6 +182,14 @@ func _show_login() -> void:
 	_in_game = false
 
 
+## 회원가입 화면. 인증 전이므로 연결만 되어 있으면 열 수 있다.
+func _show_register() -> void:
+	_show_only(_register)
+	_clear_notice()
+	_register.reset()
+	_register.focus_first()
+
+
 func _show_main() -> void:
 	_show_only(_main)
 	_clear_notice()
@@ -195,7 +216,7 @@ func _show_combat() -> void:
 
 func _show_only(screen: Control) -> void:
 	for candidate: Control in [
-			_login, _main, _inventory, _combat, _dialogue, _status,
+			_login, _register, _main, _inventory, _combat, _dialogue, _status,
 			_reading, _admin]:
 		candidate.visible = candidate == screen
 
@@ -404,7 +425,9 @@ func _on_admin_requested() -> void:
 
 
 func _on_request_timed_out(_seq: int, label: String) -> void:
-	if label == LABEL_LOGIN:
+	if label == RegisterFlow.LABEL:
+		_register_flow.on_timed_out(label)
+	elif label == LABEL_LOGIN:
 		_login.show_message("ui.notice.request_timeout", {"label": label})
 	elif label == LABEL_LOGOUT:
 		_main.set_logout_busy(false)

@@ -11,6 +11,7 @@ extends RefCounted
 var state: GameStateStore = null
 
 signal welcome_received(payload: Dictionary)
+signal register_result_received(payload: Dictionary)
 signal login_result_received(payload: Dictionary)
 signal logout_result_received(payload: Dictionary)
 signal pong_received(payload: Dictionary)
@@ -78,6 +79,9 @@ func _route(message_type: String, payload: Dictionary) -> void:
 	match message_type:
 		Protocol.WELCOME:
 			welcome_received.emit(payload)
+		Protocol.REGISTER_RESULT:
+			# 계정 생성은 인증 상태를 바꾸지 않는다. 저장소로 가지 않는다
+			register_result_received.emit(payload)
 		Protocol.LOGIN_RESULT:
 			state.apply_login_result(payload)
 			login_result_received.emit(payload)

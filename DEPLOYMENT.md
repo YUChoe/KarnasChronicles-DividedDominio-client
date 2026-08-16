@@ -21,20 +21,17 @@
 
 ```
 브라우저 ─┬→ nginx :80 ─┬→ /            정적 랜딩
-          │             ├→ /api/        게이트웨이 :3000
           │             ├→ /ws          게이트웨이 :3000 → MUD :4000
           │             └→ /admin       게이트웨이 :3000 → MUD :4001
           │
 Godot ────┴→ nginx :80 → /ws → 게이트웨이 → MUD 서버
 ```
 
-정적 자산은 nginx 가 서빙합니다. 게이트웨이는 WebSocket 두 채널과
-`/api/register` 만 맡습니다. 회원가입은 서비스 토큰이 필요해 서버측에서만
-처리할 수 있습니다.
+정적 자산은 nginx 가 서빙합니다. 게이트웨이는 WebSocket 두 채널만 맡습니다.
+랜딩에는 계정 생성이 없고 계정 생성은 Godot 클라이언트가 게임 채널의
+`register` 로 직접 합니다.
 
-게이트웨이 포트를 외부에 노출하지 않습니다. 요청 제한이 nginx 가 설정하는
-`X-Forwarded-For` 를 신뢰하므로, 직접 접근이 가능하면 그 헤더를 위조해 제한을
-피할 수 있습니다.
+게이트웨이 포트를 외부에 노출하지 않습니다.
 
 MUD 서버는 이 저장소가 배포하지 않습니다. 어드민 포트(4001)는 루프백에만
 바인드하고 게이트웨이만 닿게 합니다.
@@ -62,19 +59,15 @@ cp .env.example .env
 | `ADMIN_PORT` | `4001` | 어드민 채널 |
 | `MAX_CONNECTIONS` | `200` | 초과 시 1008 로 거절 |
 | `CONNECTION_TIMEOUT` | `300000` | 프레임이 오가지 않은 연결을 닫는 기준. 클라이언트가 60초마다 ping 을 보내므로 그보다 넉넉해야 한다 |
-| `LANDING_SERVICE_TOKEN` | 없음 | MUD 서버의 같은 이름 변수와 같아야 한다. 비우면 회원가입이 닫힌다 |
 | `LANDING_SERVE_STATIC` | `0` | 프로덕션은 `0`. nginx 가 서빙한다 |
 | `LANDING_STATIC_ROOT` | 이미지에서 `/app/public` | 정적 서빙을 켤 때만 쓴다 |
-| `REGISTER_LIMIT` | `5` | IP 당 회원가입 허용 횟수 |
-| `REGISTER_WINDOW_MS` | `3600000` | 그 횟수를 세는 구간 |
 | `LOG_LEVEL` | `info` | |
 
-`.env` 는 커밋하지 않습니다. 서비스 토큰이 유출되면 임의 계정 생성이 가능합니다.
+`.env` 는 커밋하지 않습니다.
 
 ## Docker Compose 배포
 
 ```bash
-export LANDING_SERVICE_TOKEN=<MUD 서버와 같은 값>
 docker compose up -d --build
 docker compose ps
 ```
@@ -112,7 +105,7 @@ cp -r src/server/public/* /usr/share/nginx/html/
 ```bash
 npm ci
 npm run build:server
-LANDING_SERVICE_TOKEN=<토큰> node dist/server/server/start.js
+node dist/server/server/start.js
 ```
 
 산출물은 CommonJS 입니다. 저장소의 `package.json` 은 `"type": "module"` 이지만
@@ -160,16 +153,9 @@ JS 가 막힌 환경에서 보이는 자리입니다.
 # 정적 랜딩
 curl -sI http://localhost/ | head -1
 
-# 회원가입 경로가 열렸는지 (검증 실패 400 이면 경로는 살아 있다)
-curl -s -X POST http://localhost/api/register \
-  -H 'Content-Type: application/json' -d '{"username":"ab"}'
-
 # 게임 채널 (welcome 이 오면 사슬이 이어졌다)
 npx wscat -c ws://localhost/ws
 ```
-
-`/api/register` 가 503 이면 서비스 토큰이 비어 있습니다. 502 면 게이트웨이가
-어드민 채널에 닿지 못했습니다.
 
 ## 로그와 모니터링
 

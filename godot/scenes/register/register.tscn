@@ -1,0 +1,107 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/register/register.gd" id="1_register"]
+
+[node name="Register" type="VBoxContainer"]
+offset_right = 480.0
+offset_bottom = 360.0
+theme_override_constants/separation = 10
+script = ExtResource("1_register")
+
+[node name="TitleLabel" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Create an account"
+
+[node name="UsernameRow" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="UsernameLabel" type="Label" parent="UsernameRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(96, 0)
+layout_mode = 2
+text = "Username"
+
+[node name="UsernameEdit" type="LineEdit" parent="UsernameRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+max_length = 20
+
+[node name="PasswordRow" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="PasswordLabel" type="Label" parent="PasswordRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(96, 0)
+layout_mode = 2
+text = "Password"
+
+[node name="PasswordEdit" type="LineEdit" parent="PasswordRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+secret = true
+
+[node name="ConfirmRow" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ConfirmLabel" type="Label" parent="ConfirmRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(96, 0)
+layout_mode = 2
+text = "Confirm"
+
+[node name="ConfirmEdit" type="LineEdit" parent="ConfirmRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+secret = true
+
+[node name="EmailRow" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="EmailLabel" type="Label" parent="EmailRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(96, 0)
+layout_mode = 2
+text = "Email (optional)"
+
+[node name="EmailEdit" type="LineEdit" parent="EmailRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(240, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+max_length = 254
+
+[node name="HintLabel" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3
+text = "3 to 20 characters. Letters, digits and underscores only. Password at least 8 characters."
+
+[node name="ButtonRow" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="SubmitButton" type="Button" parent="ButtonRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Create account"
+
+[node name="CancelButton" type="Button" parent="ButtonRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Back to sign in"
+
+[node name="MessageLabel" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3

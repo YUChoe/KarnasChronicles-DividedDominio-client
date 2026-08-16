@@ -10,11 +10,12 @@ const MAX_LINES := 500
 
 ## 자유 문자 입력이 허용된 게임 화면.
 ##
-## 계약이 정한 자리는 채팅 메시지, 로그인의 사용자명과 비밀번호, `changename` 의
-## 새 이름, 어드민 패널의 폼 값이다. 어드민은 편집 도구이므로 별도로 다룬다.
+## 계약이 정한 자리는 채팅 메시지, 로그인과 회원가입의 계정 항목, `changename`
+## 의 새 이름, 어드민 패널의 폼 값이다. 어드민은 편집 도구이므로 별도로 다룬다.
 const GAME_INPUT_SCENES: Array[String] = [
 	"res://scenes/login/login.tscn",
 	"res://scenes/main/chat_bar.tscn",
+	"res://scenes/register/register.tscn",
 	"res://scenes/status/status.tscn",
 ]
 

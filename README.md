@@ -21,7 +21,6 @@ MUD 서버(`Echoes-of-the-Fallen-Age`)와 Godot 클라이언트 사이의 WebSoc
 |---|---|---|
 | `/ws` | TCP 4000 | 게임 채널 |
 | `/admin` | TCP 4001 | 어드민 채널. 인증은 서버가 판정한다 |
-| `/api/register` | TCP 4001 | 회원가입. 서비스 토큰은 게이트웨이만 갖는다 |
 
 그 밖의 경로로 오는 업그레이드 요청은 404 로 거부합니다. 잘못된 포트에 붙었을
 때 조용히 실패하지 않게 하려는 것입니다.
@@ -58,13 +57,12 @@ npm run dev:server
 개발에서만 켭니다.
 
 ```bash
-LANDING_SERVE_STATIC=1 LANDING_SERVICE_TOKEN=dev-token npm run dev:server
+LANDING_SERVE_STATIC=1 npm run dev:server
 # http://localhost:3000
 ```
 
-`LANDING_SERVICE_TOKEN` 은 MUD 서버의 같은 이름 환경변수와 같아야 합니다.
-비워 두면 회원가입 경로를 만들지 않고 `/api/register` 가 503 을 돌려줍니다.
-서버도 토큰이 없는 배포에서는 그 경로를 등록하지 않습니다.
+랜딩에는 계정 생성이 없습니다. 소개와 내려받기 안내만 있습니다. 계정 생성은
+Godot 클라이언트가 게임 채널의 `register` 로 직접 합니다.
 
 ## 환경 변수
 
@@ -76,11 +74,8 @@ LANDING_SERVE_STATIC=1 LANDING_SERVICE_TOKEN=dev-token npm run dev:server
 | `ADMIN_PORT` | `4001` | 어드민 채널 포트 |
 | `MAX_CONNECTIONS` | `200` | 최대 동시 연결 |
 | `CONNECTION_TIMEOUT` | `300000` | 프레임이 오가지 않은 연결을 닫는 기준 (밀리초) |
-| `LANDING_SERVICE_TOKEN` | 없음 | 회원가입용 서비스 토큰. 브라우저로 나가지 않는다 |
 | `LANDING_SERVE_STATIC` | `0` | `1` 이면 게이트웨이가 정적 자산을 서빙한다 (개발용) |
 | `LANDING_STATIC_ROOT` | `src/server/public` | 정적 자산 경로 |
-| `REGISTER_LIMIT` | `5` | IP 당 회원가입 허용 횟수 |
-| `REGISTER_WINDOW_MS` | `3600000` | 그 횟수를 세는 구간 (밀리초) |
 | `LOG_LEVEL` | `info` | `error`, `warn`, `info`, `debug` |
 
 `.env.example` 을 `.env` 로 복사해 씁니다.
@@ -93,7 +88,7 @@ node dist/server/server/start.js
 ```
 
 Docker 와 nginx 를 쓰는 배포 절차는 [DEPLOYMENT.md](./DEPLOYMENT.md) 에 있습니다.
-정적 자산은 프로덕션에서 nginx 가 서빙하고 게이트웨이는 API 만 맡습니다.
+정적 자산은 프로덕션에서 nginx 가 서빙하고 게이트웨이는 WebSocket 만 맡습니다.
 
 ## 테스트
 
@@ -145,16 +140,6 @@ MUD 서버가 4000 과 4001 에서 듣고 있는지 확인합니다. 어드민 �
 
 `welcome` 의 `channel` 이 기대와 다르면 클라이언트가 스스로 끊습니다. `/ws` 로
 붙어야 게임 채널입니다. 경로 없이 붙으면 404 입니다.
-
-### 회원가입이 503 을 돌려준다
-
-`LANDING_SERVICE_TOKEN` 이 비어 있습니다. 게이트웨이와 MUD 서버 양쪽에 같은
-값을 넣어야 합니다.
-
-### 회원가입이 502 를 돌려준다
-
-게이트웨이가 어드민 채널에 닿지 못했거나 서비스 인증이 거절됐습니다. 토큰
-불일치는 사용자에게 알리지 않고 게이트웨이 로그에만 남습니다.
 
 ### 연결이 1009 로 끊긴다
 

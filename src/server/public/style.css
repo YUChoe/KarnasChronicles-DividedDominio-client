@@ -15,8 +15,6 @@
   --panel: #1e1b17;
   --line: #34302a;
   --accent: #c8a45c;
-  --bad: #d97a6c;
-  --good: #86b17a;
   --measure: 62rem;
 }
 
@@ -193,59 +191,6 @@ figcaption {
 .note {
   color: var(--ink-dim);
   font-size: 0.9rem;
-}
-
-form {
-  max-width: 32rem;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  margin-bottom: 1.2rem;
-}
-
-label {
-  color: var(--ink-dim);
-  font-size: 0.9rem;
-}
-
-input,
-select {
-  background: var(--ground);
-  border: 1px solid var(--line);
-  color: var(--ink);
-  padding: 0.6rem 0.7rem;
-  font: inherit;
-}
-
-input:focus,
-select:focus {
-  outline: 1px solid var(--accent);
-  border-color: var(--accent);
-}
-
-.field.invalid input {
-  border-color: var(--bad);
-}
-
-.hint {
-  color: var(--ink-dim);
-  font-size: 0.8rem;
-}
-
-.result {
-  min-height: 1.7em;
-  margin: 0;
-}
-
-.result.bad {
-  color: var(--bad);
-}
-
-.result.good {
-  color: var(--good);
 }
 
 [hidden] {

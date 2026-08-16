@@ -10,7 +10,6 @@ extends Dispatcher
 ## 화면이 응답을 직접 받는다.
 
 signal admin_login_result(payload: Dictionary)
-signal service_login_result(payload: Dictionary)
 signal account_create_result(payload: Dictionary)
 signal list_result(payload: Dictionary)
 signal get_result(payload: Dictionary)
@@ -34,8 +33,6 @@ func _route(message_type: String, payload: Dictionary) -> void:
 			pong_received.emit(payload)
 		Protocol.ADMIN_LOGIN_RESULT:
 			admin_login_result.emit(payload)
-		Protocol.SERVICE_LOGIN_RESULT:
-			service_login_result.emit(payload)
 		Protocol.ACCOUNT_CREATE_RESULT:
 			account_create_result.emit(payload)
 		Protocol.ADMIN_LIST_RESULT:
