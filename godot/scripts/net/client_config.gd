@@ -10,8 +10,10 @@ extends RefCounted
 ## 은 배포된 도메인이다. 프로파일이 host·port·secure 를 덮으므로 환경을 바꾸는
 ## 일이 한 줄 편집이 된다. 셋을 직접 정하려면 `custom` 을 쓴다.
 ##
-## 기본 프로파일은 실행 형태로 정한다. 편집기에서 돌리면 `dev`, 내보낸 빌드면
-## `production` 이다. 배포한 실행 파일이 localhost 를 보는 사고를 막는다.
+## 기본 프로파일은 실행 형태로 정한다. 편집기에서 돌리거나 개발 빌드면 `dev`,
+## 상용 빌드면 `production` 이다. 배포한 실행 파일이 localhost 를 보는 사고를
+## 막는다. 개발 빌드는 내보내기 프리셋 `Windows Desktop Dev` 가 만들며 기능
+## 태그 `devbuild` 로 자신을 밝힌다.
 ##
 ## 명령줄로도 바꿀 수 있다. 한 빌드로 두 환경을 오갈 때 쓴다.
 ##
@@ -38,6 +40,9 @@ const PROFILES := {
 	PROFILE_PRODUCTION: {"host": "mud.noizze.net", "port": 443, "secure": true},
 }
 
+## 개발 빌드가 자신을 밝히는 기능 태그. 내보내기 프리셋의 `custom_features` 다
+const FEATURE_DEV := "devbuild"
+
 const DEFAULT_LOCALE := "en"
 
 var profile := PROFILE_DEV
@@ -48,9 +53,11 @@ var locale := DEFAULT_LOCALE
 var auto_login := false
 
 
-## 편집기에서 돌리면 개발, 내보낸 빌드면 상용이다.
+## 편집기이거나 개발 빌드면 개발, 그 밖에는 상용이다.
 static func default_profile() -> String:
-	return PROFILE_DEV if OS.has_feature("editor") else PROFILE_PRODUCTION
+	if OS.has_feature("editor") or OS.has_feature(FEATURE_DEV):
+		return PROFILE_DEV
+	return PROFILE_PRODUCTION
 
 
 ## 명령줄에서 `--profile=<이름>` 을 찾는다. 없거나 모르는 이름이면 빈 문자열.

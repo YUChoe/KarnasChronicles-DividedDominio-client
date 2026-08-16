@@ -144,15 +144,30 @@ tar -a -cf karnas-windows.zip -C build/windows .
 다운로드 절 두 곳에 있습니다. 링크가 바뀌면 두 곳을 함께 고칩니다. HTML 쪽은
 JS 가 막힌 환경에서 보이는 자리입니다.
 
+클라이언트는 두 가지로 내보냅니다. 접속 대상이 다릅니다.
+
+```bash
+npm run build:godot        # 상용. build/windows/
+npm run build:godot:dev    # 개발. build/windows-dev/
+```
+
+배포하는 것은 `build/windows/` 쪽입니다. 개발 빌드는 내보내기 프리셋의 `custom_features` 가 `devbuild` 라 클라이언트가 자신을 개발 빌드로 알고 `ws://localhost:3000` 을 봅니다. 콘솔 창이 함께 떠서 `print` 를 그 자리에서 볼 수 있고, 디버그로 내보내므로 오류 위치가 자세합니다.
+
+두 산출물을 다른 디렉터리에 두는 것은 어느 쪽을 배포하는지 헷갈리지 않게 하려는 것입니다. 실행 파일만 보고는 구별할 수 없습니다.
+
+상용 빌드는 `embed_pck=true` 라 실행 파일 하나입니다(70MB). 그것만 올리면 됩니다. 개발 빌드는 `.pck` 를 분리해 두었습니다. 코드만 고쳤을 때 `.pck` 만 바꿔 시험할 수 있습니다.
+
 클라이언트의 접속 대상은 프로파일로 고릅니다. `user://client.cfg` 의 `[network] profile` 입니다.
 
 | 프로파일 | 주소 | 언제 |
 |---|---|---|
-| `dev` | `ws://localhost:3000/ws` | 편집기에서 실행할 때의 기본값 |
-| `production` | `wss://mud.noizze.net/ws` | 내보낸 빌드의 기본값 |
+| `dev` | `ws://localhost:3000/ws` | 편집기 실행과 개발 빌드의 기본값 |
+| `production` | `wss://mud.noizze.net/ws` | 상용 빌드의 기본값 |
 | `custom` | `host`·`port`·`secure` 를 파일에서 읽는다 | 그 밖의 대상 |
 
-기본값은 실행 형태가 정합니다. 편집기는 `dev`, 내보낸 빌드는 `production` 입니다. 배포한 실행 파일이 localhost 를 보는 사고를 막습니다.
+기본값은 실행 형태가 정합니다. 배포한 실행 파일이 localhost 를 보는 사고를 막습니다.
+
+우선순위는 명령줄 > `client.cfg` > 위 기본값입니다. 편집기로 한 번 돌린 기계에는 `profile="dev"` 가 적힌 `client.cfg` 가 남아 있어 상용 빌드도 그 값을 따릅니다. 상용을 확인할 때는 그 파일을 지우거나 `--profile=production` 을 붙이십시오.
 
 한 빌드로 두 환경을 오가려면 명령줄을 씁니다.
 

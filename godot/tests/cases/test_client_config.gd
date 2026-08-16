@@ -56,6 +56,21 @@ func test_평문_443_은_포트를_적는다() -> void:
 		"ws://example.com:443/ws")
 
 
+## 개발 빌드는 내보내기 프리셋의 기능 태그로 자신을 밝힌다. 그 이름이 바뀌면
+## 프리셋과 코드가 갈라져 배포 빌드가 localhost 를 보게 된다
+func test_개발_빌드_태그가_프리셋과_같다() -> void:
+	assert_eq(ClientConfig.FEATURE_DEV, "devbuild")
+
+	var presets := FileAccess.get_file_as_string("res://export_presets.cfg")
+	assert_true(presets.contains('custom_features="%s"' % ClientConfig.FEATURE_DEV),
+		"export_presets.cfg 에 개발 프리셋이 없다")
+
+
+func test_기본_프로파일은_아는_이름이다() -> void:
+	var name := ClientConfig.default_profile()
+	assert_true(ClientConfig.PROFILES.has(name), name)
+
+
 func test_경로는_계약_상수를_쓴다() -> void:
 	var config := ClientConfig.new()
 	config.apply_profile(ClientConfig.PROFILE_DEV)
