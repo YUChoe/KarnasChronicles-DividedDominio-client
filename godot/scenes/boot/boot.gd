@@ -94,6 +94,7 @@ func _ready() -> void:
 
 	_build_screens()
 	_clear_notice()
+	print("접속 대상: %s (%s)" % [_config.game_url(), _config.profile])
 	_connection.open(_config.game_url())
 
 

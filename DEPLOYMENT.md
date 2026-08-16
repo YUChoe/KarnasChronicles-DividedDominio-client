@@ -144,8 +144,26 @@ tar -a -cf karnas-windows.zip -C build/windows .
 다운로드 절 두 곳에 있습니다. 링크가 바뀌면 두 곳을 함께 고칩니다. HTML 쪽은
 JS 가 막힌 환경에서 보이는 자리입니다.
 
-클라이언트가 붙을 주소는 게임 안에서 설정합니다. 배포 도메인을 쓰려면
-`wss://<도메인>/ws` 입니다.
+클라이언트의 접속 대상은 프로파일로 고릅니다. `user://client.cfg` 의 `[network] profile` 입니다.
+
+| 프로파일 | 주소 | 언제 |
+|---|---|---|
+| `dev` | `ws://localhost:3000/ws` | 편집기에서 실행할 때의 기본값 |
+| `production` | `wss://mud.noizze.net/ws` | 내보낸 빌드의 기본값 |
+| `custom` | `host`·`port`·`secure` 를 파일에서 읽는다 | 그 밖의 대상 |
+
+기본값은 실행 형태가 정합니다. 편집기는 `dev`, 내보낸 빌드는 `production` 입니다. 배포한 실행 파일이 localhost 를 보는 사고를 막습니다.
+
+한 빌드로 두 환경을 오가려면 명령줄을 씁니다.
+
+```bash
+"Echoes of the Fallen Age.exe" --profile=dev
+godot --path godot -- --profile=production
+```
+
+`client.cfg` 의 위치는 Windows 에서 `%APPDATA%/Godot/app_userdata/<프로젝트 이름>/client.cfg` 입니다. 접속이 되지 않으면 이 파일과 기동 로그의 `접속 대상:` 줄을 먼저 봅니다.
+
+도메인이나 포트를 바꾸면 `godot/scripts/net/client_config.gd` 의 `PROFILES` 를 고칩니다. `godot/tests/cases/test_client_config.gd` 가 그 값을 검증하므로 함께 고쳐야 합니다.
 
 ## 배포 확인
 
