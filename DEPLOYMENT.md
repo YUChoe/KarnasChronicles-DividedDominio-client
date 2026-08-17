@@ -147,8 +147,9 @@ JS 가 막힌 환경에서 보이는 자리입니다.
 클라이언트는 두 가지로 내보냅니다. 접속 대상이 다릅니다.
 
 ```bash
-npm run build:godot        # 상용. build/windows/
-npm run build:godot:dev    # 개발. build/windows-dev/
+npm run build:godot        # 상용 데스크톱. build/windows/
+npm run build:godot:dev    # 개발 데스크톱. build/windows-dev/
+npm run build:godot:web    # 웹(wasm). build/web/
 ```
 
 배포하는 것은 `build/windows/` 쪽입니다. 개발 빌드는 내보내기 프리셋의 `custom_features` 가 `devbuild` 라 클라이언트가 자신을 개발 빌드로 알고 `ws://localhost:3000` 을 봅니다. 콘솔 창이 함께 떠서 `print` 를 그 자리에서 볼 수 있고, 디버그로 내보내므로 오류 위치가 자세합니다.
@@ -157,12 +158,38 @@ npm run build:godot:dev    # 개발. build/windows-dev/
 
 상용 빌드는 `embed_pck=true` 라 실행 파일 하나입니다(70MB). 그것만 올리면 됩니다. 개발 빌드는 `.pck` 를 분리해 두었습니다. 코드만 고쳤을 때 `.pck` 만 바꿔 시험할 수 있습니다.
 
+## 웹 클라이언트
+
+`npm run build:godot:web` 이 `build/web/` 에 wasm 과 pck, 로더를 냅니다. 정적 파일이므로 nginx 가 그대로 서빙합니다. 접속 대상은 상용입니다. 브라우저에는 명령줄이 없어 프로파일을 바꿀 수 없습니다.
+
+```bash
+sudo mkdir -p /var/www/mud/play
+sudo cp build/web/* /var/www/mud/play/
+```
+
+`https://<도메인>/play/` 로 열립니다.
+
+Godot 4.2 의 웹 빌드는 `SharedArrayBuffer` 를 씁니다. 브라우저는 교차 출처 격리된 문서에서만 그것을 허용하므로 두 헤더가 없으면 로더에서 멈춥니다. `nginx.conf` 의 `/play/` 위치가 그것을 붙입니다.
+
+```
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Embedder-Policy: require-corp
+```
+
+`wasm` 형식도 함께 확인하십시오. nginx 의 `mime.types` 에 그 항목이 들어간 것은 1.21.4 부터입니다. 그 이전 버전은 `application/octet-stream` 으로 내보내고, 브라우저의 `instantiateStreaming` 이 거부합니다. 저장소의 `nginx.conf` 는 정규식 위치에서 `default_type` 으로 지정합니다.
+
+```bash
+curl -sI https://<도메인>/play/index.wasm | grep -i "content-type\|cross-origin"
+```
+
+wasm 이 35MB 입니다. gzip 을 켜면 전송량이 크게 줍니다. `gzip_types` 에 `application/wasm` 을 넣어 두었습니다.
+
 클라이언트의 접속 대상은 프로파일로 고릅니다. `user://client.cfg` 의 `[network] profile` 입니다.
 
 | 프로파일 | 주소 | 언제 |
 |---|---|---|
 | `dev` | `ws://localhost:3000/ws` | 편집기 실행과 개발 빌드의 기본값 |
-| `production` | `wss://mud.noizze.net/ws` | 상용 빌드의 기본값 |
+| `production` | `wss://mud.noizze.net/ws` | 상용 빌드와 웹 빌드의 기본값 |
 | `custom` | `host`·`port`·`secure` 를 파일에서 읽는다 | 그 밖의 대상 |
 
 기본값은 실행 형태가 정합니다. 배포한 실행 파일이 localhost 를 보는 사고를 막습니다.

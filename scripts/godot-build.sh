@@ -19,12 +19,17 @@
 # 나온다. 프리셋의 `custom_features` 가 `devbuild` 라 클라이언트가 자신을
 # 개발 빌드로 알고 `ws://localhost:3000/ws` 를 본다. 콘솔 창이 함께 뜬다.
 #
-# 두 산출물을 다른 디렉터리에 두는 것은 어느 쪽을 배포하는지 헷갈리지 않게
+# 웹은 `Web` 프리셋으로 만들고 `build/web/` 에 나온다. wasm 과 pck, 로더가
+# 함께 나오며 정적 파일로 서빙한다. 상용 접속 대상을 본다. 브라우저에는
+# 명령줄이 없어 프로파일을 바꿀 수 없다.
+#
+# 산출물을 다른 디렉터리에 두는 것은 어느 쪽을 배포하는지 헷갈리지 않게
 # 하려는 것이다. 실행 파일만 보고는 구별할 수 없다.
 #
 # 사용법:
 #   bash scripts/godot-build.sh              # 상용 릴리스 내보내기
 #   bash scripts/godot-build.sh --dev        # 개발 디버그 내보내기
+#   bash scripts/godot-build.sh --web        # 웹(wasm) 내보내기
 #   bash scripts/godot-build.sh --debug      # 상용 프리셋으로 디버그 내보내기
 #   bash scripts/godot-build.sh --pack-only  # .pck 만. 템플릿이 필요 없다
 #   GODOT_BIN=/path/to/godot bash scripts/godot-build.sh
@@ -43,19 +48,29 @@ flavour="prod"
 case "${1:-}" in
   # 개발 빌드는 디버그로 낸다. 상세한 오류 위치가 필요한 쪽이다
   --dev) flavour="dev"; mode="debug" ;;
+  --web) flavour="web" ;;
   --debug) mode="debug" ;;
   --pack-only) mode="pack" ;;
   "") ;;
   *) echo "알 수 없는 인자: $1" >&2; exit 2 ;;
 esac
 
-if [ "$flavour" = "dev" ]; then
-  PRESET="${PRESET:-Windows Desktop Dev}"
-  BUILD_DIR="${BUILD_DIR:-$REPO_DIR/build/windows-dev}"
-else
-  PRESET="${PRESET:-Windows Desktop}"
-  BUILD_DIR="${BUILD_DIR:-$REPO_DIR/build/windows}"
-fi
+case "$flavour" in
+  dev)
+    PRESET="${PRESET:-Windows Desktop Dev}"
+    BUILD_DIR="${BUILD_DIR:-$REPO_DIR/build/windows-dev}"
+    ;;
+  web)
+    PRESET="${PRESET:-Web}"
+    BUILD_DIR="${BUILD_DIR:-$REPO_DIR/build/web}"
+    # 웹은 실행 파일이 아니라 로더 HTML 이 진입점이다
+    EXE_NAME="index.html"
+    ;;
+  *)
+    PRESET="${PRESET:-Windows Desktop}"
+    BUILD_DIR="${BUILD_DIR:-$REPO_DIR/build/windows}"
+    ;;
+esac
 
 if [ ! -x "$GODOT_BIN" ]; then
   echo "Godot 실행 파일을 찾을 수 없습니다: $GODOT_BIN" >&2
@@ -85,6 +100,12 @@ if [ "$flavour" = "dev" ]; then
   echo "접속 대상: 개발 (ws://localhost:3000). 배포하지 않는다"
 else
   echo "접속 대상: 상용 (wss://mud.noizze.net)"
+fi
+
+if [ "$flavour" = "web" ]; then
+  # 4.2 의 웹 빌드는 SharedArrayBuffer 를 쓴다. 교차 출처 격리 헤더가 없으면
+  # 브라우저가 그것을 막아 로더에서 멈춘다
+  echo "서빙할 때 COOP/COEP 헤더가 필요하다. nginx.conf 의 /play/ 를 보라"
 fi
 
 # 전역 클래스 캐시 준비

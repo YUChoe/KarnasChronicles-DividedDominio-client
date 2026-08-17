@@ -13,6 +13,7 @@
     "test:godot": "bash scripts/godot-test.sh",
     "build:godot": "bash scripts/godot-build.sh",
     "build:godot:dev": "bash scripts/godot-build.sh --dev",
+    "build:godot:web": "bash scripts/godot-build.sh --web",
     "check:contract": "python scripts/check-contract-coverage.py",
     "test": "bash -c './node_modules/.bin/vitest --run --config vitest.config.server.ts'",
     "test:server": "bash -c './node_modules/.bin/vitest --run --config vitest.config.server.ts'",
