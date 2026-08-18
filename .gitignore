@@ -1,14 +1,9 @@
-# Dependencies
-node_modules/
-
-# Build outputs
-dist/
+# 내보내기 산출물
 build/
 
 # Logs
 logs/
 *.log
-npm-debug.log*
 
 # Environment variables
 .env
@@ -24,6 +19,3 @@ npm-debug.log*
 # OS
 .DS_Store
 Thumbs.db
-
-# Test coverage
-coverage/

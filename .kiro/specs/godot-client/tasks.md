@@ -22,11 +22,11 @@ Godot 4.x + GDScript로 게임 클라이언트를 구현한다. 프로토콜 계
   - `godot/.gitignore` 로 `.godot/`(임포트 캐시)와 `export_presets.cfg`(서명 자격 정보)를 제외했다.
   - 검증: `Godot_v4.2.2-stable_win64 --headless --path godot --editor --quit` 로 임포트가 오류 없이 끝났고 편집기가 `project.godot` 을 다시 쓰지 않았다. 설정 키가 모두 유효하다는 뜻이다.
   - 검증: `--headless --script` 로 런타임 확인. autoload 두 개가 root 에 붙고, `ProjectSettings` 에서 `config/version` 이 읽히고, 번역 11개 파일 405개 키가 `JSON.parse_string` 으로 파싱되고, `String.format({"old_name":...})` 이 `{old_name}` 을 치환한다. design.md 가 전제한 문법 호환이 실측으로 확인됐다. 검증 스크립트는 일회용이라 남기지 않았다.
-  - 검증: 정적 검사로 LF·UTF-8, 번역 키의 locale dict 구조와 `en` 폴백, Python 포맷 스펙 0건, `{{` 리터럴 0건을 확인했다. Node 쪽 `type-check` 통과, `npm test` 38건 통과(godot/ 는 `tsconfig.server.json` 과 vitest include 밖이다).
+  - 검증: 정적 검사로 LF·UTF-8, 번역 키의 locale dict 구조와 `en` 폴백, Python 포맷 스펙 0건, `{{` 리터럴 0건을 확인했다. 게이트웨이 저장소의 `type-check` 통과, `npm test` 38건 통과(godot/ 는 `tsconfig.server.json` 과 vitest include 밖이다).
   - `.json` 은 Godot 4 에서 임포트 대상이 아니다. `.import` 파일이 생기지 않으므로 `FileAccess` 로 직접 읽는다. Task 2.2 의 로딩 방식이 이것이다.
   - 정적 검사 게이트를 함께 넣었다. Requirement 13 의 품질 기준에 해당하고, 코드가 두 파일뿐인 지금 켜는 비용이 0 이다. 나중에 켜면 누적된 위반을 한꺼번에 고쳐야 한다.
     - `project.godot` `[debug]` 에 경고를 오류로 올렸다. `untyped_declaration`, `unsafe_method_access`, `unsafe_property_access`, `unsafe_cast` 를 2(오류)로, `unsafe_call_argument` 와 `return_value_discarded` 를 1(경고)로 뒀다. 뒤의 둘은 `JSON.parse_string` 결과가 전부 Variant 인 디스패처 경계에서 과도하게 걸릴 항목이라 Task 1.4 구현 후 재검토한다. 4.2.2 에는 `treat_warnings_as_errors` 같은 전역 스위치가 없고 `debug/gdscript/warnings/*` 47개 항목별로 0·1·2 를 지정한다.
-    - `scripts/godot-check.sh` 와 npm `check:godot` 을 추가했다.
+    - `scripts/godot-check.sh` 와 `scripts/godot-check.sh` 을 추가했다.
     - 편집기로 프로젝트를 한 번 열면 `project.godot` 이 다시 쓰이면서 주석이 모두 사라지고 키 순서가 바뀐다. 값은 그대로 남는다. 따라서 설정의 근거를 파일 주석으로 남길 수 없고 이 문서가 유일한 기록이다.
   - GDScript 오류 검출의 실측 결과를 남긴다. 헤드리스 실행의 종료 코드를 게이트로 쓸 수 없다.
     - `_initialize()` 에서 직접 런타임 오류가 나면 그 함수가 중단되어 `quit()` 에 도달하지 못하고 프로세스가 무한 대기한다. 외부 타임아웃이 필요하다.
@@ -148,7 +148,7 @@ Godot → 게이트웨이 → 대역 서버로 실제 사슬을 세워 확인했
 - [x] 2.5 번역 단위 테스트
   - 키와 params 조합으로 기대 문자열을 검증한다. 언어별 dict params, 키 없음 폴백, locale 폴백을 포함한다.
   - 테스트 프레임워크를 여기서 정했다. gdUnit4 와 GUT 는 저장소 밖에서 내려받아 `addons/` 에 넣어야 하는데 이 환경에서 받을 수 없었다. 그리고 지금 필요한 검증(번역 치환, 액션 규칙, 메시지 디스패치)은 씬 트리도 목(mock)도 필요 없는 순수 로직이다. `tests/test_case.gd`(단언)와 `tests/runner.gd`(탐색과 실행) 두 파일로 충분하다. 목이나 매개변수화 테스트가 필요해지면 다시 판단한다.
-  - `npm run test:godot` 으로 돌린다. 러너는 `--script` 경로라 종료 코드가 신뢰할 수 있다. 그래도 외부 타임아웃을 건다. 런타임 오류가 나면 `quit()` 에 닿지 못해 프로세스가 멈추기 때문이다.
+  - `bash scripts/godot-test.sh` 으로 돌린다. 러너는 `--script` 경로라 종료 코드가 신뢰할 수 있다. 그래도 외부 타임아웃을 건다. 런타임 오류가 나면 `quit()` 에 닿지 못해 프로세스가 멈추기 때문이다.
   - 18건. 리소스 적재, 키 치환, locale 전환, 지원하지 않는 locale 거부, params 치환, 언어별 dict params 를 양쪽 locale 에서, 키 없음 폴백, locale 폴백, `pick` 세 경우, `render` 두 경우, 조사 완성형, 서버 리소스 키 적재.
   - 계약 문서의 오류를 하나 찾았다. `server-to-client.md` 의 `event` 예시가 쓰는 `combat.damage_dealt` 는 존재하지 않는 키다. 실제 서버가 보내는 것은 `combat.hit`, `combat.critical_hit`, `combat.attack_swing` 이다. 테스트는 실제 키로 썼다.
   - _Requirements: 13.5_
@@ -623,7 +623,7 @@ faction_relations.faction_b_id — 2행  예시 (faction_a_id=ash_knights, facti
   - _Requirements: 13.6_
 - [x] 12.5 통합 검증
   - 서버와 게이트웨이를 기동하고 로그인부터 전투, 대화, 상점, 인벤토리, 어드민까지 전체 흐름을 확인한다. 계약에 정의된 모든 서버 메시지에 수신 처리가 있고 모든 클라이언트 메시지가 서버에서 처리되는지 점검한다.
-  - 메시지 커버리지를 `scripts/check-contract-coverage.py`(`npm run check:contract`)로 남겼다. 계약 문서와 클라이언트 `protocol.gd` 를 대조한다. 서버 저장소의 `check_protocol_consistency.py` 가 계약과 서버 구현을 대조하므로 이것이 남은 한 변을 덮는다.
+  - 메시지 커버리지를 `scripts/check-contract-coverage.py`(`python scripts/check-contract-coverage.py`)로 남겼다. 계약 문서와 클라이언트 `protocol.gd` 를 대조한다. 서버 저장소의 `check_protocol_consistency.py` 가 계약과 서버 구현을 대조하므로 이것이 남은 한 변을 덮는다.
   - 결과는 누락 0종이다. 계약의 서버 메시지 19종, 클라이언트 메시지 6종, 어드민 타입 22종을 모두 다룬다. 클라이언트에만 있는 것은 게이트웨이 자체 프레임 둘이며 계약의 빈 자리다.
   - 서버 쪽 검사도 "일치" 다. 그 과정에서 내가 Task 3 에서 넣은 내부 합성 메시지가 검사에 걸리는 것을 발견해 고쳤다. `{"type": "action", "verb": verb}` 의 `type` 키는 `build_context` 가 읽지 않는데, 검사기가 이것을 서버가 내보내는 타입으로 오인했다.
   - 전투와 상점은 실제 서버로 확인할 수 없다. 전투는 원하는 상태를 만들 수 없고 상점은 서버가 verb 를 등록하지 않는다. 둘 다 대역 서버로 확인했다.
@@ -648,10 +648,9 @@ faction_relations.faction_b_id — 2행  예시 (faction_a_id=ash_knights, facti
 
 | 명령 | 대상 |
 |---|---|
-| `npm run check:godot` | 정적 검사. 임포트와 스크립트별 파스·타입 (58개) |
-| `npm run test:godot` | 단위 테스트 (152건) |
-| `npm run check:contract` | 계약 문서와 클라이언트 메시지 타입 대조 |
-| `npm test` | 게이트웨이 테스트 (38건) |
+| `bash scripts/godot-check.sh` | 정적 검사. 임포트와 스크립트별 파스·타입 (58개) |
+| `bash scripts/godot-test.sh` | 단위 테스트 (152건) |
+| `python scripts/check-contract-coverage.py` | 계약 문서와 클라이언트 메시지 타입 대조 |
 
 서버 저장소에서는 `pytest`(348건)와 `scripts/check_protocol_consistency.py` 다.
 

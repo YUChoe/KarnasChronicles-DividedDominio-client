@@ -1,167 +1,128 @@
-# Karnas Chronicles: Divided Dominion — 게이트웨이와 랜딩
+# Karnas Chronicles: Divided Dominion — Godot 클라이언트
 
-MUD 서버(`Echoes-of-the-Fallen-Age`)와 Godot 클라이언트 사이의 WebSocket
-게이트웨이, 그리고 회원가입을 받는 랜딩 사이트입니다. Godot 클라이언트도 같은
-저장소의 [godot/](./godot/) 에 있습니다.
+MUD 서버 `Echoes-of-the-Fallen-Age` 에 붙는 게임 클라이언트입니다. Godot 4.2.2
+로 만들었고 Windows 실행 파일과 웹(wasm)으로 내보냅니다.
 
-## 구성 요소
+서버에 직접 붙지 않습니다. WebSocket 게이트웨이를 거칩니다. 게이트웨이와 랜딩
+사이트는 별도 저장소인 `karnas-gateway` 에 있습니다.
 
-| 구성 요소 | 위치 | 역할 |
-|---|---|---|
-| 게이트웨이 | [src/server/](./src/server/) | WebSocket ↔ TCP 중계. 두 채널을 경로로 가른다 |
-| 랜딩 | [src/server/public/](./src/server/public/), [src/server/landing/](./src/server/landing/) | 게임 소개와 회원가입 |
-| Godot 클라이언트 | [godot/](./godot/) | 게임 화면. 별도 스펙이 다룬다 |
-
-게이트웨이는 상태를 갖지 않습니다. 데이터베이스에 접근하지 않고 메시지 내용을
-해석하지 않습니다. 인증은 MUD 서버가 합니다.
-
-### 채널
-
-| 경로 | 상위 포트 | 용도 |
-|---|---|---|
-| `/ws` | TCP 4000 | 게임 채널 |
-| `/admin` | TCP 4001 | 어드민 채널. 인증은 서버가 판정한다 |
-
-그 밖의 경로로 오는 업그레이드 요청은 404 로 거부합니다. 잘못된 포트에 붙었을
-때 조용히 실패하지 않게 하려는 것입니다.
-
-### 프로토콜
-
-개행으로 구분되는 JSON 라인입니다. 게이트웨이는 봉투를 씌우지 않고 서버가 보낸
-라인을 그대로 WebSocket 프레임으로 전달합니다. 자신의 제어 메시지에만
-`gateway_` 접두어를 씁니다.
-
-라인 길이 상한은 256KB 입니다. TCP 청크 경계는 라인 경계와 무관하므로 개행을
-찾은 뒤에만 UTF-8 로 디코딩합니다. 멀티바이트 문자가 청크 경계에서 갈라져도
-손상되지 않습니다.
-
-계약 문서는 서버 저장소의 `docs/protocol/` 입니다. 세 저장소가 그 문서를
-기준으로 삼습니다.
+```
+Godot 클라이언트 ──wss──▶ nginx ──▶ 게이트웨이 :3000 ──TCP──▶ MUD 서버 :4000
+```
 
 ## 요구 사항
 
-- Node.js 20.x LTS 이상
-- MUD 서버가 TCP 4000(게임), 4001(어드민)에서 실행 중
-- Godot 4.2.2 (클라이언트를 열거나 검사할 때만)
+- Godot 4.2.2 (`C:\Users\USER\Documents\Godot_v4.2.2-stable_win64`)
+- Python 3.10 이상 (계약 대조 스크립트)
+- 내보내려면 같은 버전의 내보내기 템플릿
 
-## 설치와 실행
+Node 는 필요하지 않습니다. 스크립트를 직접 부릅니다.
 
-```bash
-npm install
-
-# 게이트웨이 (감시 모드)
-npm run dev:server
-```
-
-랜딩을 브라우저에서 보려면 정적 서빙을 켭니다. 프로덕션에서는 nginx 가 맡으므로
-개발에서만 켭니다.
+## 검사와 테스트
 
 ```bash
-LANDING_SERVE_STATIC=1 npm run dev:server
-# http://localhost:3000
+bash scripts/godot-check.sh              # 스크립트별 파스와 타입 (62개)
+bash scripts/godot-test.sh               # 단위 테스트 (176건)
+python scripts/check-contract-coverage.py # 계약과 메시지 타입 대조
 ```
 
-랜딩에는 계정 생성이 없습니다. 소개와 내려받기 안내만 있습니다. 계정 생성은
-Godot 클라이언트가 게임 채널의 `register` 로 직접 합니다.
+`check-contract-coverage.py` 는 서버 저장소를 형제 디렉터리에서 찾습니다. 다른
+곳에 있으면 `SERVER_REPO` 로 지정합니다.
 
-## 환경 변수
+## 내보내기
 
-| 변수 | 기본값 | 용도 |
+```bash
+bash scripts/godot-build.sh              # 상용 데스크톱. build/windows/
+bash scripts/godot-build.sh --dev        # 개발 데스크톱. build/windows-dev/
+bash scripts/godot-build.sh --web        # 웹(wasm). build/web/
+bash scripts/godot-build.sh --pack-only  # 템플릿 없이 리소스 묶음만 확인
+```
+
+배포하는 것은 `build/windows/` 입니다. `embed_pck=true` 라 실행 파일 하나이며
+그것만 올리면 됩니다.
+
+개발 빌드는 내보내기 프리셋의 `custom_features` 가 `devbuild` 라 클라이언트가
+자신을 개발 빌드로 알고 `ws://localhost:3000` 을 봅니다. 콘솔 창이 함께 뜨고
+디버그로 내보내므로 오류 위치가 자세합니다. 배포하지 않습니다.
+
+내보내기 템플릿은 엔진 배포물에 없습니다. 편집기의 `편집기 > 내보내기 템플릿
+관리 > 다운로드` 로 받거나 `Godot_v4.2.2-stable_export_templates.tpz` 를
+`%APPDATA%/Godot/export_templates/4.2.2.stable/` 에 풉니다. 없으면 빌드
+스크립트가 그 경로를 알려 주고 멈춥니다.
+
+`export_presets.cfg` 는 저장소에 있습니다. 서명 자격 정보를 담지 않습니다.
+
+## 접속 대상
+
+`user://client.cfg` 의 `[network] profile` 이 정합니다.
+
+| 프로파일 | 주소 | 기본으로 쓰이는 때 |
 |---|---|---|
-| `WS_PORT` | `3000` | 게이트웨이 포트 |
-| `TELNET_HOST` | `localhost` | MUD 서버 주소 |
-| `TELNET_PORT` | `4000` | 게임 채널 포트 |
-| `ADMIN_PORT` | `4001` | 어드민 채널 포트 |
-| `MAX_CONNECTIONS` | `200` | 최대 동시 연결 |
-| `CONNECTION_TIMEOUT` | `300000` | 프레임이 오가지 않은 연결을 닫는 기준 (밀리초) |
-| `LANDING_SERVE_STATIC` | `0` | `1` 이면 게이트웨이가 정적 자산을 서빙한다 (개발용) |
-| `LANDING_STATIC_ROOT` | `src/server/public` | 정적 자산 경로 |
-| `LOG_LEVEL` | `info` | `error`, `warn`, `info`, `debug` |
+| `dev` | `ws://localhost:3000/ws` | 편집기 실행과 개발 빌드 |
+| `production` | `wss://mud.noizze.net/ws` | 상용 빌드와 웹 빌드 |
+| `custom` | `host`·`port`·`secure` 를 파일에서 읽는다 | 그 밖의 대상 |
 
-`.env.example` 을 `.env` 로 복사해 씁니다.
-
-## 빌드와 배포
+우선순위는 명령줄 > `client.cfg` > 위 기본값입니다.
 
 ```bash
-npm run build:server     # dist/server 에 CommonJS 산출
-node dist/server/server/start.js
+"build/windows/Echoes of the Fallen Age.exe" --profile=dev
+godot --path godot -- --profile=production
 ```
 
-Docker 와 nginx 를 쓰는 배포 절차는 [DEPLOYMENT.md](./DEPLOYMENT.md) 에 있습니다.
-정적 자산은 프로덕션에서 nginx 가 서빙하고 게이트웨이는 WebSocket 만 맡습니다.
+편집기로 한 번 돌린 기계에는 `profile="dev"` 가 적힌 `client.cfg` 가 남습니다.
+상용 빌드를 확인할 때는 그 파일을 지우거나 `--profile=production` 을 붙이십시오.
+Windows 에서 그 파일은 `%APPDATA%/Godot/app_userdata/Echoes of the Fallen
+Age/client.cfg` 입니다.
 
-## 테스트
+접속이 되지 않으면 그 파일과 기동 로그의 `접속 대상:` 줄을 먼저 봅니다.
+
+도메인이나 포트를 바꾸려면 `godot/scripts/net/client_config.gd` 의 `PROFILES`
+를 고칩니다. `godot/tests/cases/test_client_config.gd` 가 그 값을 검증하므로
+함께 고쳐야 합니다.
+
+## 웹 배포
+
+`build/web/` 을 게이트웨이 저장소가 관리하는 nginx 의 `/play/` 로 복사합니다.
 
 ```bash
-npm test              # 게이트웨이와 랜딩 단위 테스트
-npm run test:e2e      # 게이트웨이 전체 사슬
-npm run test:load     # 동시 연결 특성
-npm run type-check    # 타입 검사 (테스트 포함)
-
-npm run check:godot   # Godot 스크립트 정적 검사
-npm run test:godot    # Godot 클라이언트 테스트
-npm run build:godot   # Godot 클라이언트 내보내기
-npm run check:contract # 계약 문서와 클라이언트 처리 범위 대조
+sudo cp build/web/* /var/www/mud/play/
 ```
 
-랜딩의 브라우저 스크립트는 순수 JavaScript 이며 타입 검사 대상이 아닙니다.
-검증 규칙은 게이트웨이의 `landing/validate.ts` 와 같은 규칙 이름을 씁니다.
+Godot 4.2 의 웹 빌드는 `SharedArrayBuffer` 를 씁니다. 교차 출처 격리
+헤더(`Cross-Origin-Opener-Policy`, `Cross-Origin-Embedder-Policy`)가 없으면
+로더에서 멈춥니다. `wasm` 형식도 맞아야 합니다. 두 가지 모두 게이트웨이 저장소의
+`nginx.conf` 가 처리합니다.
 
-## 프로젝트 구조
+## 구조
 
 ```
-├── src/
-│   ├── server/
-│   │   ├── start.ts            엔트리. 환경변수를 읽어 배선한다
-│   │   ├── gateway.ts          채널 라우팅과 중계
-│   │   ├── telnet-client.ts    상위 TCP 연결
-│   │   ├── line-framer.ts      개행 경계 복원
-│   │   ├── connection-pool.ts  연결 풀과 유휴 정리
-│   │   ├── logger.ts           winston 설정
-│   │   ├── landing/            회원가입 경로와 정적 서빙
-│   │   ├── public/             랜딩 정적 자산
-│   │   └── __tests__/          게이트웨이·랜딩 테스트
-│   ├── shared/types.ts         게이트웨이 제어 메시지 타입
-│   └── __tests__/              e2e·부하 테스트
-├── godot/                      Godot 클라이언트
-├── scripts/                    검사와 배포 스크립트
-├── nginx.conf                  랜딩 서빙과 프록시
-└── .kiro/specs/                스펙과 설계
+├── godot/
+│   ├── scenes/         화면. boot 가 조립 지점이다
+│   ├── scripts/
+│   │   ├── net/        연결, 디스패처, 액션 송신, 접속 설정
+│   │   ├── state/      상태 저장소
+│   │   ├── rules/      액션 규칙과 거절 처리
+│   │   ├── i18n/       번역
+│   │   └── admin/      어드민 채널
+│   ├── resources/translations/   번역 파일
+│   └── tests/          러너와 케이스
+├── scripts/            검사, 테스트, 내보내기
+└── .kiro/specs/godot-client/
 ```
 
-## 문제 해결
+## 계약
 
-### 게이트웨이가 상위 서버에 붙지 못한다
+프로토콜 계약은 서버 저장소의 `docs/protocol/` 이 유일한 기준입니다. 세
+저장소가 그것을 기준으로 삼습니다. 계약이 바뀌면
+`godot/scripts/net/protocol.gd` 를 먼저 고칩니다.
 
-MUD 서버가 4000 과 4001 에서 듣고 있는지 확인합니다. 어드민 포트는 기본이
-루프백 바인드이므로 컨테이너에서 붙을 때는 호스트 주소를 맞춰야 합니다.
+## 저장소
 
-### 클라이언트가 붙자마자 끊긴다
+| 저장소 | 내용 |
+|---|---|
+| `Echoes-of-the-Fallen-Age` | MUD 서버. 프로토콜 계약 |
+| `karnas-gateway` | WebSocket 게이트웨이, 랜딩, nginx 설정, 배포 |
+| 이 저장소 | Godot 클라이언트 |
 
-`welcome` 의 `channel` 이 기대와 다르면 클라이언트가 스스로 끊습니다. `/ws` 로
-붙어야 게임 채널입니다. 경로 없이 붙으면 404 입니다.
-
-### 연결이 1009 로 끊긴다
-
-라인 길이 상한(256KB)을 넘었습니다. 어드민 채널의 큰 응답에서 나올 수 있으며,
-클라이언트의 WebSocket 수신 버퍼도 같은 크기로 맞춰야 합니다.
-
-### 로그
-
-```bash
-tail -f logs/combined.log
-tail -f logs/error.log
-```
-
-비밀번호는 어느 경로에서도 기록하지 않습니다.
-
-## 기술 스택
-
-- Node.js, TypeScript, `ws`
-- Vitest, fast-check (속성 기반 테스트)
-- winston
-- 랜딩: 빌드 도구 없는 HTML, CSS, 바닐라 JavaScript
-
-## 라이선스
-
-MIT
+2026-08-18 에 게이트웨이가 이 저장소에서 갈라져 나갔습니다. 그 이전 이력은 여기
+남아 있습니다.
