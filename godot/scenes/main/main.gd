@@ -9,8 +9,7 @@ extends VBoxContainer
 ## 하위 패널은 각자 자기 표시만 담당하고 송신은 이 화면이 모아서 한다. 패널이
 ## 네트워크 계층을 알지 않게 한다.
 
-signal logout_requested()
-signal admin_requested()
+signal settings_requested()
 signal inventory_requested()
 signal status_requested()
 ## 조립 지점의 알림 영역에 문구를 띄운다
@@ -26,8 +25,7 @@ const LABEL_CHAT := "chat"
 @onready var _time: Label = %TimeLabel
 @onready var _position: Label = %PositionLabel
 @onready var _description: Label = %DescriptionLabel
-@onready var _logout: Button = %LogoutButton
-@onready var _admin: Button = %AdminButton
+@onready var _settings: Button = %SettingsButton
 @onready var _inventory: Button = %InventoryButton
 @onready var _status: Button = %StatusButton
 @onready var _minimap: Minimap = %Minimap
@@ -56,8 +54,7 @@ var _selected_id := ""
 
 
 func _ready() -> void:
-	_logout.pressed.connect(func() -> void: logout_requested.emit())
-	_admin.pressed.connect(func() -> void: admin_requested.emit())
+	_settings.pressed.connect(func() -> void: settings_requested.emit())
 	_inventory.pressed.connect(func() -> void: inventory_requested.emit())
 	_status.pressed.connect(func() -> void: status_requested.emit())
 	_enter.pressed.connect(_on_enter_pressed)
@@ -117,8 +114,7 @@ func bind(
 func apply_texts() -> void:
 	if _translator == null:
 		return
-	_logout.text = _translator.t("ui.main.sign_out")
-	_admin.text = _translator.t("ui.main.admin_panel")
+	_settings.text = _translator.t("ui.settings.title")
 	_inventory.text = _translator.t("ui.inventory.open")
 	_status.text = _translator.t("ui.status.open")
 	_exits_title.text = _translator.t("ui.room.exits")
@@ -135,10 +131,6 @@ func apply_texts() -> void:
 	_objects.apply_texts()
 
 
-func set_logout_busy(busy: bool) -> void:
-	_logout.disabled = busy
-
-
 func _on_player_changed() -> void:
 	if _state == null:
 		return
@@ -149,9 +141,6 @@ func _on_player_changed() -> void:
 	_summary.text = ("%s (%s)" % [display_name, username]
 		if faction.is_empty() else "%s (%s)  %s" % [display_name, username, faction])
 
-	# 권한만으로는 진입 가능 여부를 알 수 없다. 어드민 포트를 열지 않은 배포가
-	# 있으므로 서버가 알려준 `available` 이 참일 때만 노출한다.
-	_admin.visible = Protocol.as_bool(_state.admin_channel.get("available"))
 	_social.set_following(
 		not Protocol.as_string(_state.player.get("following")).is_empty())
 

@@ -1,0 +1,48 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scenes/settings/settings.gd" id="1_settings"]
+[ext_resource type="PackedScene" path="res://scenes/common/connection_indicator.tscn" id="2_indicator"]
+[ext_resource type="PackedScene" path="res://scenes/common/locale_selector.tscn" id="3_locale"]
+
+[node name="Settings" type="VBoxContainer"]
+offset_right = 480.0
+offset_bottom = 360.0
+theme_override_constants/separation = 12
+script = ExtResource("1_settings")
+
+[node name="TitleLabel" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Settings"
+
+[node name="ConnectionIndicator" parent="." instance=ExtResource("2_indicator")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="LocaleSelector" parent="." instance=ExtResource("3_locale")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Separator" type="HSeparator" parent="."]
+layout_mode = 2
+
+[node name="AdminButton" type="Button" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "Admin panel"
+
+[node name="LogoutButton" type="Button" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Sign out"
+
+[node name="QuitButton" type="Button" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Quit"
+
+[node name="CloseButton" type="Button" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Back"

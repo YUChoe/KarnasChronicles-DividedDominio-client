@@ -15,6 +15,8 @@ extends VBoxContainer
 
 signal submitted(username: String, password: String, remember: bool)
 signal register_requested
+## 언어 선택과 연결 상태가 설정 화면에 있다. 로그인 전에도 닿아야 한다
+signal settings_requested
 
 const REJECTION_PREFIX := "ui.login.rejected."
 ## 계약이 정의한 로그인 실패 사유. 사용자명 존재 여부를 구분해 알려주지 않는
@@ -32,6 +34,7 @@ const KNOWN_REASONS: Array[String] = [
 @onready var _submit: Button = %SubmitButton
 @onready var _message: Label = %MessageLabel
 @onready var _register: Button = %RegisterButton
+@onready var _settings: Button = %SettingsButton
 
 var _translator: TranslatorService = null
 var _message_key := ""
@@ -43,6 +46,7 @@ func _ready() -> void:
 	_username.text_submitted.connect(_on_text_submitted)
 	_password.text_submitted.connect(_on_text_submitted)
 	_register.pressed.connect(_on_register_pressed)
+	_settings.pressed.connect(func() -> void: settings_requested.emit())
 
 
 func bind(translator: TranslatorService) -> void:
@@ -60,6 +64,7 @@ func apply_texts() -> void:
 	_remember.text = _translator.t("ui.login.remember")
 	_submit.text = _translator.t("ui.login.submit")
 	_register.text = _translator.t("ui.login.register")
+	_settings.text = _translator.t("ui.settings.title")
 	_message.text = ("" if _message_key.is_empty()
 		else _translator.t(_message_key, _message_params))
 

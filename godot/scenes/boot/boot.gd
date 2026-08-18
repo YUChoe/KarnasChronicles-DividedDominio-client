@@ -14,8 +14,8 @@ const DIALOGUE_SCENE := preload("res://scenes/dialogue/dialogue.tscn")
 const STATUS_SCENE := preload("res://scenes/status/status.tscn")
 const READING_SCENE := preload("res://scenes/reading/reading.tscn")
 const ADMIN_SCENE := preload("res://scenes/admin/admin.tscn")
+const SETTINGS_SCENE := preload("res://scenes/settings/settings.tscn")
 
-const LABEL_LOGIN := "login"
 const LABEL_LOGOUT := "logout"
 
 ## 로그인 성공 후 게임 화면을 열기 전에 기다리는 스냅샷
@@ -26,8 +26,6 @@ const REQUIRED_SNAPSHOTS: Array[String] = [
 
 @onready var _connection: Connection = $Connection
 @onready var _action_sender: ActionSender = $ActionSender
-@onready var _indicator: ConnectionIndicator = %ConnectionIndicator
-@onready var _locale_selector: LocaleSelector = %LocaleSelector
 @onready var _screens: Control = %Screens
 @onready var _notice: Label = %Notice
 
@@ -38,6 +36,7 @@ var _translator: TranslatorService = null
 var _login: LoginScreen = null
 var _register: RegisterScreen = null
 var _register_flow: RegisterFlow = null
+var _login_flow: LoginFlow = null
 var _main: MainScreen = null
 var _inventory: InventoryScreen = null
 var _combat: CombatScreen = null
@@ -45,6 +44,10 @@ var _dialogue: DialogueScreen = null
 var _status: StatusScreen = null
 var _reading: ReadingScreen = null
 var _admin: AdminScreen = null
+var _settings: SettingsScreen = null
+## 설정 화면이 담고 있다. 예전에는 화면 최상단 줄에 있었다
+var _indicator: ConnectionIndicator = null
+var _locale_selector: LocaleSelector = null
 ## 로그인 후 도착한 스냅샷 종류
 var _snapshots: Dictionary = {}
 ## 게임 화면에 한 번 들어왔는가. 화면 표시 상태로 판정하면 인벤토리나 상태
@@ -78,19 +81,12 @@ func _ready() -> void:
 
 	_dispatcher.gateway_error.connect(_on_gateway_error)
 	_dispatcher.action_rejected.connect(_on_action_rejected)
-	_dispatcher.login_result_received.connect(_on_login_result)
 	_dispatcher.logout_result_received.connect(_on_logout_result)
 
 	_action_sender.request_timed_out.connect(_on_request_timed_out)
 
 	_store.resync_required.connect(_on_resync_required)
 	_store.snapshot_received.connect(_on_snapshot_received)
-
-	_indicator.bind(_connection, _translator)
-	_indicator.reconnect_requested.connect(_on_reconnect_requested)
-
-	_locale_selector.bind(_translator)
-	_locale_selector.locale_selected.connect(_on_locale_selected)
 
 	_build_screens()
 	_clear_notice()
@@ -104,8 +100,13 @@ func _build_screens() -> void:
 	_login = LOGIN_SCENE.instantiate()
 	_screens.add_child(_login)
 	_login.bind(_translator)
-	_login.submitted.connect(_on_login_submitted)
 	_login.register_requested.connect(_show_register)
+	_login.settings_requested.connect(_show_settings)
+
+	_login_flow = LoginFlow.new()
+	_login_flow.bind(_action_sender, _login, _config)
+	_login_flow.accepted.connect(_on_login_accepted)
+	_dispatcher.login_result_received.connect(_login_flow.on_result)
 
 	_register = REGISTER_SCENE.instantiate()
 	_screens.add_child(_register)
@@ -120,8 +121,7 @@ func _build_screens() -> void:
 	_main = MAIN_SCENE.instantiate()
 	_screens.add_child(_main)
 	_main.bind(_store, _translator, _action_sender)
-	_main.logout_requested.connect(_on_logout_requested)
-	_main.admin_requested.connect(_on_admin_requested)
+	_main.settings_requested.connect(_show_settings)
 	_main.notice_requested.connect(_set_notice)
 	_main.inventory_requested.connect(_show_inventory)
 	_main.status_requested.connect(_show_status)
@@ -162,18 +162,30 @@ func _build_screens() -> void:
 	_admin.closed.connect(_show_main)
 	_admin.notice_requested.connect(_set_notice)
 
+	# 설정 화면이 연결 상태와 언어 선택을 담는다. 두 컴포넌트의 배선은 여기서
+	# 한다. 화면이 트리에 들어간 뒤여야 `@onready` 가 채워져 있다
+	_settings = SETTINGS_SCENE.instantiate()
+	_screens.add_child(_settings)
+	_settings.bind(_translator)
+	_settings.closed.connect(_on_settings_closed)
+	_settings.logout_requested.connect(_on_logout_requested)
+	_settings.admin_requested.connect(_on_admin_requested)
+	_settings.quit_requested.connect(_on_quit_requested)
+
+	_indicator = _settings.connection_indicator()
+	_indicator.bind(_connection, _translator)
+	_indicator.reconnect_requested.connect(_on_reconnect_requested)
+
+	_locale_selector = _settings.locale_selector()
+	_locale_selector.bind(_translator)
+	_locale_selector.locale_selected.connect(_on_locale_selected)
+
 	_store.container_contents_received.connect(_on_container_contents)
 	_store.readable_content_received.connect(_on_readable_content)
 	_store.combat_changed.connect(_on_combat_changed)
 	_store.dialogue_changed.connect(_on_dialogue_changed)
 
-	var saved := CredentialStore.load_credentials()
-	if not saved.is_empty():
-		_login.prefill(
-			Protocol.as_string(saved.get("username")),
-			Protocol.as_string(saved.get("password")),
-			_config.auto_login)
-
+	_login_flow.prefill()
 	_show_login()
 
 
@@ -189,6 +201,26 @@ func _show_register() -> void:
 	_clear_notice()
 	_register.reset()
 	_register.focus_first()
+
+
+## 설정 화면. 어드민과 로그아웃은 인증 상태에 따라 보인다.
+##
+## 로그인 전에도 열 수 있다. 언어 선택이 여기 있으므로 첫 실행에 화면 언어를
+## 바꿀 방법이 필요하다.
+func _show_settings() -> void:
+	_show_only(_settings)
+	_clear_notice()
+	_settings.set_logout_available(_in_game)
+	_settings.set_admin_available(
+		_in_game and Protocol.as_bool(_store.admin_channel.get("available")))
+
+
+## 열기 전 화면으로 돌아간다.
+func _on_settings_closed() -> void:
+	if _in_game:
+		_show_main()
+	else:
+		_show_login()
 
 
 func _show_main() -> void:
@@ -218,7 +250,7 @@ func _show_combat() -> void:
 func _show_only(screen: Control) -> void:
 	for candidate: Control in [
 			_login, _register, _main, _inventory, _combat, _dialogue, _status,
-			_reading, _admin]:
+			_reading, _admin, _settings]:
 		candidate.visible = candidate == screen
 
 
@@ -290,7 +322,7 @@ func _on_state_changed(state: Connection.State) -> void:
 
 	if state == Connection.State.READY:
 		_login.set_connected(true)
-		_maybe_auto_login()
+		_login_flow.try_auto_login()
 		return
 
 	if state == Connection.State.DISCONNECTED:
@@ -302,53 +334,10 @@ func _on_state_changed(state: Connection.State) -> void:
 		_show_login()
 
 
-func _maybe_auto_login() -> void:
-	if not _config.auto_login:
-		_login.focus_first_empty()
-		return
-	var saved := CredentialStore.load_credentials()
-	if saved.is_empty():
-		return
-	_on_login_submitted(
-		Protocol.as_string(saved.get("username")),
-		Protocol.as_string(saved.get("password")),
-		true)
-
-
-func _on_login_submitted(username: String, password: String, remember: bool) -> void:
-	_login.set_busy(true)
-	_config.auto_login = remember
-	_config.save()
-
-	if remember:
-		CredentialStore.save_credentials(username, password)
-	else:
-		CredentialStore.clear()
-
-	var seq := _action_sender.send_request(
-		Protocol.LOGIN,
-		{"username": username, "password": password},
-		LABEL_LOGIN)
-	if seq == 0:
-		_login.show_message("ui.login.send_failed")
-
-
-func _on_login_result(payload: Dictionary) -> void:
-	if not Protocol.as_bool(payload.get("success")):
-		# 저장된 자격이 더 이상 맞지 않으므로 자동 로그인을 끈다
-		CredentialStore.clear()
-		_config.auto_login = false
-		_config.save()
-		var code := Protocol.as_string(payload.get("reason_code"), "UNKNOWN")
-		print("로그인 거절: %s" % code)
-		_login.show_rejection(code)
-		return
-
-	# 계약이 room_info, player_state, inventory 를 이어서 보낸다. 셋을 모두 받은
-	# 뒤에 게임 화면을 연다.
+## 인증이 받아들여졌다. 계약이 이어서 보내는 스냅샷 셋을 기다린다.
+func _on_login_accepted() -> void:
 	_snapshots = {}
 	_in_game = false
-	_login.set_busy(true)
 	print("로그인 성공: %s" % Protocol.as_string(_store.player.get("username"), "?"))
 
 
@@ -368,15 +357,15 @@ func _on_snapshot_received(kind: String) -> void:
 
 
 func _on_logout_requested() -> void:
-	_main.set_logout_busy(true)
+	_settings.set_logout_busy(true)
 	var seq := _action_sender.send_request(Protocol.LOGOUT, {}, LABEL_LOGOUT)
 	if seq == 0:
-		_main.set_logout_busy(false)
+		_settings.set_logout_busy(false)
 
 
 ## 인증만 해제되고 연결은 유지된다. 다른 계정으로 다시 들어갈 수 있다.
 func _on_logout_result(_payload: Dictionary) -> void:
-	_main.set_logout_busy(false)
+	_settings.set_logout_busy(false)
 	_show_login()
 	_login.clear_message()
 	_login.focus_first_empty()
@@ -428,10 +417,10 @@ func _on_admin_requested() -> void:
 func _on_request_timed_out(_seq: int, label: String) -> void:
 	if label == RegisterFlow.LABEL:
 		_register_flow.on_timed_out(label)
-	elif label == LABEL_LOGIN:
-		_login.show_message("ui.notice.request_timeout", {"label": label})
+	elif label == LoginFlow.LABEL:
+		_login_flow.on_timed_out(label)
 	elif label == LABEL_LOGOUT:
-		_main.set_logout_busy(false)
+		_settings.set_logout_busy(false)
 		_set_notice("ui.notice.request_timeout", {"label": label})
 
 
@@ -490,3 +479,9 @@ func _on_resync_required(reason: String) -> void:
 
 func _on_reconnect_requested() -> void:
 	_connection.open(_config.game_url())
+
+
+## 사용자가 게임을 닫는다. 서버 세션은 연결이 끊기면서 정리된다.
+func _on_quit_requested() -> void:
+	print("사용자 종료")
+	get_tree().quit()

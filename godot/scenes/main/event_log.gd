@@ -11,13 +11,25 @@ extends VBoxContainer
 ## `RichTextLabel` 의 BBCode 를 켜지 않는다. 채팅 본문이 사용자 입력이므로
 ## BBCode 를 해석하면 다른 플레이어가 태그를 심을 수 있다.
 
-## 채널 필터. `all` 은 전부, `chat` 은 채팅, 나머지는 `event.category` 다.
+## 채널 필터.
+##
+## 탭은 셋이다. 전투·이동·아이템·사회·시스템 탭은 없앴다. 그 내용은 "전체"
+## 에 그대로 남는다. 탭이 여덟이면 고르는 일이 읽는 일보다 번거롭다.
+##
+## "대화" 는 채팅과 대화를 함께 받는다. NPC 와의 대화도 플레이어끼리의 말도
+## 사용자에게는 같은 일이다.
 const CHANNEL_ALL := "all"
 const CHANNEL_CHAT := "chat"
+const CHANNEL_DIALOGUE := "dialogue"
+const CHANNEL_PARTY := "party"
 const FILTERS: Array[String] = [
-	CHANNEL_ALL, CHANNEL_CHAT,
-	"combat", "movement", "item", "social", "system", "dialogue",
+	CHANNEL_ALL, CHANNEL_CHAT, CHANNEL_PARTY,
 ]
+
+## 필터가 받는 채널. 목록에 없는 필터는 자기 이름만 받는다.
+const FILTER_CHANNELS := {
+	CHANNEL_CHAT: [CHANNEL_CHAT, CHANNEL_DIALOGUE],
+}
 
 ## 보관 상한. 상태 저장소와 같은 값을 쓴다.
 const LIMIT := GameStateStore.LOG_LIMIT
@@ -88,6 +100,17 @@ func entry_count() -> int:
 	return _entries.size()
 
 
+## 필터가 그 채널을 받는가.
+##
+## 정적 함수인 것은 씬 트리 없이 검증하기 위해서다. 탭 구성이 요구 사항이므로
+## 테스트가 그것을 붙잡아야 한다.
+static func accepts(filter: String, channel: String) -> bool:
+	if filter == CHANNEL_ALL:
+		return true
+	var accepted: Array = FILTER_CHANNELS.get(filter, [filter])
+	return accepted.has(channel)
+
+
 func _append(entry: Dictionary) -> void:
 	_entries.append(entry)
 	if _entries.size() > LIMIT:
@@ -101,7 +124,7 @@ func _render() -> void:
 
 	var lines: Array[String] = []
 	for entry: Dictionary in _entries:
-		if _filter != CHANNEL_ALL and Protocol.as_string(entry.get("channel")) != _filter:
+		if not EventLog.accepts(_filter, Protocol.as_string(entry.get("channel"))):
 			continue
 		lines.append(_line_of(entry))
 

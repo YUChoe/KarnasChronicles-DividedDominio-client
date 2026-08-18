@@ -39,9 +39,33 @@ func test_모든_감정_표현에_서버_문장_키가_있다() -> void:
 			assert_ne(_translator.t(key), key, "번역 없음: %s" % key)
 
 
-func test_로그_필터가_계약의_category_를_모두_덮는다() -> void:
+## 탭은 셋이다. 전투·이동·아이템·사회·시스템 탭은 없앴고 그 내용은 "전체" 에
+## 남는다. 분류별 탭을 되살리려면 요구 사항을 다시 정해야 한다
+func test_로그_필터가_셋이다() -> void:
+	assert_eq(EventLog.FILTERS, [
+		EventLog.CHANNEL_ALL, EventLog.CHANNEL_CHAT, EventLog.CHANNEL_PARTY,
+	] as Array[String])
+
+
+## 계약의 분류는 탭이 없어도 "전체" 에서 보여야 한다
+func test_계약의_category_가_전체에_들어온다() -> void:
 	for category: String in Protocol.EVENT_CATEGORIES:
-		assert_true(EventLog.FILTERS.has(category), "누락: %s" % category)
+		assert_true(EventLog.accepts(EventLog.CHANNEL_ALL, category), category)
+
+
+## 채팅 탭이 대화까지 받는다. 사용자에게는 같은 일이다
+func test_대화_탭이_채팅과_대화를_함께_받는다() -> void:
+	assert_true(EventLog.accepts(EventLog.CHANNEL_CHAT, EventLog.CHANNEL_CHAT))
+	assert_true(EventLog.accepts(
+		EventLog.CHANNEL_CHAT, EventLog.CHANNEL_DIALOGUE))
+	assert_false(EventLog.accepts(EventLog.CHANNEL_CHAT, "combat"))
+
+
+## 파티 탭은 아직 채울 것이 없다. 서버에 파티 기능이 없다
+func test_파티_탭은_다른_분류를_받지_않는다() -> void:
+	for category: String in Protocol.EVENT_CATEGORIES:
+		assert_false(
+			EventLog.accepts(EventLog.CHANNEL_PARTY, category), category)
 
 
 func test_로그_필터마다_문구가_있다() -> void:

@@ -35,6 +35,18 @@
         "en": "Language",
         "ko": "언어"
     },
+    "ui.settings.title": {
+        "en": "Settings",
+        "ko": "설정"
+    },
+    "ui.settings.quit": {
+        "en": "Quit the game",
+        "ko": "게임 종료"
+    },
+    "ui.settings.close": {
+        "en": "Back",
+        "ko": "돌아가기"
+    },
     "ui.login.title": {
         "en": "Sign in",
         "ko": "로그인"
@@ -316,32 +328,12 @@
         "ko": "전체"
     },
     "ui.log.chat": {
-        "en": "Chat",
-        "ko": "채팅"
-    },
-    "ui.log.combat": {
-        "en": "Combat",
-        "ko": "전투"
-    },
-    "ui.log.movement": {
-        "en": "Movement",
-        "ko": "이동"
-    },
-    "ui.log.item": {
-        "en": "Items",
-        "ko": "아이템"
-    },
-    "ui.log.social": {
-        "en": "Social",
-        "ko": "사회"
-    },
-    "ui.log.system": {
-        "en": "System",
-        "ko": "시스템"
-    },
-    "ui.log.dialogue": {
-        "en": "Dialogue",
+        "en": "Talk",
         "ko": "대화"
+    },
+    "ui.log.party": {
+        "en": "Party",
+        "ko": "파티"
     },
     "ui.chat.channel_room": {
         "en": "Say",
