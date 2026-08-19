@@ -71,6 +71,23 @@ func test_기본_프로파일은_아는_이름이다() -> void:
 	assert_true(ClientConfig.PROFILES.has(name), name)
 
 
+## 저장된 설정은 그것을 쓴 빌드가 지금 빌드와 같은 종류일 때만 따른다.
+## 프로파일을 고르는 UI 가 없어 저장된 값은 선택이 아니라 이전 실행의 메아리다
+func test_빌드_종류가_셋이다() -> void:
+	var flavour := ClientConfig.build_flavour()
+	assert_true([
+		ClientConfig.FLAVOUR_DEV,
+		ClientConfig.FLAVOUR_PRODUCTION,
+		ClientConfig.FLAVOUR_WEB,
+	].has(flavour), flavour)
+
+
+## 편집기에서 돌리는 동안은 개발 빌드로 본다
+func test_편집기는_개발_종류다() -> void:
+	assert_eq(ClientConfig.build_flavour(), ClientConfig.FLAVOUR_DEV)
+	assert_eq(ClientConfig.default_profile(), ClientConfig.PROFILE_DEV)
+
+
 func test_경로는_계약_상수를_쓴다() -> void:
 	var config := ClientConfig.new()
 	config.apply_profile(ClientConfig.PROFILE_DEV)

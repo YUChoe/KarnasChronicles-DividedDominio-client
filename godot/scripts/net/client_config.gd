@@ -11,9 +11,14 @@ extends RefCounted
 ## 일이 한 줄 편집이 된다. 셋을 직접 정하려면 `custom` 을 쓴다.
 ##
 ## 기본 프로파일은 실행 형태로 정한다. 편집기에서 돌리거나 개발 빌드면 `dev`,
-## 상용 빌드면 `production` 이다. 배포한 실행 파일이 localhost 를 보는 사고를
+## 그 밖에는 `production` 이다. 배포한 실행 파일이 localhost 를 보는 사고를
 ## 막는다. 개발 빌드는 내보내기 프리셋 `Windows Desktop Dev` 가 만들며 기능
 ## 태그 `devbuild` 로 자신을 밝힌다.
+##
+## 파일에 적힌 프로파일은 그것을 쓴 빌드가 지금 도는 빌드와 같은 종류일 때만
+## 따른다. 프로파일을 고르는 UI 가 없으므로 저장된 값은 사용자의 선택이 아니라
+## 이전 실행이 남긴 메아리다. 편집기로 한 번 돌린 기계에서 상용 실행 파일이
+## localhost 를 보는 일이 실제로 있었다.
 ##
 ## 명령줄로도 바꿀 수 있다. 한 빌드로 두 환경을 오갈 때 쓴다.
 ##
@@ -43,6 +48,11 @@ const PROFILES := {
 ## 개발 빌드가 자신을 밝히는 기능 태그. 내보내기 프리셋의 `custom_features` 다
 const FEATURE_DEV := "devbuild"
 
+## 빌드 종류. 저장된 설정을 따를지 가르는 기준이다
+const FLAVOUR_DEV := "dev"
+const FLAVOUR_PRODUCTION := "production"
+const FLAVOUR_WEB := "web"
+
 const DEFAULT_LOCALE := "en"
 
 var profile := PROFILE_DEV
@@ -53,9 +63,18 @@ var locale := DEFAULT_LOCALE
 var auto_login := false
 
 
+## 지금 도는 빌드의 종류.
+static func build_flavour() -> String:
+	if OS.has_feature("editor") or OS.has_feature(FEATURE_DEV):
+		return FLAVOUR_DEV
+	if OS.has_feature("web"):
+		return FLAVOUR_WEB
+	return FLAVOUR_PRODUCTION
+
+
 ## 편집기이거나 개발 빌드면 개발, 그 밖에는 상용이다.
 static func default_profile() -> String:
-	if OS.has_feature("editor") or OS.has_feature(FEATURE_DEV):
+	if ClientConfig.build_flavour() == FLAVOUR_DEV:
 		return PROFILE_DEV
 	return PROFILE_PRODUCTION
 
@@ -88,8 +107,15 @@ static func load_or_create() -> ClientConfig:
 		config.auto_login = Protocol.as_bool(
 			file.get_value(SECTION_AUTH, "auto_login", false))
 
-	var stored := Protocol.as_string(
-		file.get_value(SECTION_NETWORK, "profile", ""))
+	# 같은 종류의 빌드가 쓴 설정만 따른다. 상용 실행 파일이 편집기 실행의
+	# 잔재를 물려받으면 배포한 클라이언트가 localhost 를 본다
+	var flavour := ClientConfig.build_flavour()
+	var stored := ""
+	if Protocol.as_string(
+			file.get_value(SECTION_NETWORK, "flavour", "")) == flavour:
+		stored = Protocol.as_string(
+			file.get_value(SECTION_NETWORK, "profile", ""))
+
 	var chosen := ClientConfig.profile_from_cmdline()
 
 	if chosen.is_empty():
@@ -110,7 +136,9 @@ static func load_or_create() -> ClientConfig:
 	else:
 		config.apply_profile(chosen)
 
-	if not loaded:
+	# 다른 빌드가 쓴 파일이면 지금 값으로 덮는다. 다음 실행에 같은 판정을
+	# 되풀이하지 않는다
+	if not loaded or stored.is_empty():
 		config.save()
 
 	return config
@@ -132,6 +160,7 @@ func apply_profile(name: String) -> bool:
 
 func save() -> void:
 	var file := ConfigFile.new()
+	file.set_value(SECTION_NETWORK, "flavour", ClientConfig.build_flavour())
 	file.set_value(SECTION_NETWORK, "profile", profile)
 	# 프로파일이 덮어쓰는 값이지만 함께 적는다. 파일만 보고도 어디에 붙는지
 	# 알 수 있어야 한다. custom 일 때만 이 값들이 읽힌다
