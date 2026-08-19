@@ -1,10 +1,9 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scenes/main/main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/main/entity_zone.tscn" id="2_zone"]
 [ext_resource type="PackedScene" path="res://scenes/main/minimap.tscn" id="3_minimap"]
 [ext_resource type="PackedScene" path="res://scenes/main/social_bar.tscn" id="4_social"]
-[ext_resource type="PackedScene" path="res://scenes/main/player_list.tscn" id="5_players"]
 [ext_resource type="PackedScene" path="res://scenes/main/event_log.tscn" id="6_log"]
 [ext_resource type="PackedScene" path="res://scenes/main/chat_bar.tscn" id="7_chat"]
 [ext_resource type="PackedScene" path="res://scenes/main/action_popover.tscn" id="8_popover"]
@@ -19,8 +18,7 @@ script = ExtResource("1_main")
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="SummaryLabel" type="Label" parent="Header"]
-unique_name_in_owner = true
+[node name="HeaderSpacer" type="Control" parent="Header"]
 layout_mode = 2
 size_flags_horizontal = 3
 
@@ -38,18 +36,6 @@ text = "Inventory"
 unique_name_in_owner = true
 layout_mode = 2
 text = "Settings"
-
-[node name="StatusRow" type="HBoxContainer" parent="."]
-layout_mode = 2
-theme_override_constants/separation = 16
-
-[node name="TimeLabel" type="Label" parent="StatusRow"]
-unique_name_in_owner = true
-layout_mode = 2
-
-[node name="PositionLabel" type="Label" parent="StatusRow"]
-unique_name_in_owner = true
-layout_mode = 2
 
 [node name="Body" type="HBoxContainer" parent="."]
 layout_mode = 2
@@ -86,6 +72,12 @@ layout_mode = 2
 size_flags_vertical = 3
 
 [node name="ObjectsZone" parent="Body/Left" instance=ExtResource("2_zone")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PlayersZone" parent="Body/Left" instance=ExtResource("2_zone")]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
@@ -156,11 +148,6 @@ layout_mode = 2
 
 [node name="SocialBar" parent="Body/Right" instance=ExtResource("4_social")]
 unique_name_in_owner = true
-layout_mode = 2
-
-[node name="PlayerList" parent="Body/Right" instance=ExtResource("5_players")]
-unique_name_in_owner = true
-visible = false
 layout_mode = 2
 
 [node name="EventLog" parent="." instance=ExtResource("6_log")]

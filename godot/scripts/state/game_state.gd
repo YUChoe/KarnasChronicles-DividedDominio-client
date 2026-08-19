@@ -19,6 +19,10 @@ const LOG_LIMIT := 500
 signal player_changed()
 signal room_changed()
 signal entities_changed()
+## 방에 누가 들어왔다. 로그에 남기려면 사본 변화만으로는 알 수 없다
+signal entity_entered(entity: Dictionary)
+## 방에서 누가 나갔다. 사본에서 지우기 전의 엔티티를 함께 넘긴다
+signal entity_left(entity: Dictionary)
 signal inventory_changed()
 signal combat_changed()
 signal dialogue_changed()
@@ -138,16 +142,24 @@ func apply_entity_enter(payload: Dictionary) -> void:
 	if id.is_empty():
 		push_warning("entity_enter 에 id 가 없습니다")
 		return
+	var known := entities.has(id)
 	entities[id] = entity
 	entities_changed.emit()
+
+	# 이미 있던 것은 다시 들어온 것이 아니다. 방을 다시 받은 뒤의 중복 알림을
+	# 로그에 남기지 않는다
+	if not known:
+		entity_entered.emit(entity)
 
 
 func apply_entity_leave(payload: Dictionary) -> void:
 	var id := Protocol.as_string(payload.get("entity_id"))
 	if not entities.has(id):
 		return
+	var entity: Dictionary = Protocol.as_dict(entities[id])
 	entities.erase(id)
 	entities_changed.emit()
+	entity_left.emit(entity)
 
 
 ## 변경된 필드만 사본에 병합한다. 대상이 없으면 방 전체를 재요청한다.

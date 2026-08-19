@@ -319,6 +319,14 @@
         "en": "Objects",
         "ko": "물건"
     },
+    "ui.zone.players": {
+        "en": "In this room",
+        "ko": "이 방의 사람"
+    },
+    "ui.zone.me": {
+        "en": " (me)",
+        "ko": " (나)"
+    },
     "ui.main.pending": {
         "en": "Chat, the event log and the inventory arrive in later tasks.",
         "ko": "채팅, 이벤트 로그, 인벤토리는 이후 작업에서 추가됩니다."
@@ -367,14 +375,6 @@
         "en": "[whisper] {from}: {message}",
         "ko": "[귓속말] {from}: {message}"
     },
-    "ui.social.who": {
-        "en": "Who",
-        "ko": "접속자"
-    },
-    "ui.social.players_here": {
-        "en": "Players here",
-        "ko": "이 방"
-    },
     "ui.social.unfollow": {
         "en": "Stop following",
         "ko": "따라가기 중단"
@@ -382,22 +382,6 @@
     "ui.social.emote": {
         "en": "Emote",
         "ko": "감정 표현"
-    },
-    "ui.players.title": {
-        "en": "Players",
-        "ko": "플레이어"
-    },
-    "ui.players.whisper": {
-        "en": "Whisper",
-        "ko": "귓속말"
-    },
-    "ui.players.empty": {
-        "en": "No one is listed.",
-        "ko": "표시할 사람이 없습니다."
-    },
-    "ui.players.close": {
-        "en": "Close",
-        "ko": "닫기"
     },
     "ui.emote.wave": {
         "en": "Wave",
@@ -1150,5 +1134,213 @@
     "ui.reading.page": {
         "en": "Page {page} of {total}",
         "ko": "{total}쪽 중 {page}쪽"
+    },
+    "ui.room.player_entered": {
+        "en": "{name} has arrived.",
+        "ko": "{name} 이(가) 들어왔습니다."
+    },
+    "ui.room.player_left": {
+        "en": "{name} has left.",
+        "ko": "{name} 이(가) 나갔습니다."
+    },
+    "ui.emote.group.action": {
+        "en": "Gestures",
+        "ko": "동작"
+    },
+    "ui.emote.group.report": {
+        "en": "Reports",
+        "ko": "전황"
+    },
+    "ui.emote.group.request": {
+        "en": "Requests",
+        "ko": "요청"
+    },
+    "ui.emote.group.order": {
+        "en": "Orders",
+        "ko": "지시"
+    },
+    "ui.emote.group.reply": {
+        "en": "Replies",
+        "ko": "응답"
+    },
+    "ui.emote.group.role": {
+        "en": "Roles",
+        "ko": "역할"
+    },
+    "ui.emote.path_cleared": {
+        "en": "Path cleared",
+        "ko": "길 열림"
+    },
+    "ui.emote.enemy_weakened": {
+        "en": "Enemy weakened",
+        "ko": "적 약화"
+    },
+    "ui.emote.all_clear": {
+        "en": "All clear",
+        "ko": "이상 없음"
+    },
+    "ui.emote.incoming": {
+        "en": "Incoming",
+        "ko": "적 접근"
+    },
+    "ui.emote.fire_set": {
+        "en": "Fire set",
+        "ko": "불 지름"
+    },
+    "ui.emote.holding": {
+        "en": "Holding",
+        "ko": "수비 중"
+    },
+    "ui.emote.advancing": {
+        "en": "Advancing",
+        "ko": "진격 중"
+    },
+    "ui.emote.under_attack": {
+        "en": "Under attack",
+        "ko": "피격 중"
+    },
+    "ui.emote.traps_cleared": {
+        "en": "Traps cleared",
+        "ko": "함정 제거"
+    },
+    "ui.emote.enemy_disguised": {
+        "en": "Enemy in disguise",
+        "ko": "변장한 적"
+    },
+    "ui.emote.need_healing": {
+        "en": "Need healing",
+        "ko": "치료 요청"
+    },
+    "ui.emote.need_arrows": {
+        "en": "Need arrows",
+        "ko": "화살 요청"
+    },
+    "ui.emote.need_help": {
+        "en": "Need help",
+        "ko": "지원 요청"
+    },
+    "ui.emote.need_smith": {
+        "en": "Need a smith",
+        "ko": "장인 요청"
+    },
+    "ui.emote.cover_me": {
+        "en": "Cover me",
+        "ko": "엄호 요청"
+    },
+    "ui.emote.hold": {
+        "en": "Hold",
+        "ko": "공격 중지"
+    },
+    "ui.emote.where_to": {
+        "en": "Where to",
+        "ko": "행선지"
+    },
+    "ui.emote.need_scout": {
+        "en": "Need a scout",
+        "ko": "정찰 요청"
+    },
+    "ui.emote.follow_me": {
+        "en": "Follow me",
+        "ko": "따라오기"
+    },
+    "ui.emote.lets_go": {
+        "en": "Let us go",
+        "ko": "출발"
+    },
+    "ui.emote.make_way": {
+        "en": "Make way",
+        "ko": "비켜서기"
+    },
+    "ui.emote.clear_path": {
+        "en": "Clear the path",
+        "ko": "길 열기"
+    },
+    "ui.emote.defend_here": {
+        "en": "Defend here",
+        "ko": "이곳 방어"
+    },
+    "ui.emote.disarm_trap": {
+        "en": "Disarm the trap",
+        "ko": "함정 해제"
+    },
+    "ui.emote.reinforce_attack": {
+        "en": "Reinforce the attack",
+        "ko": "공격 지원"
+    },
+    "ui.emote.reinforce_defence": {
+        "en": "Reinforce the defence",
+        "ko": "수비 지원"
+    },
+    "ui.emote.yes": {
+        "en": "Yes",
+        "ko": "예"
+    },
+    "ui.emote.no": {
+        "en": "No",
+        "ko": "아니오"
+    },
+    "ui.emote.thanks": {
+        "en": "Thanks",
+        "ko": "감사"
+    },
+    "ui.emote.welcome": {
+        "en": "You are welcome",
+        "ko": "천만에"
+    },
+    "ui.emote.sorry": {
+        "en": "Sorry",
+        "ko": "사과"
+    },
+    "ui.emote.oops": {
+        "en": "Oops",
+        "ko": "실수"
+    },
+    "ui.emote.hail": {
+        "en": "Hail",
+        "ko": "인사"
+    },
+    "ui.emote.farewell": {
+        "en": "Farewell",
+        "ko": "작별"
+    },
+    "ui.emote.well_struck": {
+        "en": "Well struck",
+        "ko": "훌륭한 일격"
+    },
+    "ui.emote.cheer": {
+        "en": "Cheer",
+        "ko": "환호"
+    },
+    "ui.emote.well_fought": {
+        "en": "Well fought",
+        "ko": "잘 싸움"
+    },
+    "ui.emote.acknowledged": {
+        "en": "Acknowledged",
+        "ko": "알겠음"
+    },
+    "ui.emote.declined": {
+        "en": "Declined",
+        "ko": "거절"
+    },
+    "ui.emote.done": {
+        "en": "Done",
+        "ko": "완료"
+    },
+    "ui.emote.i_will_fight": {
+        "en": "I will fight up front",
+        "ko": "전열"
+    },
+    "ui.emote.i_will_heal": {
+        "en": "I will tend the wounded",
+        "ko": "치료"
+    },
+    "ui.emote.i_will_scout": {
+        "en": "I will scout ahead",
+        "ko": "정찰"
+    },
+    "ui.emote.i_will_carry": {
+        "en": "I will carry the load",
+        "ko": "운반"
     }
 }

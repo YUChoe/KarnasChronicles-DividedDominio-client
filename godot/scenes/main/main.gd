@@ -21,7 +21,6 @@ const VERB_ENTER := "enter"
 const VERB_EMOTE := "emote"
 const LABEL_CHAT := "chat"
 
-@onready var _summary: Label = %SummaryLabel
 @onready var _time: Label = %TimeLabel
 @onready var _position: Label = %PositionLabel
 @onready var _description: Label = %DescriptionLabel
@@ -35,9 +34,10 @@ const LABEL_CHAT := "chat"
 @onready var _animals: EntityZone = %AnimalsZone
 @onready var _enemies: EntityZone = %EnemiesZone
 @onready var _objects: EntityZone = %ObjectsZone
+## 방의 플레이어. 물건 구역 아래에 둔다. 자신도 `(나)` 로 함께 보인다
+@onready var _players_zone: EntityZone = %PlayersZone
 @onready var _popover: ActionPopover = %ActionPopover
 @onready var _social: SocialBar = %SocialBar
-@onready var _players: PlayerList = %PlayerList
 @onready var _log: EventLog = %EventLog
 @onready var _chat: ChatBar = %ChatBar
 
@@ -47,8 +47,6 @@ var _sender: ActionSender = null
 ## 방향 → 버튼
 var _direction_buttons: Dictionary = {}
 var _nav_busy := false
-## `who_result` 로 알게 된 플레이어. uuid → 표시 이름
-var _known_players: Dictionary = {}
 ## 선택한 대상. 비어 있으면 선택 없음
 var _selected_id := ""
 
@@ -77,7 +75,8 @@ func bind(
 	_state.entities_changed.connect(_on_entities_changed)
 	_state.chat_received.connect(_log.add_chat)
 	_state.event_received.connect(_log.add_event)
-	_state.who_result_received.connect(_on_who_result)
+	_state.entity_entered.connect(_on_entity_entered)
+	_state.entity_left.connect(_on_entity_left)
 	_translator.locale_changed.connect(_on_locale_changed)
 	_sender.request_settled.connect(_on_request_settled)
 	_sender.request_timed_out.connect(_on_request_timed_out)
@@ -87,13 +86,14 @@ func bind(
 	_animals.bind("ui.zone.animals", _translator)
 	_enemies.bind("ui.zone.enemies", _translator)
 	_objects.bind("ui.zone.objects", _translator)
+	_players_zone.bind("ui.zone.players", _translator)
 	_popover.bind(_translator)
 	_social.bind(_translator)
-	_players.bind(_translator)
 	_log.bind(_translator)
 	_chat.bind(_translator)
 
-	for zone: EntityZone in [_people, _animals, _enemies, _objects]:
+	for zone: EntityZone in [
+			_people, _animals, _enemies, _objects, _players_zone]:
 		zone.entity_selected.connect(_on_entity_selected)
 
 	_popover.action_requested.connect(_on_popover_action)
@@ -101,7 +101,8 @@ func bind(
 	_popover.closed.connect(_clear_selection)
 	_social.verb_requested.connect(_on_social_verb)
 	_social.emote_requested.connect(_on_emote_requested)
-	_players.whisper_requested.connect(_on_whisper_requested)
+	_log.filter_changed.connect(_on_log_filter_changed)
+	_chat.set_active(EventLog.allows_chat(_log.current_filter()))
 	_chat.message_submitted.connect(_on_chat_submitted)
 	_chat.target_missing.connect(_on_chat_target_missing)
 
@@ -129,17 +130,12 @@ func apply_texts() -> void:
 	_animals.apply_texts()
 	_enemies.apply_texts()
 	_objects.apply_texts()
+	_players_zone.apply_texts()
 
 
 func _on_player_changed() -> void:
 	if _state == null:
 		return
-
-	var display_name := Protocol.as_string(_state.player.get("display_name"), "?")
-	var username := Protocol.as_string(_state.player.get("username"), "?")
-	var faction := Protocol.as_string(_state.player.get("faction_id"))
-	_summary.text = ("%s (%s)" % [display_name, username]
-		if faction.is_empty() else "%s (%s)  %s" % [display_name, username, faction])
 
 	_social.set_following(
 		not Protocol.as_string(_state.player.get("following")).is_empty())
@@ -209,6 +205,7 @@ func _on_entities_changed() -> void:
 	var animals: Array = []
 	var enemies: Array = []
 	var objects: Array = []
+	var players: Array = []
 
 	for entity_id: Variant in _state.entities:
 		var entity: Dictionary = Protocol.as_dict(_state.entities[entity_id])
@@ -219,6 +216,8 @@ func _on_entities_changed() -> void:
 				enemies.append(entity)
 			"animals":
 				animals.append(entity)
+			"players":
+				players.append(entity)
 			_:
 				people.append(entity)
 
@@ -226,6 +225,7 @@ func _on_entities_changed() -> void:
 	_animals.set_entities(animals)
 	_enemies.set_entities(enemies)
 	_objects.set_entities(objects)
+	_players_zone.set_entities(_with_self(players))
 	_refresh_chat_targets()
 
 	# 대상이 방에서 사라지면 선택을 푼다
@@ -241,7 +241,7 @@ func _zone_of(entity: Dictionary) -> String:
 		ActionRules.KIND_OBJECT:
 			return "objects"
 		ActionRules.KIND_PLAYER:
-			return "people"
+			return "players"
 		ActionRules.KIND_MONSTER:
 			match Protocol.as_string(entity.get("disposition")):
 				"hostile":
@@ -251,8 +251,64 @@ func _zone_of(entity: Dictionary) -> String:
 	return "people"
 
 
-## 귓속말 대상은 같은 방의 플레이어와 `who_result` 로 알게 된 플레이어다.
-## 자신은 제외한다.
+## 자신을 플레이어 목록 앞에 붙인다.
+##
+## 서버는 방 엔티티에 관찰자 자신을 담지 않는다. 그래도 화면에는 보여야 한다.
+## 방에 누가 있는지 세는 자리이므로 자기가 빠지면 수가 맞지 않는다.
+func _with_self(players: Array) -> Array:
+	var my_id := Protocol.as_string(_state.player.get("id"))
+	if my_id.is_empty():
+		return players
+
+	var me: Dictionary = {
+		"id": my_id,
+		"kind": ActionRules.KIND_PLAYER,
+		"is_me": true,
+		"name": {
+			"en": Protocol.as_string(_state.player.get("display_name"), "?"),
+			"ko": Protocol.as_string(_state.player.get("display_name"), "?"),
+		},
+	}
+
+	var result: Array = [me]
+	result.append_array(players)
+	return result
+
+
+## 방에 누가 들어왔다. 플레이어만 남긴다. 몬스터 로밍까지 남기면 읽을 수 없다.
+func _on_entity_entered(entity: Dictionary) -> void:
+	_log_room_change(entity, "ui.room.player_entered")
+
+
+func _on_entity_left(entity: Dictionary) -> void:
+	_log_room_change(entity, "ui.room.player_left")
+
+
+func _log_room_change(entity: Dictionary, key: String) -> void:
+	if Protocol.as_string(entity.get("kind")) != ActionRules.KIND_PLAYER:
+		return
+
+	if _translator == null:
+		return
+
+	# 이동이므로 `movement` 로 분류한다. 대화 탭에 섞이지 않는다
+	_log.add_event({
+		"category": "movement",
+		"message": {
+			"key": key,
+			"params": {"name": _translator.pick(entity.get("name"))},
+		},
+	})
+
+
+func _on_log_filter_changed(channel: String) -> void:
+	_chat.set_active(EventLog.allows_chat(channel))
+
+
+## 귓속말 대상은 같은 방의 플레이어다. 자신은 제외한다.
+##
+## 접속자 전체 목록(`who`)을 없앴으므로 다른 방 사람은 대상에 오르지 않는다.
+## 방을 넘는 귓속말이 필요해지면 대상을 확보할 경로를 다시 만들어야 한다.
 func _refresh_chat_targets() -> void:
 	var my_id := Protocol.as_string(_state.player.get("id"))
 	var targets: Dictionary = {}
@@ -266,27 +322,7 @@ func _refresh_chat_targets() -> void:
 			continue
 		targets[id] = _translator.pick(entity.get("name"))
 
-	for id: Variant in _known_players:
-		var known := Protocol.as_string(id)
-		if known == my_id:
-			continue
-		targets[known] = Protocol.as_string(_known_players[id], known)
-
 	_chat.set_targets(targets)
-
-
-func _on_who_result(players: Array) -> void:
-	for value: Variant in players:
-		var player: Dictionary = Protocol.as_dict(value)
-		var id := Protocol.as_string(player.get("id"))
-		if id.is_empty():
-			continue
-		var display_name := Protocol.as_string(player.get("display_name"))
-		_known_players[id] = (Protocol.as_string(player.get("username"), id)
-			if display_name.is_empty() else display_name)
-
-	_refresh_chat_targets()
-	_players.show_players(players)
 
 
 func _on_room_changed() -> void:
@@ -362,10 +398,6 @@ func _on_social_verb(verb: String) -> void:
 func _on_emote_requested(emote_id: String) -> void:
 	if _sender != null:
 		_sender.send_action(VERB_EMOTE, "", {"emote_id": emote_id})
-
-
-func _on_whisper_requested(player_id: String) -> void:
-	_chat.focus_whisper(player_id)
 
 
 func _on_chat_submitted(channel: String, message: String, to: String) -> void:

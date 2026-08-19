@@ -24,12 +24,24 @@ const MAX_LENGTH := 500
 var _translator: TranslatorService = null
 ## 항목 인덱스 → uuid
 var _target_ids: Array[String] = []
+## 대화·파티 탭에서만 참이다
+var _active := true
 
 
 func _ready() -> void:
 	_input.max_length = MAX_LENGTH
 	_send.pressed.connect(_on_send_pressed)
 	_input.text_submitted.connect(_on_text_submitted)
+
+
+## 대화와 파티 탭에서만 보인다.
+##
+## 로그가 다른 탭을 보고 있으면 보낸 말이 그 화면에 나타나지 않는다. 잠근 채로
+## 두면 왜 안 되는지 묻게 되므로 줄째 감춘다. 그 탭에서 말을 거는 수단은 빠른
+## 대화(`emote`)다. 문장이 번역 키라 서로 다른 언어를 쓰는 사람끼리도 통한다.
+func set_active(active: bool) -> void:
+	_active = active
+	visible = active
 
 
 func bind(translator: TranslatorService) -> void:
@@ -115,6 +127,9 @@ func _on_text_submitted(_text: String) -> void:
 
 
 func _on_send_pressed() -> void:
+	if not _active:
+		return
+
 	var message := _input.text.strip_edges()
 	if message.is_empty():
 		return

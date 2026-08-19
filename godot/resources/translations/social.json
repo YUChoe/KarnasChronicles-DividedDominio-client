@@ -114,5 +114,357 @@
     "follow.stopped_disconnected": {
         "en": "👥 {username} disconnected, so you stopped following.",
         "ko": "👥 {username}님이 연결을 해제하여 따라가기가 중지되었습니다."
+    },
+    "emote.path_cleared.self": {
+        "en": "You: The path is clear.",
+        "ko": "당신: 길을 열었습니다."
+    },
+    "emote.path_cleared.other": {
+        "en": "{username}: The path is clear.",
+        "ko": "{username}: 길을 열었습니다."
+    },
+    "emote.enemy_weakened.self": {
+        "en": "You: The enemy is weakened.",
+        "ko": "당신: 적이 약해졌습니다."
+    },
+    "emote.enemy_weakened.other": {
+        "en": "{username}: The enemy is weakened.",
+        "ko": "{username}: 적이 약해졌습니다."
+    },
+    "emote.all_clear.self": {
+        "en": "You: All clear.",
+        "ko": "당신: 주변은 조용합니다."
+    },
+    "emote.all_clear.other": {
+        "en": "{username}: All clear.",
+        "ko": "{username}: 주변은 조용합니다."
+    },
+    "emote.incoming.self": {
+        "en": "You: Incoming!",
+        "ko": "당신: 적이 옵니다!"
+    },
+    "emote.incoming.other": {
+        "en": "{username}: Incoming!",
+        "ko": "{username}: 적이 옵니다!"
+    },
+    "emote.fire_set.self": {
+        "en": "You: Fire set - stand back!",
+        "ko": "당신: 불을 질렀습니다. 물러나십시오!"
+    },
+    "emote.fire_set.other": {
+        "en": "{username}: Fire set - stand back!",
+        "ko": "{username}: 불을 질렀습니다. 물러나십시오!"
+    },
+    "emote.holding.self": {
+        "en": "You: I am holding this ground.",
+        "ko": "당신: 이곳을 지키고 있습니다."
+    },
+    "emote.holding.other": {
+        "en": "{username}: I am holding this ground.",
+        "ko": "{username}: 이곳을 지키고 있습니다."
+    },
+    "emote.advancing.self": {
+        "en": "You: I am advancing.",
+        "ko": "당신: 앞으로 나아갑니다."
+    },
+    "emote.advancing.other": {
+        "en": "{username}: I am advancing.",
+        "ko": "{username}: 앞으로 나아갑니다."
+    },
+    "emote.under_attack.self": {
+        "en": "You: I am under attack!",
+        "ko": "당신: 공격받고 있습니다!"
+    },
+    "emote.under_attack.other": {
+        "en": "{username}: I am under attack!",
+        "ko": "{username}: 공격받고 있습니다!"
+    },
+    "emote.traps_cleared.self": {
+        "en": "You: The traps are cleared.",
+        "ko": "당신: 함정을 치웠습니다."
+    },
+    "emote.traps_cleared.other": {
+        "en": "{username}: The traps are cleared.",
+        "ko": "{username}: 함정을 치웠습니다."
+    },
+    "emote.enemy_disguised.self": {
+        "en": "You: There is an enemy in disguise.",
+        "ko": "당신: 변장한 적이 있습니다."
+    },
+    "emote.enemy_disguised.other": {
+        "en": "{username}: There is an enemy in disguise.",
+        "ko": "{username}: 변장한 적이 있습니다."
+    },
+    "emote.need_healing.self": {
+        "en": "You: I need healing!",
+        "ko": "당신: 치료가 필요합니다!"
+    },
+    "emote.need_healing.other": {
+        "en": "{username}: I need healing!",
+        "ko": "{username}: 치료가 필요합니다!"
+    },
+    "emote.need_arrows.self": {
+        "en": "You: I need arrows!",
+        "ko": "당신: 화살이 필요합니다!"
+    },
+    "emote.need_arrows.other": {
+        "en": "{username}: I need arrows!",
+        "ko": "{username}: 화살이 필요합니다!"
+    },
+    "emote.need_help.self": {
+        "en": "You: I need help!",
+        "ko": "당신: 도움이 필요합니다!"
+    },
+    "emote.need_help.other": {
+        "en": "{username}: I need help!",
+        "ko": "{username}: 도움이 필요합니다!"
+    },
+    "emote.need_smith.self": {
+        "en": "You: We need a smith!",
+        "ko": "당신: 장인이 필요합니다!"
+    },
+    "emote.need_smith.other": {
+        "en": "{username}: We need a smith!",
+        "ko": "{username}: 장인이 필요합니다!"
+    },
+    "emote.cover_me.self": {
+        "en": "You: Cover me!",
+        "ko": "당신: 엄호해 주십시오!"
+    },
+    "emote.cover_me.other": {
+        "en": "{username}: Cover me!",
+        "ko": "{username}: 엄호해 주십시오!"
+    },
+    "emote.hold.self": {
+        "en": "You: Hold!",
+        "ko": "당신: 손을 멈추십시오!"
+    },
+    "emote.hold.other": {
+        "en": "{username}: Hold!",
+        "ko": "{username}: 손을 멈추십시오!"
+    },
+    "emote.where_to.self": {
+        "en": "You: Where to?",
+        "ko": "당신: 어디로 갑니까?"
+    },
+    "emote.where_to.other": {
+        "en": "{username}: Where to?",
+        "ko": "{username}: 어디로 갑니까?"
+    },
+    "emote.need_scout.self": {
+        "en": "You: We need a scout!",
+        "ko": "당신: 정찰이 필요합니다!"
+    },
+    "emote.need_scout.other": {
+        "en": "{username}: We need a scout!",
+        "ko": "{username}: 정찰이 필요합니다!"
+    },
+    "emote.follow_me.self": {
+        "en": "You: Follow me!",
+        "ko": "당신: 저를 따라오십시오!"
+    },
+    "emote.follow_me.other": {
+        "en": "{username}: Follow me!",
+        "ko": "{username}: 저를 따라오십시오!"
+    },
+    "emote.lets_go.self": {
+        "en": "You: Let us go!",
+        "ko": "당신: 갑시다!"
+    },
+    "emote.lets_go.other": {
+        "en": "{username}: Let us go!",
+        "ko": "{username}: 갑시다!"
+    },
+    "emote.make_way.self": {
+        "en": "You: Make way!",
+        "ko": "당신: 비켜 주십시오!"
+    },
+    "emote.make_way.other": {
+        "en": "{username}: Make way!",
+        "ko": "{username}: 비켜 주십시오!"
+    },
+    "emote.clear_path.self": {
+        "en": "You: Clear the path!",
+        "ko": "당신: 길을 열어 주십시오!"
+    },
+    "emote.clear_path.other": {
+        "en": "{username}: Clear the path!",
+        "ko": "{username}: 길을 열어 주십시오!"
+    },
+    "emote.defend_here.self": {
+        "en": "You: Defend this place!",
+        "ko": "당신: 이곳을 지키십시오!"
+    },
+    "emote.defend_here.other": {
+        "en": "{username}: Defend this place!",
+        "ko": "{username}: 이곳을 지키십시오!"
+    },
+    "emote.disarm_trap.self": {
+        "en": "You: Disarm the trap!",
+        "ko": "당신: 함정을 해제하십시오!"
+    },
+    "emote.disarm_trap.other": {
+        "en": "{username}: Disarm the trap!",
+        "ko": "{username}: 함정을 해제하십시오!"
+    },
+    "emote.reinforce_attack.self": {
+        "en": "You: Reinforce the attack!",
+        "ko": "당신: 공격을 도우십시오!"
+    },
+    "emote.reinforce_attack.other": {
+        "en": "{username}: Reinforce the attack!",
+        "ko": "{username}: 공격을 도우십시오!"
+    },
+    "emote.reinforce_defence.self": {
+        "en": "You: Reinforce the defence!",
+        "ko": "당신: 수비를 도우십시오!"
+    },
+    "emote.reinforce_defence.other": {
+        "en": "{username}: Reinforce the defence!",
+        "ko": "{username}: 수비를 도우십시오!"
+    },
+    "emote.yes.self": {
+        "en": "You: Yes!",
+        "ko": "당신: 예!"
+    },
+    "emote.yes.other": {
+        "en": "{username}: Yes!",
+        "ko": "{username}: 예!"
+    },
+    "emote.no.self": {
+        "en": "You: No!",
+        "ko": "당신: 아니오!"
+    },
+    "emote.no.other": {
+        "en": "{username}: No!",
+        "ko": "{username}: 아니오!"
+    },
+    "emote.thanks.self": {
+        "en": "You: Thank you!",
+        "ko": "당신: 고맙습니다!"
+    },
+    "emote.thanks.other": {
+        "en": "{username}: Thank you!",
+        "ko": "{username}: 고맙습니다!"
+    },
+    "emote.welcome.self": {
+        "en": "You: You are welcome.",
+        "ko": "당신: 천만에요."
+    },
+    "emote.welcome.other": {
+        "en": "{username}: You are welcome.",
+        "ko": "{username}: 천만에요."
+    },
+    "emote.sorry.self": {
+        "en": "You: Sorry!",
+        "ko": "당신: 미안합니다!"
+    },
+    "emote.sorry.other": {
+        "en": "{username}: Sorry!",
+        "ko": "{username}: 미안합니다!"
+    },
+    "emote.oops.self": {
+        "en": "You: Oops!",
+        "ko": "당신: 아이고!"
+    },
+    "emote.oops.other": {
+        "en": "{username}: Oops!",
+        "ko": "{username}: 아이고!"
+    },
+    "emote.hail.self": {
+        "en": "You: Hail!",
+        "ko": "당신: 안녕하십니까!"
+    },
+    "emote.hail.other": {
+        "en": "{username}: Hail!",
+        "ko": "{username}: 안녕하십니까!"
+    },
+    "emote.farewell.self": {
+        "en": "You: Farewell.",
+        "ko": "당신: 그럼 이만."
+    },
+    "emote.farewell.other": {
+        "en": "{username}: Farewell.",
+        "ko": "{username}: 그럼 이만."
+    },
+    "emote.well_struck.self": {
+        "en": "You: Well struck!",
+        "ko": "당신: 훌륭한 일격입니다!"
+    },
+    "emote.well_struck.other": {
+        "en": "{username}: Well struck!",
+        "ko": "{username}: 훌륭한 일격입니다!"
+    },
+    "emote.cheer.self": {
+        "en": "You: Aye!",
+        "ko": "당신: 좋았습니다!"
+    },
+    "emote.cheer.other": {
+        "en": "{username}: Aye!",
+        "ko": "{username}: 좋았습니다!"
+    },
+    "emote.well_fought.self": {
+        "en": "You: Well fought!",
+        "ko": "당신: 잘 싸웠습니다!"
+    },
+    "emote.well_fought.other": {
+        "en": "{username}: Well fought!",
+        "ko": "{username}: 잘 싸웠습니다!"
+    },
+    "emote.acknowledged.self": {
+        "en": "You: Acknowledged!",
+        "ko": "당신: 알겠습니다!"
+    },
+    "emote.acknowledged.other": {
+        "en": "{username}: Acknowledged!",
+        "ko": "{username}: 알겠습니다!"
+    },
+    "emote.declined.self": {
+        "en": "You: I cannot.",
+        "ko": "당신: 그럴 수 없습니다."
+    },
+    "emote.declined.other": {
+        "en": "{username}: I cannot.",
+        "ko": "{username}: 그럴 수 없습니다."
+    },
+    "emote.done.self": {
+        "en": "You: It is done!",
+        "ko": "당신: 끝냈습니다!"
+    },
+    "emote.done.other": {
+        "en": "{username}: It is done!",
+        "ko": "{username}: 끝냈습니다!"
+    },
+    "emote.i_will_fight.self": {
+        "en": "You: I will fight up front.",
+        "ko": "당신: 앞에서 싸우겠습니다."
+    },
+    "emote.i_will_fight.other": {
+        "en": "{username}: I will fight up front.",
+        "ko": "{username}: 앞에서 싸우겠습니다."
+    },
+    "emote.i_will_heal.self": {
+        "en": "You: I will tend the wounded.",
+        "ko": "당신: 부상자를 돌보겠습니다."
+    },
+    "emote.i_will_heal.other": {
+        "en": "{username}: I will tend the wounded.",
+        "ko": "{username}: 부상자를 돌보겠습니다."
+    },
+    "emote.i_will_scout.self": {
+        "en": "You: I will scout ahead.",
+        "ko": "당신: 앞을 정찰하겠습니다."
+    },
+    "emote.i_will_scout.other": {
+        "en": "{username}: I will scout ahead.",
+        "ko": "{username}: 앞을 정찰하겠습니다."
+    },
+    "emote.i_will_carry.self": {
+        "en": "You: I will carry the load.",
+        "ko": "당신: 짐을 나르겠습니다."
+    },
+    "emote.i_will_carry.other": {
+        "en": "{username}: I will carry the load.",
+        "ko": "{username}: 짐을 나르겠습니다."
     }
 }

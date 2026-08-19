@@ -85,6 +85,33 @@ def client_types(protocol: Path) -> tuple[set[str], set[str]]:
     return inbound, outbound
 
 
+EMOTE_TUPLE = re.compile(r"EMOTE_IDS = \((.*?)\)", re.S)
+GD_ARRAY = re.compile(r"const IDS: Array\[String\] = \[(.*?)\]", re.S)
+QUOTED = re.compile(r'"([a-z_]+)"')
+
+
+def emote_ids(server_repo: Path) -> tuple[list[str], list[str]]:
+    """서버와 클라이언트의 감정 표현·빠른 대화 목록을 읽는다.
+
+    서버가 `emote_id` 를 목록으로 제한하므로 둘이 어긋나면 클라이언트가 보낸
+    항목이 `INVALID_PARAMS` 로 거절된다. 화면에는 버튼이 있는데 눌러도 아무 일이
+    없다.
+    """
+    server_text = (
+        server_repo / "src" / "mud_engine" / "commands" / "actions" / "social.py"
+    ).read_text(encoding="utf-8")
+    client_text = (
+        CLIENT_ROOT / "godot" / "scripts" / "rules" / "emotes.gd"
+    ).read_text(encoding="utf-8")
+
+    server_block = EMOTE_TUPLE.search(server_text)
+    client_block = GD_ARRAY.search(client_text)
+
+    server_ids = QUOTED.findall(server_block.group(1)) if server_block else []
+    client_ids = QUOTED.findall(client_block.group(1)) if client_block else []
+    return server_ids, client_ids
+
+
 def main() -> int:
     server_repo = Path(os.environ.get("SERVER_REPO", DEFAULT_SERVER))
     docs = server_repo / "docs" / "protocol"
@@ -115,6 +142,17 @@ def main() -> int:
         for name in missing:
             print("       -", name)
         failures += len(missing)
+
+    server_emotes, client_emotes = emote_ids(server_repo)
+    same = server_emotes == client_emotes
+    print("%s 감정 표현·빠른 대화: 서버 %d종, 클라이언트 %d종"
+          % ("OK  " if same else "FAIL", len(server_emotes), len(client_emotes)))
+    if not same:
+        failures += 1
+        for name in sorted(set(server_emotes) ^ set(client_emotes)):
+            print("       -", name)
+        if set(server_emotes) == set(client_emotes):
+            print("       - 순서가 다릅니다")
 
     print()
     print("전체 통과" if failures == 0 else "누락 %d종" % failures)

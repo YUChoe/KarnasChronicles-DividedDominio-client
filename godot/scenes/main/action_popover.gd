@@ -92,7 +92,7 @@ func _render() -> void:
 		button.pressed.connect(_on_verb_pressed.bind(verb))
 		_verbs.add_child(button)
 
-	_close.text = _translator.t("ui.players.close")
+	_close.text = _translator.t("ui.container.close")
 
 
 ## 종족과 관계, 스택 수량을 한 줄에 담는다.

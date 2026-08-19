@@ -31,6 +31,9 @@ const FILTER_CHANNELS := {
 	CHANNEL_CHAT: [CHANNEL_CHAT, CHANNEL_DIALOGUE],
 }
 
+## 사용자가 탭을 바꿨다. 채팅 입력은 대화와 파티 탭에서만 동작한다
+signal filter_changed(channel: String)
+
 ## 보관 상한. 상태 저장소와 같은 값을 쓴다.
 const LIMIT := GameStateStore.LOG_LIMIT
 
@@ -96,8 +99,21 @@ func add_chat(payload: Dictionary) -> void:
 	})
 
 
+## 지금 고른 탭.
+func current_filter() -> String:
+	return _filter
+
+
 func entry_count() -> int:
 	return _entries.size()
+
+
+## 채팅 입력을 받아도 되는 탭인가.
+##
+## 다른 탭을 보고 있으면 보낸 말이 그 화면에 나타나지 않는다. 눌러도 결과가
+## 보이지 않는 입력을 열어 두지 않는다.
+static func allows_chat(filter: String) -> bool:
+	return filter == CHANNEL_CHAT or filter == CHANNEL_PARTY
 
 
 ## 필터가 그 채널을 받는가.
@@ -153,6 +169,7 @@ func _on_filter_pressed(channel: String) -> void:
 		var button: Button = _buttons[name]
 		button.button_pressed = name == channel
 	_render()
+	filter_changed.emit(channel)
 
 
 func _on_locale_changed(_locale: String) -> void:

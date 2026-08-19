@@ -64,6 +64,10 @@ func refresh() -> void:
 	if stack > 1:
 		label = "%s ×%d" % [label, stack]
 
+	# 방의 플레이어 목록에서 자신을 가려낸다. 화면이 `is_me` 를 붙인다
+	if Protocol.as_bool(_entity.get("is_me")):
+		label = "%s%s" % [label, _translator.t("ui.zone.me")]
+
 	text = "%s %s" % [_icon(), label]
 	tooltip_text = _translator.pick(_entity.get("description"))
 
